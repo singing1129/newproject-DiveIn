@@ -653,6 +653,7 @@ export default function RentProductDetail() {
       type: "rental", // (寫死)
       rentalId: product.id, // 商品 ID
       rentalName: product.name, // 商品名稱
+      rentalBrand: product.brand_name, // 商品的品牌名稱
       quantity: quantity, // 租借數量
       color: selectedColor, // 選擇的顏色
       startDate: formattedStartDate, // 轉換為 YYYY-MM-DD 格式

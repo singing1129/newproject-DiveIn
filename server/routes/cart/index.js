@@ -240,10 +240,13 @@ router.post("/add", async (req, res) => {
           });
         }
 
-        const stock = rental[0].stock === null ? Infinity : parseInt(rental[0].stock, 10);
+        const stock =
+          rental[0].stock === null ? Infinity : parseInt(rental[0].stock, 10);
         if (isNaN(stock)) {
-            console.error("庫存數據異常:", rental[0].stock);
-            return res.status(500).json({ success: false, message: "庫存數據異常" });
+          console.error("庫存數據異常:", rental[0].stock);
+          return res
+            .status(500)
+            .json({ success: false, message: "庫存數據異常" });
         }
 
         //檢查此次租借數量是否超過庫存
@@ -314,9 +317,9 @@ router.post("/add", async (req, res) => {
           // 新增項目
           await pool.execute(
             `INSERT INTO cart_rental_items 
-             (cart_id, rental_id, start_date, end_date, quantity) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [cartId, rentalId, startDate, endDate, quantity]
+              (cart_id, rental_id, start_date, end_date, quantity, color, brand_name) 
+              VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [cartId, rentalId, startDate, endDate, quantity, color, rentalBrand]
           );
         }
 
@@ -420,6 +423,7 @@ router.get("/:userId", async (req, res) => {
         cri.quantity,
         cri.start_date,
         cri.end_date,
+        cri.brand_name,
         ri.id AS rental_id,
         ri.name AS rental_name,
         ri.price,
@@ -445,6 +449,7 @@ router.get("/:userId", async (req, res) => {
         rental_fee: rentalFee, //租借總費用
         deposit_fee: item.deposit * item.quantity, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
         subtotal: rentalFee + item.deposit * item.quantity, //總押金＋租借費用=總費用
+        brand_name: item.brand_name,
       };
     });
 
