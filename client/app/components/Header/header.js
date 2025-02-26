@@ -107,11 +107,11 @@ export default function Header() {
               <FiShoppingCart />
             </a>
             {user ? (
-              <Link href="/member/account" className="header-cart a">
+              <Link href="/admin/account" className="header-cart a">
                 <FaRegUser />
               </Link>
             ) : (
-              <Link href="/member/login" className="header-cart a">
+              <Link href="/admin/login" className="header-cart a">
                 <FaRegUser />
               </Link>
             )}
