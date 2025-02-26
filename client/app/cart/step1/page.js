@@ -192,9 +192,14 @@ const Cart1 = () => {
                         key={item.id}
                         item={{
                           ...item,
-                          image: item.image_url  ||
-                          "/image/rent/no-img.png",
-                          name: `${item.brand_name} - ${item.rental_name}`,
+                          image: item.image_url || "/image/rent/no-img.png",
+                          name: (
+                            <>
+                              <span>{item.rentalBrand} -</span>
+                              <br />
+                              <span>{item.rental_name}</span>
+                            </>
+                          ),
                           rentalInfo: `${item.start_date} ~ ${item.end_date} (${item.rental_days}天)`,
                           deposit: item.deposit,
                         }}

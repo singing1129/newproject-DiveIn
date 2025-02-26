@@ -183,6 +183,17 @@ router.post("/add", async (req, res) => {
       }
 
       case "rental": {
+        // 從請求中獲取顏色和品牌名稱
+        const { color, rentalBrand } = req.body;
+
+        // 檢查品牌名稱是否存在
+        if (!rentalBrand) {
+          return res.status(400).json({
+            success: false,
+            message: "品牌名稱不可為空",
+          });
+        }
+
         if (!startDate || !endDate) {
           return res.status(400).json({
             success: false,
@@ -296,15 +307,16 @@ router.post("/add", async (req, res) => {
           });
         }
 
-        // 檢查購物車內是否已有相同商品和日期
+        // 檢查購物車內是否已有相同商品、日期以及顏色
         const [existingItem] = await pool.execute(
           `SELECT id, quantity 
            FROM cart_rental_items 
            WHERE cart_id = ? 
            AND rental_id = ? 
            AND start_date = ? 
-           AND end_date = ?`,
-          [cartId, rentalId, startDate, endDate]
+           AND end_date = ? 
+           AND color = ?`,
+          [cartId, rentalId, startDate, endDate, color]
         );
 
         if (existingItem.length > 0) {
@@ -317,20 +329,26 @@ router.post("/add", async (req, res) => {
           // 新增項目
           await pool.execute(
             `INSERT INTO cart_rental_items 
-              (cart_id, rental_id, start_date, end_date, quantity, color, brand_name) 
-              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [cartId, rentalId, startDate, endDate, quantity, color, rentalBrand]
+             (cart_id, rental_id, start_date, end_date, quantity, color, rentalBrand) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+              cartId,
+              rentalId,
+              startDate,
+              endDate,
+              quantity,
+              color || null,
+              rentalBrand,
+            ]
           );
         }
-
+        res.status(200).json({
+          success: true,
+          message: "商品已加入購物車",
+        });
         break;
       }
     }
-
-    res.status(200).json({
-      success: true,
-      message: "商品已加入購物車",
-    });
   } catch (error) {
     console.error("加入購物車失敗:", error);
     res.status(500).json({ success: false, message: "加入購物車失敗" });
@@ -417,24 +435,30 @@ router.get("/:userId", async (req, res) => {
     );
 
     // 4. 獲取租借項目並計算租期
+    //
     const [rentals] = await pool.execute(
       `SELECT 
         cri.id,
         cri.quantity,
         cri.start_date,
         cri.end_date,
-        cri.brand_name,
+        rb.name AS rentalBrand,
         ri.id AS rental_id,
         ri.name AS rental_name,
         ri.price,
         ri.price2 AS discounted_price,
         ri.deposit,
         rim.img_url AS image_url,
-        DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days
+      DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
+      cri.color
       FROM cart_rental_items cri
       JOIN rent_item ri ON cri.rental_id = ri.id
+      JOIN rent_specification rs ON ri.id = rs.rent_item_id
+      JOIN rent_brand rb ON rs.brand_id = rb.id
       LEFT JOIN rent_image rim ON ri.id = rim.rent_item_id AND rim.is_main = 1
-      WHERE cri.cart_id = ?`,
+      LEFT JOIN rent_color rc ON rs.color_id = rc.id
+      WHERE cri.cart_id = ?
+      GROUP BY cri.id`,
       [cartId]
     );
     // 開始結構

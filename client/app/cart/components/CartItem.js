@@ -164,7 +164,9 @@ const CartItem = ({ item, type = "products" }) => {
               </div>
               <div className="info-row">
                 <span className="info-label">顏色：</span>
-                <span className="info-value">{/* 顏色語法補這邊 */}</span>
+                <span className="info-value">
+                  {item.color || "無"}{" "}
+                </span>
               </div>
               <div className="info-row">
                 <span className="info-label">每日租金：</span>

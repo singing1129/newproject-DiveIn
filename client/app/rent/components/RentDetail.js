@@ -27,6 +27,10 @@ export default function RentProductDetail() {
   const [product, setProduct] = useState(null); // 商品資料
   const [quantity, setQuantity] = useState(1); // 租借數量
   const [selectedColor, setSelectedColor] = useState(null); // 選擇的顏色
+
+  const colorNames = product ? product.color_name.split(",") : []; // 如果 product 存在，則拆分顏色名稱
+  const colorRGBs = product ? product.color_rgb.split(",") : []; // 如果 product 存在，則拆分顏色 RGB 值
+
   const [startDate, setStartDate] = useState(""); // 租借開始日期
   const [endDate, setEndDate] = useState(""); // 租借結束日期
   const [isFavorite, setIsFavorite] = useState(0); // 愛心收藏功能
@@ -146,11 +150,11 @@ export default function RentProductDetail() {
     fetchProduct();
   }, [id]);
 
-  const handleColorClick = (color) => {
-    if (selectedColor === color) {
+  const handleColorClick = (colorName, colorRGB) => {
+    if (selectedColor === colorName) {
       setSelectedColor(null); // 如果已經選中，則取消選擇
     } else {
-      setSelectedColor(color); // 如果未選中，則更新選中的顏色
+      setSelectedColor(colorName); // 如果未選中，則更新選中的顏色
     }
   };
 
@@ -639,15 +643,21 @@ export default function RentProductDetail() {
 
     // 檢查商品是否有顏色規格
     const hasColorSpecifications =
-      product.specifications &&
-      product.specifications.some((spec) => spec.color_rgb);
+      product.specifications && product.specifications.length > 0;
 
     // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
     if (hasColorSpecifications && !selectedColor) {
-      alert("請選擇一個顏色！");
+      alert("請選擇商品顏色！");
       return;
     }
 
+    // 獲取選擇的顏色 RGB 值
+    const selectedSpec = product.specifications.find(
+      (spec) => spec.color === selectedColor
+    );
+    const selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
+
+    
     const cartData = {
       userId: 1, // (寫死)
       type: "rental", // (寫死)
@@ -655,7 +665,8 @@ export default function RentProductDetail() {
       rentalName: product.name, // 商品名稱
       rentalBrand: product.brand_name, // 商品的品牌名稱
       quantity: quantity, // 租借數量
-      color: selectedColor, // 選擇的顏色
+      color: selectedColor, // 選擇的顏色名稱
+      colorRGB: selectedColorRGB, // 選擇的顏色 RGB 值
       startDate: formattedStartDate, // 轉換為 YYYY-MM-DD 格式
       endDate: formattedEndDate, // 轉換為 YYYY-MM-DD 格式
       price: product.price, // 有特價選取特價的價格，沒有的話就是原價  product.price2 ? product.price2 : product.price
@@ -907,19 +918,18 @@ export default function RentProductDetail() {
                     {product.specifications &&
                     product.specifications.some((spec) => spec.color_rgb) ? (
                       <div className="product-colors">
-                        {product.specifications.map(
-                          (spec, index) =>
-                            spec.color_rgb && (
-                              <span
-                                key={index}
-                                className={`color-box ${
-                                  selectedColor === spec.color ? "selected" : ""
-                                }`}
-                                style={{ backgroundColor: spec.color_rgb }}
-                                onClick={() => handleColorClick(spec.color)} // 點擊時更新選中顏色
-                              ></span>
-                            )
-                        )}
+                        {colorNames.map((colorName, index) => (
+                          <span
+                            key={index}
+                            className={`color-box ${
+                              selectedColor === colorName ? "selected" : ""
+                            }`}
+                            style={{ backgroundColor: colorRGBs[index] }}
+                            onClick={() =>
+                              handleColorClick(colorName, colorRGBs[index])
+                            } // 點擊時更新選中顏色
+                          ></span>
+                        ))}
                       </div>
                     ) : (
                       <p className="no-colors">本商品暫無其他顏色</p>
