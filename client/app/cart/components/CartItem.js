@@ -153,16 +153,18 @@ const CartItem = ({ item, type = "products" }) => {
           <div className="info-display">
             <div className="info-content">
               <div className="info-row">
-                <span className="info-label">租賃期間：</span>
+                <span className="info-label">租借期間：</span>
                 <div className="info-value">
-                  <div>{item.start_date}</div>
-                  <div>~ {item.end_date}</div>
+                  <div>自 {item.start_date}</div>
+                  <div>至 {item.end_date}</div>
                   <div className="days">({item.rental_days}天)</div>
                 </div>
               </div>
               <div className="info-row">
                 <span className="info-label">每日租金：</span>
-                <span className="info-value">NT$ {item.discounted_price}</span>
+                <span className="info-value">
+                  NT$ {item.discounted_price ?? item.price}
+                </span>
               </div>
               <div className="info-row">
                 <span className="info-label">押金：</span>

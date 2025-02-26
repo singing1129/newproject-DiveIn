@@ -644,7 +644,7 @@ export default function RentProductDetail() {
 
     // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
     if (hasColorSpecifications && !selectedColor) {
-      alert("請選擇商品顏色！");
+      alert("請選擇一個顏色！");
       return;
     }
 
@@ -657,7 +657,7 @@ export default function RentProductDetail() {
       color: selectedColor, // 選擇的顏色
       startDate: formattedStartDate, // 轉換為 YYYY-MM-DD 格式
       endDate: formattedEndDate, // 轉換為 YYYY-MM-DD 格式
-      price: product.price, // 有特價選取特價的價格，沒有的話就是原價 product.price2 ? product.price2 : product.price
+      price: product.price, // 有特價選取特價的價格，沒有的話就是原價  product.price2 ? product.price2 : product.price
     };
 
     console.log("傳遞的資料:", cartData); // 檢查資料格式
@@ -912,14 +912,10 @@ export default function RentProductDetail() {
                               <span
                                 key={index}
                                 className={`color-box ${
-                                  selectedColor === spec.color_name
-                                    ? "selected"
-                                    : ""
+                                  selectedColor === spec.color ? "selected" : ""
                                 }`}
                                 style={{ backgroundColor: spec.color_rgb }}
-                                onClick={() =>
-                                  handleColorClick(spec.color_name)
-                                } // 點擊時更新選中顏色
+                                onClick={() => handleColorClick(spec.color)} // 點擊時更新選中顏色
                               ></span>
                             )
                         )}

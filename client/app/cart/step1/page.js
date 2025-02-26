@@ -178,11 +178,11 @@ const Cart1 = () => {
                 </div>
               )}
 
-              {/* 租賃商品區塊 */}
+              {/* 租借商品區塊 */}
               {cartData.rentals?.length > 0 && (
                 <div className="card mb-3">
                   <CartHeader
-                    title="租賃商品"
+                    title="租借商品"
                     totalItems={cartData.rentals.length}
                   />
                   <div className="card-body">
@@ -192,8 +192,9 @@ const Cart1 = () => {
                         key={item.id}
                         item={{
                           ...item,
-                          image: "./article-5ae9687eec0d4.jpg",
-                          name: item.rental_name,
+                          image: item.image_url  ||
+                          "/image/rent/no-img.png",
+                          name: `${item.brand_name} - ${item.rental_name}`,
                           rentalInfo: `${item.start_date} ~ ${item.end_date} (${item.rental_days}天)`,
                           deposit: item.deposit,
                         }}
@@ -212,7 +213,7 @@ const Cart1 = () => {
                       <div className="col text-end">
                         {totals.deposit > 0 && (
                           <div className="text-muted mb-2">
-                            租賃押金：NT$ {totals.deposit}
+                            租借押金：NT$ {totals.deposit}
                           </div>
                         )}
                         <div className="mb-2">

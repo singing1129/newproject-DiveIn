@@ -441,6 +441,7 @@ router.get("/:userId", async (req, res) => {
 
       return {
         ...item,
+        price_per_day: pricePerDay,
         rental_fee: rentalFee, //租借總費用
         deposit_fee: item.deposit * item.quantity, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
         subtotal: rentalFee + item.deposit * item.quantity, //總押金＋租借費用=總費用
