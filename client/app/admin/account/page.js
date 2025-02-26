@@ -22,7 +22,7 @@ export default function Account() {
                 <h6>我的訂單</h6>
               </div>
               <div className={styles.ASother}>
-                <h6><Link href="/member/group">我的揪團</Link></h6>
+                <h6><Link href="/users/group">我的揪團</Link></h6>
               </div>
               <div className={styles.ASother}>
                 <h6>我的最愛</h6>

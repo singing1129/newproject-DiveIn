@@ -5,7 +5,7 @@ import { isDev, apiURL } from "../../../../config";
 import Link from "next/link";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function EcpayPage() {
   // 檢查是否登入
