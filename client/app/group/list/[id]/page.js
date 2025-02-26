@@ -567,14 +567,14 @@ export default function GroupDetailPage() {
               已揪 {group.participant_number} / {group.max_number}
             </div>
             
-            {/* FIXME: 設定好可選人數限制 */}
+            {/* OK 設定好可選人數限制 */}
             {(group.max_number - group.participant_number) > 0 ? (
               <>
             <div className="fs-20px fw-bold"> 可加人數：{(group.max_number - group.participant_number)} </div>
               <div className="fw-bold fs-18px">人數</div>
                 <div className="input-group count-group">
                   <button
-                    className="btn"
+                    className="btn fs-18px"
                     type="button"
                     id="button-addon1"
                     onClick={() => {
@@ -585,13 +585,13 @@ export default function GroupDetailPage() {
                   </button>
                   <input
                     type="text"
-                    className="form-control text-center"
+                    className="form-control text-center fs-18px"
                     value={count}
                     readOnly
                     aria-label="Number input"
                   />
                   <button
-                    className="btn"
+                    className="btn fs-18px"
                     type="button"
                     id="button-addon2"
                     onClick={() => {
