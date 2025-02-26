@@ -1,8 +1,8 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
-import articleSidebarRouter from "./sidebar.js"; 
-import articleCreateRouter from "./create.js"; 
-import articleReplyRouter from "./reply.js"; 
+import articleSidebarRouter from "./sidebar.js";
+import articleCreateRouter from "./create.js";
+import articleReplyRouter from "./reply.js";
 import articleLikeRouter from "./like.js"; // 文章 & 留言按讚
 
 const router = express.Router();
@@ -211,42 +211,6 @@ router.get("/:id", async (req, res) => {
       message: "獲取文章詳情失敗",
       error: error.message,
     });
-  }
-});
-
-/** 📝 新增文章 */
-router.post("/", async (req, res) => {
-  try {
-    const { title, content, category_small_id, user_id, tags, images } = req.body;
-
-    // 插入文章
-    const [result] = await pool.execute(
-      `
-      INSERT INTO article (title, content, article_category_small_id, users_id, publish_at)
-      VALUES (?, ?, ?, ?, NOW())
-      `,
-      [title, content, category_small_id, user_id]
-    );
-
-    const articleId = result.insertId;
-
-    // 插入標籤
-    if (tags && tags.length > 0) {
-      await Promise.all(
-        tags.map((tagId) =>
-          pool.execute("INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)", [articleId, tagId])
-        )
-      );
-    }
-
-    res.json({
-      status: "success",
-      message: "文章新增成功",
-      articleId,
-    });
-  } catch (error) {
-    console.error("❌ 新增文章失敗：", error);
-    res.status(500).json({ status: "error", message: "新增文章失敗", error: error.message });
   }
 });
 

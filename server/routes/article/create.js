@@ -1,17 +1,24 @@
 import express from "express";
-import multer from "multer"; // 继续使用 multer
+import multer from "multer";
 import fs from "fs";
 import path from "path";
-import { v4 as uuidv4 } from "uuid";
-// import { pool } from "../../config/mysql.js";
+import { fileURLToPath } from "url";
 import { db } from "../../config/articleDb.js";
 
 const router = express.Router();
 
-// Multer 設定 設定上傳檔案儲存
+// 計算 __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Multer 設定
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "server/public/uploads/article/"); // 設定正確的儲存路徑
+    const uploadDir = path.join(__dirname, "public", "uploads", "article");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -19,27 +26,30 @@ const storage = multer.diskStorage({
   },
 });
 
-// 限制文件格式
 const fileFilter = (req, file, cb) => {
   const allowedTypes = new Set(["image/jpeg", "image/png", "image/gif"]);
   cb(null, allowedTypes.has(file.mimetype));
 };
 
-// 設定 multer 上傳
 const upload = multer({ storage, fileFilter });
 
 // 文章創建 API 路由
-router.post("/", upload.single("new_coverImage"), async (req, res) => {
+router.post("/create", upload.single("new_coverImage"), async (req, res) => {
+  console.log("req.body:", req.body); // 調試：打印非文件字段
+  console.log("req.file:", req.file); // 調試：打印文件字段
+
   const {
     new_title,
     new_content,
     new_categorySmall,
     new_tags,
-    new_status = "draft", // 預設狀態為草稿
+    status = "draft",
   } = req.body;
 
-  const coverImagePath = req.file ? `/uploads/${req.file.filename}` : null;
-  const currentDate = new Date(); // 取得當前時間
+  const coverImagePath = req.file
+    ? `/uploads/article/${req.file.filename}`
+    : null;
+  const currentDate = new Date();
 
   // 檢查必要的字段
   if (!new_title || !new_content || !new_categorySmall || !new_tags) {
@@ -48,45 +58,73 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
 
   try {
     // 插入文章資料
-    const [articleResult] = await db.query(
+    const userId = 1; // 假設用戶 ID 為 1
+    const { results: articleResult } = await db.query(
       "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
         new_content,
         new_categorySmall,
-        // 假設用戶 ID 從 session 或 JWT 提供
-        req.user.id, // 假設你有用 `req.user.id` 取得當前用戶的 ID
-        new_status,
-        currentDate, // created_at
-        new_status === "published" ? currentDate : null, // publish_at, 如果是發表，設為當前時間
-        0, // 預設為 0
-        0, // 預設為 0
-        0, // 預設為 0
+        userId,
+        status,
+        currentDate,
+        status === "published" ? currentDate : null,
+        0,
+        0,
+        0,
       ]
     );
+
+    // 調試：檢查插入文章的返回值
+    console.log("articleResult:", articleResult);
+    if (!articleResult || articleResult.insertId === 0) {
+      throw new Error("無法獲取文章 ID");
+    }
     const articleId = articleResult.insertId;
 
     // 插入封面圖片資料
     if (coverImagePath) {
       await db.query(
         "INSERT INTO article_image (article_id, name, img_url, is_main) VALUES (?, ?, ?, ?)",
-        [articleId, Date.now(), coverImagePath, 0] // 使用時間戳生成名稱
+        [articleId, Date.now(), coverImagePath, 0]
       );
     }
 
     // 處理標籤
-    const tagArray = JSON.parse(new_tags); // 前端傳送的是 JSON 格式的標籤
+    let tagArray;
+    try {
+      tagArray = JSON.parse(new_tags);
+    } catch (error) {
+      console.error("new_tags 解析失敗：", new_tags);
+      return res.status(400).json({ message: "標籤格式錯誤" });
+    }
+
+    console.log("tagArray:", tagArray); // 調試：打印解析後的標籤數組
+
+    // 檢查 tagArray 是否為數組
+    if (!Array.isArray(tagArray)) {
+      console.error("new_tags 不是有效的數組：", new_tags);
+      return res.status(400).json({ message: "標籤格式錯誤" });
+    }
+
     for (let tag of tagArray) {
-      const [existingTag] = await db.query(
+      // 檢查標籤是否已存在
+      const { results: existingTag } = await db.query(
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
         [tag]
       );
-      let tagId;
+      console.log("existingTag:", existingTag); // 調試：打印查詢結果
 
+      if (!Array.isArray(existingTag)) {
+        throw new Error("資料庫查詢返回值格式錯誤");
+      }
+
+      let tagId;
       if (existingTag.length > 0) {
         tagId = existingTag[0].id;
       } else {
-        const [tagResult] = await db.query(
+        // 插入新標籤
+        const { results: tagResult } = await db.query(
           "INSERT INTO article_tag_small (tag_name) VALUES (?)",
           [tag]
         );
@@ -100,10 +138,12 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
       );
     }
 
-    res.status(200).json({ message: "文章創建成功！", articleId });
+    res
+      .status(200)
+      .json({ success: true, message: "文章創建成功！", articleId });
   } catch (error) {
     console.error("❌ 文章創建失敗：", error);
-    res.status(500).json({ message: "創建文章時發生錯誤" });
+    res.status(500).json({ success: false, message: "創建文章時發生錯誤" });
   }
 });
 
@@ -128,7 +168,9 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
     new_status,
     new_tags,
   } = req.body;
-  let coverImagePath = req.file ? `/uploads/${req.file.filename}` : null;
+  let coverImagePath = req.file
+    ? `/uploads/article/${req.file.filename}`
+    : null;
 
   try {
     // 檢查必要的字段
@@ -197,10 +239,12 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
       );
     }
 
-    res.status(200).json({ message: "文章更新成功！", articleId });
+    res
+      .status(200)
+      .json({ success: true, message: "文章更新成功！", articleId });
   } catch (error) {
     console.error("❌ 文章更新失敗：", error);
-    res.status(500).json({ message: "更新文章時發生錯誤" });
+    res.status(500).json({ success: false, message: "更新文章時發生錯誤" });
   }
 });
 
@@ -243,10 +287,10 @@ router.post("/save-draft", async (req, res) => {
       );
     }
 
-    res.status(200).json({ message: "草稿儲存成功！", draftId });
+    res.status(200).json({ success: true, message: "草稿儲存成功！", draftId });
   } catch (error) {
     console.error("❌ 草稿儲存失敗：", error);
-    res.status(500).json({ message: "儲存草稿時發生錯誤" });
+    res.status(500).json({ success: false, message: "儲存草稿時發生錯誤" });
   }
 });
 
@@ -269,6 +313,11 @@ router.get("/data", async (req, res) => {
     console.error("❌ 無法獲取分類與標籤：", error);
     res.status(500).json({ success: false, message: "獲取資料失敗" });
   }
+});
+
+// 測試路由
+router.get("/create", (req, res) => {
+  res.send("這是文章創建頁面");
 });
 
 export default router;

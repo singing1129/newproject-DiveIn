@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios"; // 引入 axios
+import axios from "axios";
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 
@@ -23,10 +23,11 @@ const ArticleForm = () => {
   useEffect(() => {
     const getCategoriesAndTags = async () => {
       try {
-        const response = await axios.get("http://localhost:3005/api/article/create/data");
-        const data = response.data; // 使用 axios 获取的 data
+        const response = await axios.get(
+          "http://localhost:3005/api/article/create/data"
+        );
+        const data = response.data;
 
-        console.log(data);  // 输出数据，查看是否正确
         if (data.success) {
           setCategoriesBig(data.category_big || []);
           setCategoriesSmall(data.category_small || []);
@@ -68,9 +69,9 @@ const ArticleForm = () => {
   // 處理封面圖片選擇
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return; // 避免沒有選擇文件的錯誤
+    if (!file) return;
 
-    setCoverImage(file); // 設置圖片文件
+    setCoverImage(file);
     const reader = new FileReader();
     reader.onloadend = () => setPreviewImage(reader.result);
     reader.readAsDataURL(file);
@@ -81,25 +82,34 @@ const ArticleForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!submitStatus) {
+      alert("請選擇儲存草稿或發表文章");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("new_title", new_title);
     formData.append("new_content", new_content);
     formData.append("new_categorySmall", new_categorySmall);
-    formData.append("tags", JSON.stringify(tagsList));
-
-    // 根據 submitStatus 設定 status 和 publish_at
-    const publishAt =
-      submitStatus === "published" ? new Date().toISOString() : null;
+    formData.append("new_tags", JSON.stringify(tagsList)); // 注意：改為 new_tags
     formData.append("status", submitStatus);
-    formData.append("publish_at", publishAt);
-
     if (new_coverImage) formData.append("new_coverImage", new_coverImage);
+
+    // 調試：打印 FormData 內容
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
     try {
       const response = await fetch("http://localhost:3005/api/article/create", {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error("請求失敗");
+      }
 
       const data = await response.json();
       if (data.success) {
@@ -160,7 +170,10 @@ const ArticleForm = () => {
           >
             <option value="">請選擇大分類</option>
             {categoriesBig.map((category) => (
-              <option key={category.big_category_id} value={category.big_category_id}>
+              <option
+                key={category.big_category_id}
+                value={category.big_category_id}
+              >
                 {category.big_category_name}
               </option>
             ))}
@@ -219,14 +232,14 @@ const ArticleForm = () => {
         {/* 按鈕 */}
         <div className="btnarea">
           <button
-            type="button"
+            type="submit"
             className="btn article-create-btn"
             onClick={() => setSubmitStatus("draft")}
           >
             儲存草稿
           </button>
           <button
-            type="button"
+            type="submit"
             className="btn article-create-btn"
             onClick={() => setSubmitStatus("published")}
           >
