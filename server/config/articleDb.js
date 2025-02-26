@@ -17,7 +17,9 @@ const query = async (sql, params = []) => {
 export const db = {
   // 取得所有文章
   getArticles: async () => {
-    return query("SELECT * FROM article WHERE isDeleted = 0 ORDER BY created_at DESC");
+    return query(
+      "SELECT * FROM article WHERE isDeleted = 0 ORDER BY created_at DESC"
+    );
   },
 
   // 透過 ID 取得單篇文章
