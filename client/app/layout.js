@@ -9,7 +9,7 @@ import Breadcrumb from "./components/Breadcrumb/breadcrumb";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@/hooks/useAuth";
 import Script from "next/script";
 
 import { Noto_Sans_TC } from "next/font/google";
