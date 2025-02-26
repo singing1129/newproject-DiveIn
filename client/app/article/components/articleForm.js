@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
+import axios from "axios"; // 引入 axios
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
-
-const API_BASE_URL = "http://localhost:3005/api/article/create/data";
 
 const ArticleForm = () => {
   const [new_title, setTitle] = useState("");
@@ -24,8 +23,10 @@ const ArticleForm = () => {
   useEffect(() => {
     const getCategoriesAndTags = async () => {
       try {
-        const response = await fetch(API_BASE_URL);
-        const data = await response.json();
+        const response = await axios.get("http://localhost:3005/api/article/create/data");
+        const data = response.data; // 使用 axios 获取的 data
+
+        console.log(data);  // 输出数据，查看是否正确
         if (data.success) {
           setCategoriesBig(data.category_big || []);
           setCategoriesSmall(data.category_small || []);
@@ -159,8 +160,8 @@ const ArticleForm = () => {
           >
             <option value="">請選擇大分類</option>
             {categoriesBig.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+              <option key={category.big_category_id} value={category.big_category_id}>
+                {category.big_category_name}
               </option>
             ))}
           </select>
@@ -174,8 +175,8 @@ const ArticleForm = () => {
           >
             <option value="">請選擇小分類</option>
             {filteredSmallCategories.map((category, index) => (
-              <option key={index} value={category.name}>
-                {category.name}
+              <option key={index} value={category.small_category_id}>
+                {category.small_category_name}
               </option>
             ))}
           </select>

@@ -2,9 +2,8 @@ import express from "express";
 import multer from "multer"; // 继续使用 multer
 import fs from "fs";
 import path from "path";
-import Article from "../../article/models/article.js";
 import { v4 as uuidv4 } from "uuid";
-import { pool } from "../../config/mysql.js";
+// import { pool } from "../../config/mysql.js";
 import { db } from "../../config/articleDb.js";
 
 const router = express.Router();
@@ -30,7 +29,6 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter });
 
 // 文章創建 API 路由
-// 文章創建 API 路由
 router.post("/", upload.single("new_coverImage"), async (req, res) => {
   const {
     new_title,
@@ -50,7 +48,7 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
 
   try {
     // 插入文章資料
-    const [articleResult] = await pool.query(
+    const [articleResult] = await db.query(
       "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
@@ -70,7 +68,7 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
 
     // 插入封面圖片資料
     if (coverImagePath) {
-      await pool.query(
+      await db.query(
         "INSERT INTO article_image (article_id, name, img_url, is_main) VALUES (?, ?, ?, ?)",
         [articleId, Date.now(), coverImagePath, 0] // 使用時間戳生成名稱
       );
@@ -79,7 +77,7 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
     // 處理標籤
     const tagArray = JSON.parse(new_tags); // 前端傳送的是 JSON 格式的標籤
     for (let tag of tagArray) {
-      const [existingTag] = await pool.query(
+      const [existingTag] = await db.query(
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
         [tag]
       );
@@ -88,7 +86,7 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
       if (existingTag.length > 0) {
         tagId = existingTag[0].id;
       } else {
-        const [tagResult] = await pool.query(
+        const [tagResult] = await db.query(
           "INSERT INTO article_tag_small (tag_name) VALUES (?)",
           [tag]
         );
@@ -96,7 +94,7 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
       }
 
       // 關聯標籤與文章
-      await pool.query(
+      await db.query(
         "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
         [articleId, tagId]
       );
@@ -146,7 +144,7 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
     // 如果沒有新圖片，保留舊的圖片
     async function getCoverImagePath(articleId, coverImagePath) {
       if (!coverImagePath) {
-        const [oldCover] = await pool.query(
+        const [oldCover] = await db.query(
           "SELECT cover_image FROM article WHERE id = ?",
           [articleId]
         );
@@ -156,7 +154,7 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
     }
 
     // 更新文章資料
-    await pool.query(
+    await db.query(
       "UPDATE article SET title = ?, content = ?, article_category_small_id = ?, status = ?, cover_image = ? WHERE id = ?",
       [
         new_title,
@@ -169,14 +167,14 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
     );
 
     // 刪除舊的標籤關聯
-    await pool.query("DELETE FROM article_tag_big WHERE article_id = ?", [
+    await db.query("DELETE FROM article_tag_big WHERE article_id = ?", [
       articleId,
     ]);
 
     // 重新關聯標籤
     const tagArray = JSON.parse(new_tags);
     for (let tag of tagArray) {
-      const [existingTag] = await pool.query(
+      const [existingTag] = await db.query(
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
         [tag]
       );
@@ -185,7 +183,7 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
       if (existingTag.length > 0) {
         tagId = existingTag[0].id;
       } else {
-        const [tagResult] = await pool.query(
+        const [tagResult] = await db.query(
           "INSERT INTO article_tag_small (tag_name) VALUES (?)",
           [tag]
         );
@@ -193,7 +191,7 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
       }
 
       // 關聯標籤與文章
-      await pool.query(
+      await db.query(
         "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
         [articleId, tagId]
       );
@@ -223,7 +221,7 @@ router.post("/save-draft", async (req, res) => {
     }
 
     // 插入草稿資料
-    const [draftResult] = await pool.query(
+    const [draftResult] = await db.query(
       'INSERT INTO article (title, content, article_category_small_id, status) VALUES (?, ?, ?, "draft")',
       [new_title, new_content, new_article_category_small_id]
     );
@@ -232,14 +230,14 @@ router.post("/save-draft", async (req, res) => {
     // 插入並關聯標籤
     const tagArray = JSON.parse(new_tags);
     for (let tag of tagArray) {
-      const [tagResult] = await pool.query(
+      const [tagResult] = await db.query(
         "INSERT IGNORE INTO article_tag_small (tag_name) VALUES (?)",
         [tag]
       );
       const tagId = tagResult.insertId;
 
       // 關聯標籤與草稿文章
-      await pool.query(
+      await db.query(
         "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
         [draftId, tagId]
       );
@@ -256,17 +254,10 @@ router.post("/save-draft", async (req, res) => {
 router.get("/data", async (req, res) => {
   try {
     // 取得分類
-    const [category_big] = await pool.query(
-      "SELECT id, name FROM article_category_big"
-    );
-    const [category_small] = await pool.query(
-      "SELECT name, category_big_id FROM article_category_small"
-    );
+    const { category_big, category_small } = await db.getCategories();
 
     // 取得標籤
-    const [tags] = await pool.query(
-      "SELECT id, tag_name FROM article_tag_small"
-    );
+    const tags = await db.getTags();
 
     res.status(200).json({
       success: true,
