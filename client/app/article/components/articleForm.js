@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { fetchArticleCreateData } from "../../api/article/create";
- // 假設 fetchArticleData 是 API
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
+
+const API_BASE_URL = "http://localhost:3005/api/article/create/data";
 
 const ArticleForm = () => {
   const [new_title, setTitle] = useState("");
@@ -24,17 +24,17 @@ const ArticleForm = () => {
   useEffect(() => {
     const getCategoriesAndTags = async () => {
       try {
-        const response = await fetchArticleData(); // 假設這是 API 請求
-        if (response.success) {
-          setCategoriesBig(response.category_big || []);
-          setCategoriesSmall(response.category_small || []);
-          setTags(response.tags || []);
+        const response = await fetch(API_BASE_URL);
+        const data = await response.json();
+        if (data.success) {
+          setCategoriesBig(data.category_big || []);
+          setCategoriesSmall(data.category_small || []);
+          setTags(data.tags || []);
         }
       } catch (error) {
         console.error("❌ 取得分類與標籤失敗：", error);
       }
     };
-
     getCategoriesAndTags();
   }, []);
 
@@ -67,37 +67,47 @@ const ArticleForm = () => {
   // 處理封面圖片選擇
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setCoverImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImage(reader.result);
-      reader.readAsDataURL(file);
-    }
+    if (!file) return; // 避免沒有選擇文件的錯誤
+
+    setCoverImage(file); // 設置圖片文件
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewImage(reader.result);
+    reader.readAsDataURL(file);
   };
 
   // 提交表單
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // 防止表單預設提交行為
+
     const formData = new FormData();
     formData.append("new_title", new_title);
     formData.append("new_content", new_content);
     formData.append("new_categoryBig", new_categoryBig);
     formData.append("new_categorySmall", new_categorySmall);
-    formData.append("tags", JSON.stringify(tagsList));
+    formData.append("tags", JSON.stringify(tagsList)); // 必須轉成 JSON 字串
     if (new_coverImage) formData.append("new_coverImage", new_coverImage);
 
     try {
-      const response = await createArticle(formData);
-      if (response.success) alert("文章發表成功！");
-      else alert("發表失敗，請重試！");
+      const response = await fetch("http://localhost:3005/api/article/create", {
+        method: "POST",
+        body: formData, // 必須用 FormData 傳送
+      });
+
+      const data = await response.json(); // 確保能解析 JSON
+      if (data.success) {
+        alert("文章發表成功！");
+      } else {
+        alert("發表失敗：" + (data.message || "請稍後再試"));
+      }
     } catch (error) {
+      console.error("❌ 發送請求錯誤：", error);
       alert("提交錯誤，請稍後再試！");
     }
   };
 
   return (
     <div className="create-form">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} encType="multipart/form-data">
         <div className="create-title">發表新文章</div>
 
         {/* 封面圖片 */}
@@ -200,8 +210,12 @@ const ArticleForm = () => {
 
         {/* 按鈕 */}
         <div className="btnarea">
-          <button className="btn article-create-btn">儲存草稿</button>
-          <button className="btn article-create-btn">發表文章</button>
+          <button type="submit" className="btn article-create-btn">
+            儲存草稿
+          </button>
+          <button type="submit" className="btn article-create-btn">
+            發表文章
+          </button>
         </div>
       </form>
     </div>
