@@ -74,7 +74,7 @@ const Cart1 = () => {
       0
     );
 
-    // 計算租賃押金總額
+    // 計算租賃押金總額（）
     const deposit = selectedRentals.reduce(
       (sum, item) => sum + Number(item.deposit_fee || 0) * item.quantity,
       0

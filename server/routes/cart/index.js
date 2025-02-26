@@ -464,15 +464,23 @@ router.get("/:userId", async (req, res) => {
     // 開始結構
     const processedRentals = rentals.map((item) => {
       // 特價允許null
+      // 使用特價價格，如果沒有特價就用原價
       const pricePerDay = item.discounted_price || item.price;
+      // 租借總費用=單價*數量*總天數
       const rentalFee = pricePerDay * item.rental_days * item.quantity;
+
+      // nana新增：每日押金 = 單價的 30%
+      const deposit = pricePerDay * 0.3;
+
+      // nana新增：押金總費用 = 押金 * 數量 * 總天數
+      const depositFee = deposit * item.quantity * item.rental_days;
 
       return {
         ...item,
         price_per_day: pricePerDay,
         rental_fee: rentalFee, //租借總費用
-        deposit_fee: item.deposit * item.quantity, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
-        subtotal: rentalFee + item.deposit * item.quantity, //總押金＋租借費用=總費用
+        deposit_fee: depositFee, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
+        subtotal: rentalFee + depositFee, //總押金＋租借費用=總費用
         brand_name: item.brand_name,
       };
     });

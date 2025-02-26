@@ -22,7 +22,6 @@ const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function RentProductDetail() {
-  //   const { id } = useParams(); // 取得動態路由參數
   const { id } = useParams(); // 取得動態路由參數
   const [product, setProduct] = useState(null); // 商品資料
   const [quantity, setQuantity] = useState(1); // 租借數量

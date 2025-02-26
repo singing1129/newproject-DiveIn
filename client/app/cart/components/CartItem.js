@@ -176,7 +176,7 @@ const CartItem = ({ item, type = "products" }) => {
               </div>
               <div className="info-row">
                 <span className="info-label">押金：</span>
-                <span className="info-value">NT$ {item.deposit_fee}</span>
+                <span className="info-value">NT$ {item.deposit}</span>
               </div>
             </div>
           </div>
@@ -226,7 +226,7 @@ const CartItem = ({ item, type = "products" }) => {
             {type === "rentals" ? "每日租金：" : "單價："}
           </span>
           <span className="text-muted">
-            ${type === "rentals" ? item.discounted_price : item.price}
+            ${type === "rentals" ? item.price_per_day : item.price}
           </span>
         </div>
       </div>
@@ -245,9 +245,9 @@ const CartItem = ({ item, type = "products" }) => {
             {type === "rentals"
               ? Number(item.discounted_price) * quantity * item.rental_days
               : Number(item.price) * quantity}
-            {type === "rentals" && item.deposit_fee > 0 && (
+            {type === "rentals" && item.deposit > 0 && (
               <div className="text-muted small">
-                (押金：NT$ {item.deposit_fee})
+                (押金：NT$ {item.deposit})
               </div>
             )}
           </div>

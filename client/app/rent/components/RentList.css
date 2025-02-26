@@ -193,6 +193,49 @@
   font-size: 10px;
 }
 
+.clear-filter {
+  cursor: pointer;
+  margin-left: 10px;
+  transition: color 0.3s, transform 0.3s; /* 動畫效果 */
+}
+
+.clear-filter:hover {
+  /* color: red; 鼠標懸停顏色 */
+  transform: scale(1.2); /* 鼠標懸停時放大按鈕 */
+}
+
+.clear-filter:active {
+  /* color: #ff0000; 點擊時的顏色 */
+}
+
+/* 基本的圓形顏色框 */
+.color-circle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0px 3px -2px 0px;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(0, 0, 0, 0.1)
+  );
+}
+
+.color-circle:hover {
+  transform: scale(1.05); /* 放大 */
+  border-color: var(--black); /* 邊框變深 */
+  box-shadow: 0 0 10px rgba(200, 200, 200, 0.1); /* 陰影 */
+}
+
+/* 當顏色選中時 */
+.color-circle.selected {
+  box-shadow: 0 0 15px rgba(200, 200, 200, 0.7); /* 更明顯的陰影 */
+}
+
 .sidebar .product-filter .product-filter-price .price-input {
   gap: 10px;
   padding: 0px 0px 10px 0px;
@@ -651,7 +694,7 @@
   overflow: hidden; /* 隱藏超出部分 */
 }
 .main .product-lists .card .img-container::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 40%;
   left: 0;
@@ -665,7 +708,6 @@
 .main .product-lists .card:hover .img-container::after {
   opacity: 1;
 }
-
 
 .main .product-lists .card .card-body .product-brand,
 .main .product-lists .card .card-body .product-name,
@@ -698,6 +740,7 @@
 .main .product-lists .card .card-body .product-price,
 .main .product-lists .card .card-body .product-price2 {
   display: inline-block;
+  font-size: 14px;
 }
 
 .main .product-lists .card .card-body .product-color {
