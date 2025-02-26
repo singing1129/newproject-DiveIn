@@ -61,8 +61,14 @@ export default function RentList() {
   const [tempPriceRange, setTempPriceRange] = useState([0, 50000]); // 臨時價格區間
 
   //顏色專區
+
   const [colors, setColors] = useState([]); // 存儲顏色資料
   const [selectedColorId, setSelectedColorId] = useState(null);
+
+  const [product, setProduct] = useState(null); // 商品資料
+  const colorNames = products.color_name ? products.color_name.split(",") : [];
+  const colorRGBs = products.color_rgb ? products.color_rgb.split(",") : [];
+
   const [isExpanded, setIsExpanded] = useState(false); // 控制顏色選項展開/收起
 
   // 新上市商品推薦專區
@@ -76,10 +82,10 @@ export default function RentList() {
   // const [isModalOpen, setIsModalOpen] = useState(false);
   // const [item, setItem] = useState(null); // 將 selectedProduct 改為 item
   // const [selectedProduct, setSelectedProduct] = useState(null);
-  const [product, setProduct] = useState(null); // 商品資料
+
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null); // 選擇的顏色
-  const [selectedColorRGB, setSelectedColorRGB] = useState(null); 
+  const [selectedColorRGB, setSelectedColorRGB] = useState(null);
 
   const [startDate, setStartDate] = useState(""); // 租借開始日期
   const [endDate, setEndDate] = useState(""); // 租借結束日期
@@ -613,8 +619,12 @@ export default function RentList() {
 
   // 加入購物車的顏色處理
   const handleColorClick = (colorName, colorRGB) => {
-    setSelectedColor(colorName); // 更新顏色名稱
-    setSelectedColorRGB(colorRGB); // 更新顏色 RGB 值
+    // 檢查是否已選擇此顏色，若已選擇則取消選擇
+    if (selectedColor === colorName) {
+      setSelectedColor(null); // 取消顏色選擇
+    } else {
+      setSelectedColor(colorName); // 設置為選中的顏色
+    }
   };
 
   // 獲取新品資料
@@ -1205,9 +1215,15 @@ export default function RentList() {
           disableMobile: true,
           onClose: (selectedDates) => {
             if (selectedDates.length === 2) {
-              const [start, end] = selectedDates.map(
-                (date) => date.toISOString().split("T")[0]
-              );
+              // 直接使用 flatpickr 返回的日期，避免處理 ISO 格式
+              const [start, end] = selectedDates.map((date) => {
+                // 返回 "YYYY-MM-DD" 格式的日期字串
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, "0"); // 確保兩位數
+                const day = String(date.getDate()).padStart(2, "0"); // 確保兩位數
+                return `${year}-${month}-${day}`;
+              });
+
               setStartDate(start); // 設置 startDate
               setEndDate(end); // 設置 endDate
               console.log("選擇的日期區間:", start, end);
@@ -1289,9 +1305,8 @@ export default function RentList() {
       return;
     }
 
-    // 傳遞給後端的格式
-    const formattedStartDate = startDate.toString().split("T")[0]; // 輸出 YYYY-MM-DD
-    const formattedEndDate = endDate.toString().split("T")[0]; // 輸出 YYYY-MM-DD
+    const formattedStartDate = startDate;
+    const formattedEndDate = endDate;
 
     // 檢查是否選擇了日期
     if (!startDate || !endDate) {
@@ -1300,21 +1315,42 @@ export default function RentList() {
     }
 
     // 檢查商品是否有顏色規格
-    const hasColorSpecifications = product.colors && product.colors.length > 0;
+    const hasColorSpecifications =
+      product.color_name && product.color_name.split(",").length > 0;
 
     // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
-    if (product.color_name && !selectedColor) {
+    if (hasColorSpecifications && !selectedColor) {
       alert("請選擇商品顏色！");
       return;
     }
 
-    // 獲取選擇的顏色 RGB 值
-    const selectedColorObj = product.colors.find(
-      (color) => color.color_name === selectedColor
-    );
-    const selectedColorRGB = selectedColorObj
-      ? selectedColorObj.color_rgb
-      : null;
+    // 3. 獲取選擇的顏色 RGB 值
+    const getColorRGB = (colorName) => {
+      // 假設 product.color_name 和 product.color_rgb 都是以逗號分隔的字符串
+      if (product.color_name && product.color_rgb) {
+        const colorNames = product.color_name ? product.color_name.split(",") : [];
+        const colorRGBs = product.color_rgb ? product.color_rgb.split(",") : [];
+
+        // 查找選擇的顏色並返回對應的 RGB 值
+        const index = colorNames.findIndex(
+          (name) => name.trim() === colorName.trim()
+        );
+        if (index !== -1) {
+          return colorRGBs[index].trim(); // 返回對應的 RGB 值
+        }
+      }
+      return null; // 如果沒有找到對應顏色，則返回 null
+    };
+
+    // 範例：獲取選擇的顏色 RGB
+    if (selectedColor) {
+      const selectedColorRGB = getColorRGB(selectedColor);
+      if (selectedColorRGB) {
+        console.log("選擇的顏色 RGB:", selectedColorRGB);
+      } else {
+        console.log("顏色 RGB 值未找到");
+      }
+    }
 
     const cartData = {
       userId: 1, // (寫死)
@@ -2041,7 +2077,7 @@ export default function RentList() {
                                       return (
                                         <div
                                           key={index}
-                                          className={`color-box rounded-circle mx-1 border ${
+                                          className={`color-box ${
                                             selectedColor?.name === colorName
                                               ? "selected"
                                               : ""
@@ -2092,7 +2128,10 @@ export default function RentList() {
                                 <button
                                   className="btn btn-outline-secondary btn-sm"
                                   onClick={() => {
-                                    if (!product.stock || quantity < product.stock) {
+                                    if (
+                                      !product.stock ||
+                                      quantity < product.stock
+                                    ) {
                                       setQuantity((prev) => prev + 1);
                                     }
                                   }}

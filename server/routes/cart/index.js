@@ -267,6 +267,7 @@ router.post("/add", async (req, res) => {
             message: "商品庫存不足",
           });
         }
+        
 
         // 修改SQL查詢使用CAST確保數字類型
         const [rentals] = await pool.execute(
