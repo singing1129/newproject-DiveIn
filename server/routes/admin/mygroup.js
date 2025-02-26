@@ -45,10 +45,10 @@ router.post("/myGroup", async (req, res) => {
         });
     }
 });
-router.delete("/myGroup/:id", async (req, res) => {
-    res.json({
-        message:"有連接到刪除功能"
-    })
+router.put("/myGroup/:id", async (req, res) => {
+    const id = req.params.id
+    const sql = `UPDATE groups SET status = 2 WHERE id = ${id} `
+    await pool.execute(sql)
 });
 
 export default router;
