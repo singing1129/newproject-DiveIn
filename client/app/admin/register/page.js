@@ -1,5 +1,5 @@
 "use client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 import styles from "../Login.module.css";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,16 +7,12 @@ import { useRouter } from "next/navigation";
 
 export default function Register() {
   const [checkingAuth, setCheckingAuth] = useState(true);
-  // const [account, setAccount] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { user, register } = useAuth() || {};
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleRegister = async () => {
-    if (loading) return;
-
     if (!email.trim()) {
       alert("請輸入使用者email");
       return;
@@ -26,32 +22,24 @@ export default function Register() {
       return;
     }
 
-    setLoading(true);
-
     try {
       await register(email, password);
-      router.push("/member/login");
+      alert("註冊成功！"); // 註冊成功提示
+      router.push("/admin/login"); // 導向登入頁面
     } catch (error) {
       console.error("註冊錯誤:", error);
-      alert("註冊失敗，請稍後再試");
-    } finally {
-      setLoading(false);
+      // 錯誤訊息已經在 useAuth 的 register 函數中處理
     }
   };
 
-  useEffect(() => {
-    if (!user) {
-      setCheckingAuth(false);
-    }
-  }, [user]);
-
-  if (checkingAuth) {
-    return <div>載入中...</div>;
-  }
   return (
-    <div className={styles.loginPage}>
+    <form className={styles.loginPage}>
       <div className={styles.main}>
-        <img src="/image/DiveIn-logo-dark-final.png" alt="logo" className={styles.logo} />
+        <img
+          src="/image/DiveIn-logo-dark-final.png"
+          alt="logo"
+          className={styles.logo}
+        />
         <div className={styles.line1}></div>
         <div className={styles.sectionLogin}>
           <h3>註冊</h3>
@@ -98,13 +86,13 @@ export default function Register() {
               </div>
             </div>
             <div className={styles.fcBox}>
-              <Link href="/member/login" className={styles.ftext}>
+              <Link href="/login" className={styles.ftext}>
                 我有帳號！
               </Link>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

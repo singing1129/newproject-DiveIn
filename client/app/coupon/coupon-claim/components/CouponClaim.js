@@ -1,14 +1,14 @@
 // pages/CouponClaim.jsx (或對應路徑)
 "use client";
 
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Breadcrumb from "@/components/Breadcrumb/breadcrumb";
 import CouponClaimList from "./CouponClaimList"; // 同層的 CouponClaimList 元件
 import Carousel from "./Carousel/Carousel";
 import "./CouponClaim.css";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 export default function CouponClaim() {
   const { user, token } = useAuth();
@@ -23,7 +23,7 @@ export default function CouponClaim() {
   if (!user) {
     return <div>載入中...</div>;
   }
-  
+
   return (
     <>
       <div>
