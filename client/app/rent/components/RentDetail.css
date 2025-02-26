@@ -161,9 +161,9 @@
   /* font-size: 24px; */
   font-weight: 700;
 }
-/* .main-details .details-titles .product-name-fav {
+.main-details .details-titles .product-name-fav {
   position: relative;
-} */
+}
 
 .main-details .details-titles .product-name-fav .heart-icon {
   font-size: 24;
@@ -180,6 +180,31 @@
 .main-details .details-titles .product-name-fav .heart-icon.filled {
   color: var(--primary-color);
 }
+
+/* 預設的愛心樣式 */
+/* .icon-container .icon i.bi-heart {
+  color: #ccc; 
+  transition: color 0.3s ease;
+} */
+
+/* 收藏時的愛心樣式 */
+/* .icon-container .icon i.bi-heart.favorite {
+  color: #ff4757;
+  transition: transform 0.5s ease;
+} */
+
+/* 心跳動畫 */
+/* @keyframes heartBeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+} */
+
+/* 顯示動畫時，讓愛心放大 */
+/* .icon-container .icon i.bi-heart.favorite.animated {
+  animation: heartBeat 0.5s ease;
+} */
+
 
 .main-details .details-titles .product-name {
   margin: 0;

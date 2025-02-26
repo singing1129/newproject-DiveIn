@@ -23,12 +23,13 @@ const API_BASE_URL = "http://localhost:3005/api";
 
 export default function RentProductDetail() {
   const { id } = useParams(); // 取得動態路由參數
+  const [products, setProducts] = useState(null); // 商品資料
   const [product, setProduct] = useState(null); // 商品資料
   const [quantity, setQuantity] = useState(1); // 租借數量
   const [selectedColor, setSelectedColor] = useState(null); // 選擇的顏色
 
-  const colorNames = product ? product.color_name.split(",") : []; // 如果 product 存在，則拆分顏色名稱
-  const colorRGBs = product ? product.color_rgb.split(",") : []; // 如果 product 存在，則拆分顏色 RGB 值
+  const colorNames = products ? products.color_name.split(",") : []; // 如果 product 存在，則拆分顏色名稱
+  const colorRGBs = products ? products.color_rgb.split(",") : []; // 如果 product 存在，則拆分顏色 RGB 值
 
   const [startDate, setStartDate] = useState(""); // 租借開始日期
   const [endDate, setEndDate] = useState(""); // 租借結束日期
@@ -157,10 +158,19 @@ export default function RentProductDetail() {
     }
   };
 
+  const HeartIcon = ({ isFavorite, onClick }) => {
+    return (
+      <div className="heart-icon" onClick={onClick}>
+        <i className={`bi bi-heart ${isFavorite ? "filled" : ""}`}></i>
+      </div>
+    );
+  };
+
   // 判斷收藏的愛心狀態
   const handleClick = () => {
     const newIsFavorite = isFavorite === 0 ? 1 : 0;
-    setIsFavorite(newIsFavorite);
+   setIsFavorite(newIsFavorite);
+   alert(newIsFavorite ? '收藏成功！' : '收藏取消！');
 
     // 這裡可以加入後端 API 呼叫，更新 is_like 狀態
     // axios.post(`/api/rent-item/${id}/update-favorite`, { isLike: newIsFavorite })
@@ -656,7 +666,6 @@ export default function RentProductDetail() {
     );
     const selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
 
-    
     const cartData = {
       userId: 1, // (寫死)
       type: "rental", // (寫死)
@@ -888,7 +897,7 @@ export default function RentProductDetail() {
                 </p>
                 <div className="product-name-fav d-flex flex-row justify-content-between align-items-center">
                   <p className="product-name">{product.name}</p>
-                  <div className="product-name-fav" onClick={handleClick}>
+                  <div className="product-name-fav">
                     <HeartIcon isFavorite={isFavorite} onClick={handleClick} />
                   </div>
                 </div>
