@@ -44,6 +44,9 @@ export default function GroupDetailPage() {
     setCitySelect(selectOption[countrySelect]);
   }, [countrySelect]);
 
+  // 今天日期，限制活動時間用
+  const now = new Date().toISOString().split("T")[0]
+
   const doUpload = async (e) => {
     try {
       e.preventDefault();
@@ -202,11 +205,9 @@ export default function GroupDetailPage() {
           >
             {citySelect.length > 0 ? (
               citySelect.map((v, i) => (
-                <>
                   <option key={`${v}+${i}`} value={v}>
                     {v}
                   </option>
-                </>
               ))
             ) : (
               <option value="default" disabled>
@@ -220,7 +221,7 @@ export default function GroupDetailPage() {
             <div className="fs-22px">
               活動日期 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="date" name="date" />
+            <input className="form-control" type="date" name="date" min={now} />
           </div>
           <div className="col-12 col-sm-6 d-flex flex-column gap-3">
             <div className="fs-22px">

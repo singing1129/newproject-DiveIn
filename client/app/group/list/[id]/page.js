@@ -66,7 +66,7 @@ export default function GroupDetailPage() {
       const res = await axios.post(api + "/group/join", joinInformation);
       if (res.data.status == "success") {
         alert("成功跟團");
-        window.location = `/member/group`;
+        window.location = `/admin/group`;
       } else {
         alert(res.data.message || "跟團失敗！請稍後再試");
       }
@@ -91,10 +91,10 @@ export default function GroupDetailPage() {
               <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
                 <a
                   href="#"
-                  // onClick={(e) => {
-                  //     e.preventDefault();
-                  //     handleCategoryFilter("面鏡");
-                  // }}
+                // onClick={(e) => {
+                //     e.preventDefault();
+                //     handleCategoryFilter("面鏡");
+                // }}
                 >
                   台灣
                 </a>
@@ -102,12 +102,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       屏東
                     </a>
@@ -115,12 +115,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       台東
                     </a>
@@ -128,12 +128,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       澎湖
                     </a>
@@ -141,12 +141,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       綠島
                     </a>
@@ -154,12 +154,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       蘭嶼
                     </a>
@@ -167,12 +167,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       小琉球
                     </a>
@@ -180,12 +180,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "自由潛水面鏡"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "自由潛水面鏡"
+                    //     );
+                    // }}
                     >
                       其他
                     </a>
@@ -195,10 +195,10 @@ export default function GroupDetailPage() {
               <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
                 <a
                   href="#"
-                  // onClick={(e) => {
-                  //     e.preventDefault();
-                  //     handleCategoryFilter("蛙鞋");
-                  // }}
+                // onClick={(e) => {
+                //     e.preventDefault();
+                //     handleCategoryFilter("蛙鞋");
+                // }}
                 >
                   日本
                 </a>
@@ -206,12 +206,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       沖繩
                     </a>
@@ -219,12 +219,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       石垣島
                     </a>
@@ -232,12 +232,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       其他
                     </a>
@@ -247,10 +247,10 @@ export default function GroupDetailPage() {
               <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
                 <a
                   href="#"
-                  // onClick={(e) => {
-                  //     e.preventDefault();
-                  //     handleCategoryFilter("蛙鞋");
-                  // }}
+                // onClick={(e) => {
+                //     e.preventDefault();
+                //     handleCategoryFilter("蛙鞋");
+                // }}
                 >
                   菲律賓
                 </a>
@@ -258,12 +258,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       長灘島
                     </a>
@@ -271,12 +271,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       宿霧
                     </a>
@@ -284,12 +284,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       薄荷島
                     </a>
@@ -297,12 +297,12 @@ export default function GroupDetailPage() {
                   <li>
                     <a
                       href="#"
-                      // onClick={(e) => {
-                      //     e.preventDefault();
-                      //     handleCategoryFilter(
-                      //         "開放式蛙鞋"
-                      //     );
-                      // }}
+                    // onClick={(e) => {
+                    //     e.preventDefault();
+                    //     handleCategoryFilter(
+                    //         "開放式蛙鞋"
+                    //     );
+                    // }}
                     >
                       其他
                     </a>
@@ -312,10 +312,10 @@ export default function GroupDetailPage() {
               <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
                 <a
                   href="#"
-                  // onClick={(e) => {
-                  //     e.preventDefault();
-                  //     handleCategoryFilter("蛙鞋");
-                  // }}
+                // onClick={(e) => {
+                //     e.preventDefault();
+                //     handleCategoryFilter("蛙鞋");
+                // }}
                 >
                   其他
                 </a>
@@ -452,7 +452,7 @@ export default function GroupDetailPage() {
                         </div> */}
         </div>
       </div>
-      <div className="row">
+      <div className="row m-0 ">
         <div className="col-sm-8 col-12 d-flex flex-column middle-section">
           <div className="img-container">
             <img
@@ -564,45 +564,61 @@ export default function GroupDetailPage() {
               <div>
                 <i className="bi bi-person-check-fill color-primary fs-26px" />
               </div>
-              已揪 0 ／ 剩餘 {group.max_number}
+              已揪 {group.participant_number} / {group.max_number}
             </div>
-            <div className="fw-bold fs-18px">人數</div>
+            
             {/* FIXME: 設定好可選人數限制 */}
-            <div className="input-group count-group">
-              <button
-                className="btn"
-                type="button"
-                id="button-addon1"
-                onClick={() => {
-                  if (count > 0) setCount(count - 1);
-                }}
-              >
-                -
-              </button>
-              <input
-                type="text"
-                className="form-control text-center"
-                value={count}
-                readOnly
-                aria-label="Number input"
-              />
-              <button
-                className="btn"
-                type="button"
-                id="button-addon2"
-                onClick={() => {
-                  if (count < group.max_number) setCount(count + 1);
-                }}
-              >
-                +
-              </button>
-            </div>
+            {(group.max_number - group.participant_number) > 0 ? (
+              <>
+            <div className="fs-20px fw-bold"> 可加人數：{(group.max_number - group.participant_number)} </div>
+              <div className="fw-bold fs-18px">人數</div>
+                <div className="input-group count-group">
+                  <button
+                    className="btn"
+                    type="button"
+                    id="button-addon1"
+                    onClick={() => {
+                      if (count > 0) setCount(count - 1);
+                    }}
+                  >
+                    -
+                  </button>
+                  <input
+                    type="text"
+                    className="form-control text-center"
+                    value={count}
+                    readOnly
+                    aria-label="Number input"
+                  />
+                  <button
+                    className="btn"
+                    type="button"
+                    id="button-addon2"
+                    onClick={() => {
+                      if (count < (group.max_number - group.participant_number)) setCount(count + 1);
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
 
-            <div className="text-center">
-              <button className="btn join-btn fs-20px" onClick={doJoin}>
-                加入跟團
-              </button>
-            </div>
+                <div className="text-center">
+                  {
+                    user.id == group.user_id ? (
+                      <button className="btn edit-btn fs-20px">
+                        修改揪團
+                      </button>
+                    ) : (<button className="btn join-btn fs-20px" onClick={doJoin}>
+                      加入跟團
+                    </button>
+                    )
+                  }
+                </div>
+              </>
+            ) : (
+              <div className="fs-20px fw-bold color-primary">人數已滿！</div>
+            )}
+
           </div>
         </div>
         <div className="col-sm-4 col-12 p-sm-0">
@@ -611,8 +627,8 @@ export default function GroupDetailPage() {
             <div className="m-0">
               {description && description.length > 0
                 ? description.map((v, i) => {
-                    return <p key={i}>{v}</p>;
-                  })
+                  return <p key={i}>{v}</p>;
+                })
                 : "載入中"}
             </div>
           </div>
