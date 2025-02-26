@@ -1,65 +1,83 @@
 import express from "express";
-import multer from "multer";
+import multer from "multer"; // 继续使用 multer
 import fs from "fs";
 import path from "path";
+import Article from "../../article/models/article.js";
 import { v4 as uuidv4 } from "uuid";
 import { pool } from "../../config/mysql.js";
-import { upload } from "../../article/middleware/upload.js";
 import { db } from "../../config/articleDb.js";
 
 const router = express.Router();
 
-// Multer 設定
+// Multer 設定 設定上傳檔案儲存
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = "./public/uploads";
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    cb(null, dir);
+    cb(null, "server/public/uploads/article/"); // 設定正確的儲存路徑
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + uuidv4();
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
 });
 
+// 限制文件格式
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/gif"]);
+  cb(null, allowedTypes.has(file.mimetype));
+};
+
+// 設定 multer 上傳
+const upload = multer({ storage, fileFilter });
+
+// 文章創建 API 路由
 // 文章創建 API 路由
 router.post("/", upload.single("new_coverImage"), async (req, res) => {
   const {
     new_title,
     new_content,
-    new_categorySmall, // 修正字段名稱
-    // new_users_id, // 這個可能需要前端提供
+    new_categorySmall,
     new_tags,
-    new_status = 1, // 預設狀態為已發表
+    new_status = "draft", // 預設狀態為草稿
   } = req.body;
 
   const coverImagePath = req.file ? `/uploads/${req.file.filename}` : null;
-  console.log("🔍 接收到的请求数据:", req.body);
+  const currentDate = new Date(); // 取得當前時間
+
+  // 檢查必要的字段
+  if (!new_title || !new_content || !new_categorySmall || !new_tags) {
+    return res.status(400).json({ message: "所有字段都是必需的！" });
+  }
 
   try {
-    // 檢查必要的字段
-    if (!new_title || !new_content || !new_categorySmall || !new_tags) {
-      return res.status(400).json({ message: "所有字段都是必需的！" });
-    }
-
     // 插入文章資料
     const [articleResult] = await pool.query(
-      "INSERT INTO article (title, content, article_category_small_id, users_id, status, cover_image) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
         new_content,
         new_categorySmall,
-        // new_users_id,
+        // 假設用戶 ID 從 session 或 JWT 提供
+        req.user.id, // 假設你有用 `req.user.id` 取得當前用戶的 ID
         new_status,
-        coverImagePath,
+        currentDate, // created_at
+        new_status === "published" ? currentDate : null, // publish_at, 如果是發表，設為當前時間
+        0, // 預設為 0
+        0, // 預設為 0
+        0, // 預設為 0
       ]
     );
     const articleId = articleResult.insertId;
 
-    // 插入並關聯標籤
-    const tagArray = JSON.parse(new_tags);
+    // 插入封面圖片資料
+    if (coverImagePath) {
+      await pool.query(
+        "INSERT INTO article_image (article_id, name, img_url, is_main) VALUES (?, ?, ?, ?)",
+        [articleId, Date.now(), coverImagePath, 0] // 使用時間戳生成名稱
+      );
+    }
+
+    // 處理標籤
+    const tagArray = JSON.parse(new_tags); // 前端傳送的是 JSON 格式的標籤
     for (let tag of tagArray) {
       const [existingTag] = await pool.query(
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
@@ -93,20 +111,13 @@ router.post("/", upload.single("new_coverImage"), async (req, res) => {
 
 // 處理文章封面圖片上傳
 router.post("/upload-image", upload.single("coverImage"), (req, res) => {
-  uploadArticleImage(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ success: false, message: err.message });
-    }
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "請選擇圖片" });
+  }
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "請選擇圖片" });
-    }
-
-    // 取得圖片存放路徑
-    const imageUrl = `/uploads/article/${req.file.filename}`;
-    console.log("🔍 接收到的请求数据:", req.body); // 打印请求数据
-    res.status(200).json({ success: true, imageUrl });
-  });
+  const imageUrl = `/uploads/article/${req.file.filename}`;
+  console.log("🔍 接收到的请求数据:", req.body); // 打印请求数据
+  res.status(200).json({ success: true, imageUrl });
 });
 
 // 更新文章 API
@@ -133,12 +144,15 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
     }
 
     // 如果沒有新圖片，保留舊的圖片
-    if (!coverImagePath) {
-      const [oldCover] = await pool.query(
-        "SELECT cover_image FROM article WHERE id = ?",
-        [articleId]
-      );
-      coverImagePath = oldCover.length > 0 ? oldCover[0].cover_image : null;
+    async function getCoverImagePath(articleId, coverImagePath) {
+      if (!coverImagePath) {
+        const [oldCover] = await pool.query(
+          "SELECT cover_image FROM article WHERE id = ?",
+          [articleId]
+        );
+        return oldCover.length > 0 ? oldCover[0].cover_image : null;
+      }
+      return coverImagePath;
     }
 
     // 更新文章資料
@@ -162,7 +176,6 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
     // 重新關聯標籤
     const tagArray = JSON.parse(new_tags);
     for (let tag of tagArray) {
-      // 先檢查標籤是否已存在
       const [existingTag] = await pool.query(
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
         [tag]
@@ -195,13 +208,8 @@ router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
 
 // 草稿儲存 API
 router.post("/save-draft", async (req, res) => {
-  const {
-    new_title,
-    new_content,
-    new_article_category_small_id,
-    // new_users_id,
-    new_tags,
-  } = req.body;
+  const { new_title, new_content, new_article_category_small_id, new_tags } =
+    req.body;
   console.log("🔍 接收到的请求数据:", req.body); // 打印请求数据
   try {
     // 檢查必要的字段
@@ -216,7 +224,7 @@ router.post("/save-draft", async (req, res) => {
 
     // 插入草稿資料
     const [draftResult] = await pool.query(
-      'INSERT INTO article (title, content, article_category_small_id, status) VALUES (?, ?, ?, ?, "draft")',
+      'INSERT INTO article (title, content, article_category_small_id, status) VALUES (?, ?, ?, "draft")',
       [new_title, new_content, new_article_category_small_id]
     );
     const draftId = draftResult.insertId;

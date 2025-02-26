@@ -34,8 +34,8 @@ import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態
 // import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
 import couponRouter from "../routes/coupon/index.js";
 import couponClaimRouter from "../routes/coupon/claim.js";
-import memberRouter from "../routes/member/index.js";
-import memberMyGroupRouter from "../routes/member/mygroup.js";
+import memberRouter from "../routes/admin/index.js";
+import memberMyGroupRouter from "../routes/admin/mygroup.js";
 // import shipmentRouter from "../routes/ship/index.js"; // 運送相關路由
 import checkoutRouter from "../routes/checkout/index.js";
 //ecpay
@@ -47,19 +47,29 @@ import orderRouter from "../routes/order/index.js";
 
 // 建立 Express 應用程式
 const app = express();
-// 設定 CORS
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"], // 只允許前端的域名
-    credentials: true,
-  })
-);
+
+
+// 設定允許的跨域來源
+const whiteList = ["http://localhost:3000", "http://localhost:3001"];
+const corsOptions = {
+  credentials: true,
+  origin(origin, callback) {
+    // 允許 postman 和允許的網域
+    if (!origin || whiteList.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("不允許的跨域來源"));
+    }
+  },
+};
+// 應用中間件for admin
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // 中間件
 app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(process.cwd(), "../public")));
+
 // 測試 API
 app.get("/", (req, res) => {
   res.json({ message: "Express server is running" });
@@ -79,20 +89,15 @@ apiRouter.use("/categories", categoriesRouter);
 apiRouter.use("/brands", brandRouter);
 // 訂單相關路由
 apiRouter.use("/checkout", checkoutRouter);
-
 // ecpay
 apiRouter.use("/ecpay", ecpayRouter);
-
 // linepay
 apiRouter.use("/linepay", linepayRouter);
-
 //order
 apiRouter.use("/order", orderRouter);
-
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);
-
 // 揪團相關路由
 apiRouter.use("/group", groupRouter);
 apiRouter.use("/group", groupListRouter);
@@ -122,9 +127,8 @@ apiRouter.use("/coupon", couponRouter); // 負責 `/api/coupon/index`
 apiRouter.use("/coupon", couponClaimRouter); // 負責 `/api/coupon/claim`
 
 // 會員相關路由
-apiRouter.use("/member", memberRouter);
-apiRouter.use("/member", memberMyGroupRouter);
-
+apiRouter.use("/admin", memberRouter);
+apiRouter.use("/admin", memberMyGroupRouter);
 
 // 捕捉 404 錯誤
 app.use((req, res, next) => {
