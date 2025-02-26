@@ -1,0 +1,56 @@
+.header-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.popup-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.popup-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.popup-column {
+  flex: 1;
+}
+
+.popup-column h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.popup-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.popup-column li {
+  margin-bottom: 0.8rem;
+}
+
+.popup-column a {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-size: 1rem;
+  display: block;
+  padding: 0.3rem 0;
+}
+
+.popup-column a:hover {
+  color: #0066cc;
+}

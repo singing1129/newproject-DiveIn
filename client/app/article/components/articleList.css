@@ -1,0 +1,201 @@
+/* article-controls */
+.article-controls {
+  width: 100%;
+  height: 60px;
+  margin-bottom: 20px; /* 添加底部间距 */
+  display: flex;
+  justify-content: space-between; /* 将筛选器和按钮区域分开 */
+  padding: 0 15px 15px 0; /* 添加一些内边距 */
+  background-color: #fff; /* 设置背景颜色 */
+  margin: 0 8px;
+}
+.article-controls-btn {
+  display: flex;
+  justify-content: flex-end; /* 将按钮区域置于右侧 */
+  gap: 10px; /* 按钮之间的间距 */
+}
+
+.article-controls-btn .btn-icon {
+  margin-right: 10px;
+}
+.article-controls-btn .btn {
+  width: 120px;
+  height: 40px;
+  display: inline-block; /* 按鈕為行內區塊元素 */
+  align-items: center; /* 垂直居中对齐内容 */
+  padding: 8px 19px; /* 內邊距 */
+  background-color: #029cad; /* 背景顏色 */
+  color: #fff; /* 文字顏色為白色 */
+  text-align: center; /* 文字置中 */
+  font-size: 14px; /* 字體大小 */
+  border: none; /* 移除邊框 */
+  border-radius: 4px; /* 圓角邊框 */
+  cursor: pointer; /* 設置為點擊樣式 */
+  box-sizing: border-box; /* 讓內邊距和邊框算在內 */
+}
+
+.article-controls-btn .btn:hover {
+  background-color: #02818b; /* 滑鼠懸停時改變背景顏色 */
+  color: #fff; /* 文字顏色為白色 */
+}
+
+/* card */
+.article-list {
+  grid-template-columns: repeat(2, 1fr); /* 设定两列布局，每列占 1fr */
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start; /* 确保内容从上往下排列 */
+  min-height: auto; /* 让容器自动适应高度 */
+  text-align: left; /* 避免 inline-block 触发居中 */
+  padding-bottom: 100px; /* 確保底部有足夠的間距 */
+}
+
+.article-list-card {
+  display: inline-block;
+  width: 48%; /* 让每个卡片占 48%，留一点间距 */
+  margin: 8px 1% 25px 1%; /* 水平间距 */
+  vertical-align: top; /* 避免 inline-block 造成的对齐问题 */
+  height: 300px;
+}
+
+.article-list-card-photo {
+  position: relative;
+  height: 40%;  /* 图片区域占卡片高度的40% */
+  overflow: hidden;  /* 隐藏超出部分 */
+  object-fit: cover;
+  object-position: center;
+}
+
+.article-list-card-text {
+  flex: 3; /* 占据 3 份 */
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px; /* 添加内边距 */
+}
+
+.article-list-card-title {
+  color: rgba(0, 0, 0, 0.8);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.article-list-icon {
+  margin-right: 6px; /* 調整數值來改變距離 */
+  display: inline-flex; /* 保持圖標與文字對齊 */
+  align-items: center;
+  font-size: 15px;
+}
+
+.article-list-card-info {
+  color: #898989;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: normal;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.article-list-card-author,
+.article-list-card-publishtime {
+  margin-right: 10px;
+}
+
+.article-list-card-comment {
+  margin-left: auto; /* 置于右侧 */
+}
+
+.article-list-card-content {
+  color: #898989;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 5px 0;
+  display: -webkit-box; /* 必须使用 -webkit-box */
+  -webkit-line-clamp: 3; /* 限制显示三行 */
+  -webkit-box-orient: vertical; /* 垂直排列 */
+  overflow: hidden; /* 隐藏超出部分 */
+  text-overflow: ellipsis; /* 显示省略号 */
+  white-space: normal; /* 确保文本可以换行 */
+  max-height: calc(3 * 1.7em); /* 根据行高限制最大高度，1.2em 为行高 */
+}
+
+.article-list-card-btn {
+  display: flex;
+  justify-content: flex-end; /* 按钮置右 */
+  padding-right: 10px;
+  padding: 5px 0;
+  margin-top: auto; /* 将按钮区域推到父容器底部 */
+}
+
+.article-list-card-btn .btn {
+  border-radius: 30px; /* 控制边框圆角大小 */
+  color: black;
+  background-color: #ffd500;
+  padding: 4px 33px; /* 上下 5px，高度更扁，左右 30px，宽度更长 */
+  font-size: 16px;
+}
+
+/* Pagination 分页 */
+.custom-pagination {
+  display: flex;
+  justify-content: flex-end; /* 让分页按钮置中 */
+  background-color: white;
+  list-style: none;
+  width: 100%;
+  margin-top: 60px;
+}
+
+.page-item {
+  display: inline-block;
+}
+
+.page-link {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  line-height: 40px;
+  text-decoration: none;
+  color: black;
+  background-color: white;
+  font-size: 16px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.page-item.active .page-link {
+  background-color: #ffd500;
+  color: black;
+}
+
+.page-link:hover {
+  background-color: rgba(255, 213, 0, 0.3);
+}
+
+.page-link:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+/* 翻页器项目 hover 效果 */
+.page-item:hover {
+  background-color: rgba(255, 213, 0, 0.3); /* 黄色透明 */
+}
+
+.page-link:hover {
+  background-color: #ffd500;
+}
+
+.page-item.active .page-link {
+  background-color: #ffd500;
+  color: black;
+}
+
+.page-link:focus {
+  outline: none;
+}

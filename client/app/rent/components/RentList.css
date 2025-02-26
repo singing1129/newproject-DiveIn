@@ -1,0 +1,795 @@
+:root {
+  --primary-color: #219ebc;
+  --primary-deep-color: #023047;
+  --primary-light-color: #8ecae6;
+  --secondary-color: #ffd500;
+  --secondary-deep-color: #ffb703;
+  --secondary-light-color: #f1d691;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-20-color: #f8f9fa;
+  --gray-50-color: #e5e5e5;
+  --gray-100-color: #dedede;
+  --gray-200-color: #e5e5e5;
+  --gray-300-color: #cfcfcf;
+  --gray-400-color: #b2b2b2;
+  --gray-500-color: #a3a3a3;
+  --gray-600-color: #898989;
+  --gray-700-color: #6f6f6f;
+  --gray-800-color: #555555;
+  --gray-900-color: #3b3b3b;
+}
+
+* {
+  font-family: "Noto Sans TC", serif;
+  font-size: 16px;
+}
+
+/* 去除 bs 的 focus ring */
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.bread {
+  margin-bottom: 30px;
+}
+
+.sidebar {
+  padding-right: 15px;
+  gap: 30px;
+}
+
+.sidebar-category {
+  gap: -30px;
+  border-bottom: 1px solid var(--gray-50-color);
+}
+
+.sidebar .sidebar-lists .sidebar-lists-title {
+  padding: 15px;
+  /* background-color: var(--gray-200-color); */
+}
+
+.sidebar .sidebar-lists .sidebar-lists-title.open {
+  background: var(--gray-20-color);
+}
+
+.sidebar .sidebar-lists .sidebar-lists-title h6 {
+  font-weight: 700;
+}
+
+.sidebar .sidebar-lists .sidebar-lists-title h6 {
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar .sidebar-lists .sidebar-lists-title i {
+  margin: 0;
+  padding: 0;
+  transition: transform 0.3s ease;
+}
+
+/* 當下拉選單打開時，旋轉圖標 */
+.sidebar .sidebar-lists .sidebar-lists-title.open i {
+  transform: rotate(180deg);
+}
+
+/* 下拉選單 */
+.sidebar-dropdown {
+  position: relative;
+  background-color: var(--white);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 下拉選單中的每個項目 */
+.sidebar-dropdown-item {
+  position: relative;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--black);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sidebar-dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+}
+
+/* 當項目被選中時的樣式 */
+.sidebar-dropdown-item.selected {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+/* 小分類下拉選單 */
+.small-category-dropdown {
+  display: none; /* 小分類隱藏 */
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background-color: var(--white);
+  border: 1px solid var(--gray-50-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 160px; /* 最小寬度 */
+  z-index: 10; /* 確保小分類選單在最上層 */
+}
+.sidebar-dropdown-item:hover .small-category-dropdown {
+  display: block; /* hover 顯示小分類 */
+}
+
+/* 小分類下拉選單中的每個項目 */
+.small-category-dropdown-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--black);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.small-category-dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+}
+
+.small-category-dropdown-item.selected {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.sidebar .sidebar-lists .product-category-content {
+  padding: 10px 15px;
+}
+
+.sidebar .sidebar-lists .product-category-content ul {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 6px 0px;
+  margin: 0;
+}
+
+.sidebar .sidebar-selectBtn {
+  background-color: var(--white);
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.sidebar .sidebar-selectBtn:hover {
+  background-color: var(--gray-50-color);
+  box-shadow: inset 0 0 0 1px var(--gray-50-color);
+}
+
+.sidebar .sidebar-selectBtn.active {
+  background-color: var(--gray-100-color);
+}
+
+.sidebar .sidebar-selectBtn i,
+.sidebar .sidebar-selectBtn span {
+  font-size: 14px;
+}
+
+.sidebar .product-filter .product-filter-price,
+.sidebar .product-filter .product-filter-brand,
+.sidebar .product-filter .product-filter-color,
+.sidebar .product-filter .product-filter-wetsuit {
+  padding: 15px 15px;
+  border-bottom: 1px solid var(--gray-100-color);
+}
+
+.sidebar .product-filter .filter-subtitle {
+  font-size: 13px;
+  font-weight: 700;
+  padding-bottom: 8px;
+  margin-bottom: 0;
+}
+
+.sidebar .product-filter .filter-subtitle2 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar .product-filter .filter-subtitle2 i {
+  font-size: 10px;
+}
+
+.sidebar .product-filter .product-filter-price .price-input {
+  gap: 10px;
+  padding: 0px 0px 10px 0px;
+}
+
+.sidebar .product-filter .product-filter-price .price-box {
+  width: 100%;
+  gap: 6px;
+}
+
+.sidebar .product-filter .product-filter-price .price-box .min-price,
+.sidebar .product-filter .product-filter-price .price-box .max-price {
+  border: 1px solid var(--gray-100-color);
+  padding: 15px;
+}
+
+.sidebar .product-filter .product-filter-price .currency-symbol {
+  font-weight: 700;
+  color: var(--black);
+}
+
+.sidebar .product-filter .product-filter-price .price-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  height: 17px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--black);
+  text-align: center;
+}
+
+.sidebar .product-filter .product-filter-price .price-box input::placeholder {
+  width: 100%;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-600-color);
+}
+
+/* 覆蓋 rc-slider 的默認樣式 */
+.custom-slider .rc-slider-track {
+  background-color: var(--primary-light-color); /* 滑軌顏色 */
+}
+
+.custom-slider .rc-slider-handle {
+  border-color: var(--primary-color); /* 滑塊邊框顏色 */
+  background-color: var(--primary-color); /* 滑塊背景顏色 */
+}
+
+.custom-slider .rc-slider-dot-active {
+  border-color: var(--primary-color); /* 刻度點顏色 */
+}
+
+.sidebar .product-filter .product-filter-brand .brand-select {
+  gap: 10px;
+  padding-bottom: 7px;
+}
+
+.sidebar .product-filter .product-filter-brand .brand-select .brand {
+  color: var(--gray-600-color);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sidebar .product-filter .product-filter-color .color-options {
+  max-width: 100%;
+  gap: 10px;
+}
+
+.sidebar .product-filter .product-filter-color .color-options .color-circle {
+  width: 25px;
+  height: 25px;
+  border-radius: 100px;
+  cursor: pointer;
+}
+
+/* 圖標旋轉效果 */
+.bi-chevron-down {
+  transition: transform 0.3s ease-in-out; /* 旋轉過渡 */
+}
+
+/* 圖標旋轉效果 */
+.bi-chevron-down.rotate {
+  transform: rotate(180deg); /* 旋轉 180 度 */
+}
+
+/* 顏色選項展開時的樣式 */
+.color-options.expanded {
+  max-height: 1000px; /* 展開後高度更大 */
+  overflow: visible; /* 顯示所有顏色選項 */
+  transition: max-height 0.3s ease-in-out; /* 平滑過渡 */
+}
+
+/* 顏色選項收起時的樣式 */
+.color-options {
+  max-height: 60px; /* 收起時限制高度 */
+  overflow: hidden; /* 隱藏多餘的顏色選項 */
+  transition: max-height 0.3s ease-in-out; /* 平滑過渡 */
+}
+
+.sidebar .product-new .new-product-lists {
+  width: 100%;
+  padding: 15px;
+  gap: 10px;
+}
+
+.sidebar .product-new .new-product-lists .card {
+  width: 100%;
+  border: none;
+}
+.sidebar .product-new .new-product-lists .card:hover {
+  box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar .product-new .new-product-lists .card .new-product {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.sidebar .product-new .new-product-lists .card .new-product .product-img {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.sidebar .product-new .new-product-lists .card .new-product .card-body {
+  flex-grow: 1;
+  min-width: 0;
+  gap: 2px;
+  padding: 0px 0px 0px 10px;
+}
+
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-brand,
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-name,
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-price {
+  margin: 0;
+  color: var(--black);
+}
+
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-brand {
+  color: var(--gray-600-color);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-name {
+  font-size: 14px;
+  white-space: nowrap; /* 防止換行 */
+  overflow: hidden; /* 隱藏溢出部分 */
+  text-overflow: ellipsis; /* 顯示省略號 */
+  width: 100%; /* 確保它有固定的寬度 */
+}
+
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-price {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--black) !important;
+}
+
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-color {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sidebar
+  .product-new
+  .new-product-lists
+  .card
+  .new-product
+  .card-body
+  .product-color
+  .color-box {
+  width: 13px;
+  height: 13px;
+  border: 0.5px solid var(--gray-200-color);
+  border-radius: 50%;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
+}
+
+.sidebar .product-new .pagination.page-link {
+  border: none;
+  color: var(--black);
+}
+
+.sidebar .product-sale .sale-product-lists {
+  padding: 15px;
+  gap: 10px;
+}
+
+.sidebar .product-sale .sale-product-lists .card {
+  border: none;
+}
+.sidebar .product-sale .sale-product-lists .card:hover {
+  box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar .product-sale .sale-product-lists .card .sale-product {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.sidebar .product-sale .sale-product-lists .card .sale-product .product-img {
+  /* width: 90px; */
+  flex-shrink: 0;
+}
+
+.sidebar .product-sale .sale-product-lists .card .sale-product .card-body {
+  flex-grow: 1;
+  min-width: 0;
+  gap: 2px;
+  padding: 0px 0px 0px 10px;
+}
+
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-brand,
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-name,
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-price,
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-price2 {
+  margin: 0;
+  color: var(--black);
+}
+
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-brand {
+  color: var(--gray-600-color);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-name {
+  font-size: 14px;
+  white-space: nowrap; /* 防止換行 */
+  overflow: hidden; /* 隱藏溢出部分 */
+  text-overflow: ellipsis; /* 顯示省略號 */
+  width: 100%; /* 確保它有固定的寬度 */
+}
+
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-price,
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-price2 {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-color {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sidebar
+  .product-sale
+  .sale-product-lists
+  .card
+  .sale-product
+  .card-body
+  .product-color
+  .color-box {
+  width: 13px;
+  height: 13px;
+  border: 0.5px solid var(--gray-200-color);
+  border-radius: 50%;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
+}
+
+.sidebar .product-sale .pagination.page-link {
+  border: none;
+  color: var(--black);
+}
+
+.main {
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+.main .main-top,
+.main .main-describe {
+  margin-bottom: 10px;
+}
+
+.main .main-describe {
+  color: var(--gray-600-color);
+}
+
+.main .main-img {
+  /* height: 188px; */
+  object-fit: cover;
+}
+
+/* 清除大小分類的叉叉 */
+.clear-category-icon {
+  color: #888;
+  font-size: 14px;
+  margin-left: 5px;
+}
+
+.clear-category-icon:hover {
+  color: #333;
+}
+
+.main .main-select .show-per-page-btn,
+.main .main-select .select-order-btn {
+  border: 0.5px solid var(--gray-200-color);
+  /* border-radius: 30px; */
+  transition: background-color 0.3s ease;
+}
+.main .main-select .show-per-page-btn:hover,
+.main .main-select .select-order-btn:hover {
+  background-color: var(--primary-light-color);
+}
+
+.main .main-select .show-per-page-btn .showPerPageText,
+.main .main-select .select-order-btn .selectOrderText {
+  font-size: 15px;
+  color: var(--gray-600-color);
+  transition: color 0.3s ease;
+}
+.main .main-select .show-per-page-btn .showPerPageText:hover,
+.main .main-select .select-order-btn .selectOrderText:hover {
+  color: var(--black);
+}
+
+.main .main-select .show-per-page-btn .showPerPageText .bi-caret-down-fill,
+.main .main-select .select-order-btn .selectOrderText .bi-caret-down-fill {
+  font-size: 10px;
+}
+
+.clear-sort-icon {
+  font-size: 16px;
+  color: var(--gray-600-color);
+  padding: 0 4px; /* 調整內邊距 */
+}
+
+.clear-sort-icon:hover {
+  color: var(--primary-color);
+}
+
+.main .product-lists .card {
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease-in-out;
+  /* padding: 10px; */
+}
+
+.main .product-lists .card:hover {
+  /* border: 1px solid var(--gray-50-color); */
+  box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.08);
+  transform: scale(1.05);
+}
+
+.main .product-lists .card .img-container {
+  /* padding: 10px; */
+  width: 100%;
+  aspect-ratio: 1 / 1; /* 確保所有圖片為正方形 */
+  position: relative;
+  overflow: hidden; /* 隱藏超出部分 */
+}
+.main .product-lists .card .img-container::after {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.4));
+  filter: blur(2px); /* 模糊效果 */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.main .product-lists .card:hover .img-container::after {
+  opacity: 1;
+}
+
+
+.main .product-lists .card .card-body .product-brand,
+.main .product-lists .card .card-body .product-name,
+.main .product-lists .card .card-body .product-price,
+.main .product-lists .card .card-body .product-price2 {
+  margin: 0 0 5px 0;
+}
+
+.main .product-lists .card .card-body .product-brand {
+  color: var(--gray-600-color);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.main .product-lists .card .card-body .product-name {
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-align: center;
+  height: 40px; /* 固定高度 */
+  line-height: 15px; /* 控制最多兩行 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 顯示最多兩行 */
+  -webkit-box-orient: vertical;
+  overflow: hidden; /* 超出部分隱藏 */
+  text-overflow: ellipsis; /* 超出部分顯示省略號 */
+  line-clamp: 2;
+}
+
+.main .product-lists .card .card-body .product-price,
+.main .product-lists .card .card-body .product-price2 {
+  display: inline-block;
+}
+
+.main .product-lists .card .card-body .product-color {
+  gap: 6px;
+  height: 20px;
+}
+
+.main .product-lists .card .card-body .product-color .color-box {
+  width: 15px;
+  height: 15px;
+  border: 0.5px solid var(--gray-200-color);
+  border-radius: 50%;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
+}
+
+.main .product-lists .card .card-body .icon-container {
+  position: absolute;
+  bottom: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 15px;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.main .product-lists .card .card-body .icon-container .icon {
+  text-align: center;
+  background-color: var(--white);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.main .product-lists .card .card-body .icon-container .icon i {
+  text-align: center;
+  font-size: 16px;
+  color: var(--black);
+}
+
+.main .product-lists .card:hover .icon-container {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.main .product-lists .card:hover .icon-container .icon:hover {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.main .product-lists .card:hover .icon-container .icon i:hover {
+  color: var(--white);
+}
+
+.main .pagination .page-link {
+  width: 35px;
+  height: 35px;
+  border: none;
+  border-radius: 0;
+  color: var(--black);
+  font-weight: 400;
+}
+.main .pagination .page-link a {
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.main .pagination .page-link i {
+  font-size: 12px;
+}
+
+.main .pagination .active .page-link {
+  background-color: var(--secondary-color);
+  font-weight: bold;
+}
+
+.main .pagination .page-link:hover {
+  background-color: var(--primary-light-color);
+}
+
+.main .pagination .ellipsis {
+  cursor: default; /* 禁用滑鼠指針 */
+  background-color: transparent;
+}
+
+.dropdown .dropdown-item:hover {
+  background-color: var(--primary-light-color);
+  color: var(--white);
+}
+
+.dropdown .dropdown-item:active {
+  background-color: var(--primary-color);
+  color: var(--white);
+}

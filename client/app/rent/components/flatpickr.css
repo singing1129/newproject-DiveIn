@@ -1,0 +1,167 @@
+/* flatpickr自訂樣式修改 */
+
+/* 通用樣式 */
+.booking-date .booking-title {
+  margin: 0;
+  color: var(--gray-600-color);
+  font-weight: 700;
+}
+
+.booking-date .calendar-detail .flatpickr-input {
+  display: none;
+}
+
+.booking-date .calendar-detail .flatpickr-calendar {
+  width: 100%;
+  max-width: 100%;
+  background-color: var(--white);
+  border: 0.5px solid var(--gray-100-color);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.booking-date .calendar-detail .dayContainer {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+/* 月份樣式 */
+.booking-date .calendar-detail .flatpickr-month {
+  height: auto;
+  min-height: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  background: var(--primary-color);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+}
+
+.booking-date .calendar-detail .flatpickr-current-month {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.booking-date .calendar-detail .flatpickr-monthDropdown-months {
+  font-size: 16px;
+  font-weight: 700;
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.booking-date .calendar-detail .flatpickr-current-month .flatpickr-monthDropdown-months {
+  appearance: none; /* 移除預設樣式 */
+  background-image: none; /* 移除預設箭頭 */
+}
+
+.booking-date .calendar-detail .flatpickr-current-month .flatpickr-monthDropdown-months,
+.booking-date .calendar-detail .flatpickr-current-month .numInputWrapper {
+  margin: 0;
+}
+
+.booking-date .calendar-detail .flatpickr-current-month .numInputWrapper {
+  display: inline-flex; /* 讓年份輸入框與月份選擇器對齊 */
+  align-items: center; /* 垂直置中 */
+}
+
+.booking-date .calendar-detail .flatpickr-current-month input {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* 修改前後月箭頭顏色 */
+.booking-date .calendar-detail.flatpickr-prev-month svg,
+.booking-date .calendar-detail .flatpickr-next-month svg {
+  fill: var(--white);
+}
+
+/* 週次樣式 */
+.booking-date .calendar-detail .flatpickr-weekdays {
+  width: 100%;
+  background-color: var(--primary-light-color);
+  display: flex;
+}
+
+.booking-date .calendar-detail .flatpickr-weekday {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--black);
+  flex: 1;
+  text-align: center;
+}
+
+.booking-date .calendar-detail .flatpickr-day.today {
+  border-radius: 0;
+  border: 0.5px solid var(--primary-light-color);
+}
+
+.booking-date .calendar-detail .flatpickr-day.selected,
+.booking-date .calendar-detail .flatpickr-day.inRange,
+.booking-date .calendar-detail .flatpickr-day.startRange,
+.booking-date .calendar-detail .flatpickr-day.endRange {
+  border-radius: 0;
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+}
+
+.booking-date .calendar-detail .flatpickr-days {
+  width: 100%;
+}
+
+.booking-date .calendar-detail .flatpickr-day {
+  margin: 0;
+  width: calc(100% / 7); /* 7 天均分寬度 */
+  max-width: calc(100% / 7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 讓選取範圍內的日期緊貼在一起 */
+.booking-date .calendar-detail .flatpickr-day.inRange {
+  box-shadow: -5px 0 0 var(--primary-color), 5px 0 0 var(--primary-color);
+}
+
+.booking-date .calendar-detail .flatpickr-day.selected:hover {
+  border-radius: 0;
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+/* 改變 hover 時日期的背景 */
+.booking-date .calendar-detail .flatpickr-day:hover {
+  background: var(--primary-light-color);
+  border-radius: 0;
+  color: var(--white);
+}
+
+/* 選定日期範圍的樣式 */
+.calendar-detail .selected-date-range {
+  gap: 10px;
+  margin-top: 20px;
+  background-color: rgba(142, 202, 230, 0.5);
+}
+
+.calendar-detail .selected-date-range #date-range-text {
+  margin: 0;
+  color: var(--black);
+  font-weight: 400;
+}
+
+.calendar-detail .selected-date-range #total-cost-text {
+  margin: 0;
+  color: var(--black);
+  font-weight: 400;
+  display: none; /* 預設隱藏 */
+}
