@@ -13,13 +13,14 @@ class MyUploadAdapter {
         new Promise((resolve, reject) => {
           const formData = new FormData();
           formData.append("articleImage", file);
-          fetch("/api/upload", {
+          fetch("http://localhost:3005/api/upload", {
+            // 確保路徑正確
             method: "POST",
             body: formData,
           })
             .then((response) => response.json())
             .then((result) => {
-              resolve({ default: result.url });
+              resolve({ default: result.url }); // CKEditor 需要的返回格式
             })
             .catch(reject);
         })
@@ -45,7 +46,6 @@ const Myeditor = ({ onChange, name, value }) => {
     };
   }, []);
 
-  
   return (
     <>
       {CKEditor && ClassicEditor ? ( // 確保 CKEditor 和 ClassicEditor 都已經加載完成

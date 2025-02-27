@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 // Multer 設定
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "public", "uploads", "article");
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "article");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -85,8 +85,8 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
     // 插入封面圖片資料
     if (coverImagePath) {
       await db.query(
-        "INSERT INTO article_image (article_id, name, img_url, is_main) VALUES (?, ?, ?, ?)",
-        [articleId, Date.now(), coverImagePath, 0]
+        "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
+        [articleId, coverImagePath, 0]
       );
     }
 
@@ -109,7 +109,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
 
     for (let tag of tagArray) {
       // 檢查標籤是否已存在
-      const { results: existingTag } = await db.query(
+      const [existingTag] = await db.query(
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
         [tag]
       );
@@ -148,14 +148,55 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
 });
 
 // 處理文章封面圖片上傳
-router.post("/upload-image", upload.single("coverImage"), (req, res) => {
+router.post("/upload-image", upload.single("coverImage"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: "請選擇圖片" });
   }
 
   const imageUrl = `/uploads/article/${req.file.filename}`;
-  console.log("🔍 接收到的请求数据:", req.body); // 打印请求数据
-  res.status(200).json({ success: true, imageUrl });
+
+  try {
+    // 將圖片信息存儲到 article_image 資料表
+    const { results } = await db.query(
+      "INSERT INTO article_image (img_url, is_main) VALUES (?, ?)",
+      [imageUrl, 1] // is_main 設為 1
+    );
+
+    res.status(200).json({
+      success: true,
+      imageUrl,
+      imageId: results.insertId, // 可選：返回圖片的 ID
+    });
+  } catch (error) {
+    console.error("❌ 封面圖片上傳失敗：", error);
+    res.status(500).json({ success: false, message: "封面圖片上傳失敗" });
+  }
+});
+
+// 新增 CKEditor 圖片上傳路由
+router.post("/upload", upload.single("articleImage"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: "請選擇圖片" });
+  }
+
+  const imageUrl = `/uploads/article/${req.file.filename}`;
+
+  try {
+    // 將圖片信息存儲到 article_image 資料表
+    const { results } = await db.query(
+      "INSERT INTO article_image (img_url, is_main) VALUES (?, ?)",
+      [imageUrl, 0] // is_main 設為 0
+    );
+
+    res.status(200).json({
+      success: true,
+      url: imageUrl, // CKEditor 需要的返回格式
+      imageId: results.insertId, // 可選：返回圖片的 ID
+    });
+  } catch (error) {
+    console.error("❌ 圖片上傳失敗：", error);
+    res.status(500).json({ success: false, message: "圖片上傳失敗" });
+  }
 });
 
 // 更新文章 API

@@ -70,6 +70,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logger("dev"));
 app.use(express.static(path.join(process.cwd(), "../public")));
 
+// 提供 uploads 目錄下的靜態文件服務
+app.use("/uploads/article", express.static(path.join(process.cwd(), "public", "uploads")));
+
 // 測試 API
 app.get("/", (req, res) => {
   res.json({ message: "Express server is running" });
