@@ -1465,6 +1465,18 @@ export default function RentList() {
                 </div>
               </div>
 
+              {/* 2. 篩選條件區塊 */}
+              <div className="d-flex flex-column sidebar-lists product-search">
+                  <form className="d-flex flex-row align-items-center search-box" action="">
+                    <input
+                      type="search"
+                      className="form-control"
+                      placeholder="Search"
+                    />
+                    <i className="bi bi-search"></i>
+                  </form>
+              </div>
+
               {/* 篩選按鈕 */}
 
               {/* 2. 篩選條件區塊 */}

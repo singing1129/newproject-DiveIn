@@ -74,6 +74,37 @@
   transform: rotate(180deg);
 }
 
+/* 側欄搜索 */
+.search-box {
+  width: 100%;
+  max-width: 300px;
+  position: relative; /* 新增這行，確保內部的 .search-box i 可以正確定位 */
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 35px 10px 10px; /* 增加右側內距，避免圖示重疊輸入內容 */
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--primary-color);
+}
+
+.search-box i {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+
+
 /* 下拉選單 */
 .sidebar-dropdown {
   position: relative;
