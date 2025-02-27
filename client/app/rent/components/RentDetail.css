@@ -161,23 +161,27 @@
   /* font-size: 24px; */
   font-weight: 700;
 }
-/* .main-details .details-titles .product-name-fav {
+.main-details .details-titles .product-name-fav {
   position: relative;
-} */
+}
 
 .main-details .details-titles .product-name-fav .heart-icon {
-  font-size: 24;
+  font-size: 28;
   color: var(--black);
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 /* hover的時候的效果 */
-.main-details .details-titles .product-name-fav .heart-icon:hover {
+/* .main-details .details-titles .product-name-fav .heart-icon .bi:hover {
+  color: var(--secondary-color);
+} */
+ 
+/* fill的時候的效果 */
+.main-details .details-titles .product-name-fav .heart-icon .bi {
   color: var(--primary-color);
 }
-/* fill的時候的效果 */
-.main-details .details-titles .product-name-fav .heart-icon.filled {
+.heart-icon.filled .bi {
   color: var(--primary-color);
 }
 
@@ -251,24 +255,27 @@
 .main-details .details-select .product-color .colors .color-box {
   width: 30px;
   height: 30px;
-  border-radius: 100px;
+  border-radius: 50%;
   display: inline-block;
   margin-right: 8px;
   filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
-  cursor: pointer; 
+  cursor: pointer;
   transition: all 0.3s ease;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.1));
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(0, 0, 0, 0.1)
+  );
 }
 .main-details .details-select .product-color .colors .color-box:hover {
   transform: scale(1.1); /* 放大 */
   border-color: var(--black); /* 邊框變深 */
-  box-shadow: 0 0 10px rgba(200, 200, 200, 0.1) /* 陰影 */
+  box-shadow: 0 0 10px rgba(200, 200, 200, 0.1); /* 陰影 */
 }
 .main-details .details-select .product-color .colors .color-box.selected {
   border: 1.5px solid var(--black); /* 更粗的邊框 */
   box-shadow: 0 0 15px rgba(200, 200, 200, 0.7); /* 更明顯的陰影 */
 }
-
 
 .main-details .details-select .product-color .colors .color-box:active {
   transform: scale(0.9);
@@ -584,7 +591,10 @@
   text-align: center;
   font-size: 16px;
   color: var(--black);
+  transition: color 0.3s ease;
 }
+
+/* Hover 效果 */
 
 .you-may-likes .you-may-like-products .card:hover .icon-container {
   opacity: 1;
@@ -593,10 +603,34 @@
 }
 
 .you-may-likes .you-may-like-products .card:hover .icon-container .icon:hover {
-  background-color: var(--primary-color);
-  color: var(--white);
+  background-color: var(--primary-color); /* hover 時背景變為 primary */
 }
 
-.you-may-likes .you-may-like-products.card:hover .icon-container .icon i:hover {
-  color: var(--white);
+.you-may-likes
+  .you-may-like-products
+  .card:hover
+  .icon-container
+  .icon:hover
+  i {
+  color: var(--white); /* hover 時圖標變為白色 */
+}
+
+/* 收藏狀態下的樣式 */
+.you-may-likes
+  .you-may-like-products
+  .card
+  .card-body
+  .icon-container
+  .icon.favorite {
+  background-color: var(--primary-color); /* 收藏狀態下背景變為 primary */
+}
+
+.you-may-likes
+  .you-may-like-products
+  .card
+  .card-body
+  .icon-container
+  .icon.favorite
+  i {
+  color: var(--white); /* 收藏狀態下圖標變為白色 */
 }
