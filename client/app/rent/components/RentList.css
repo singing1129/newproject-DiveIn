@@ -103,8 +103,6 @@
   cursor: pointer;
 }
 
-
-
 /* 下拉選單 */
 .sidebar-dropdown {
   position: relative;
@@ -787,44 +785,75 @@
   filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
 }
 
-.main .product-lists .card .card-body .icon-container {
+/* 保護 bootstrap modal */
+#rentDetailModal.modal {
+  z-index: 1050 !important; /* 固定層級 */
+}
+
+.modal-backdrop {
+  z-index: 1040 !important; /* 固定背景層級 */
+}
+
+.hover-action-container {
   position: absolute;
-  bottom: 35%;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  gap: 15px;
+  display: flex;
   opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
 }
 
-.main .product-lists .card .card-body .icon-container .icon {
-  text-align: center;
-  background-color: var(--white);
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+.icon-group{
+  display: flex;
+  gap: 15px;
 }
 
-.main .product-lists .card .card-body .icon-container .icon i {
-  text-align: center;
-  font-size: 16px;
-  color: var(--black);
-}
-
-.main .product-lists .card:hover .icon-container {
+/* 卡片懸浮狀態 */
+.card:hover .hover-action-container {
   opacity: 1;
-  transform: translate(-50%, -50%);
+  
+}
+/* 按鈕通用樣式 */
+.hover-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.main .product-lists .card:hover .icon-container .icon:hover {
-  background-color: var(--primary-color);
+.hover-action-btn i {
+  color: var(--black);
+  transition: color 0.2s ease;
+}
+
+/* 懸浮互動效果 */
+.hover-action-btn:hover {
+  background: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.hover-action-btn:hover i {
   color: var(--white);
 }
 
-.main .product-lists .card:hover .icon-container .icon i:hover {
+/* 已收藏狀態 */
+.hover-action-btn.favorited {
+  background: var(--primary-color);
+}
+
+.hover-action-btn.favorited i {
   color: var(--white);
 }
+
+
 
 .main .pagination .page-link {
   width: 35px;
@@ -866,4 +895,21 @@
 .dropdown .dropdown-item:active {
   background-color: var(--primary-color);
   color: var(--white);
+}
+
+/* 保護 bootstrap modal */
+#rentDetailModal.modal {
+  z-index: 1050 !important; /* 固定層級 */
+}
+
+.modal-backdrop {
+  z-index: 1040 !important; /* 固定背景層級 */
+}
+/* 在全局 CSS 添加 */
+#rentDetailModal.modal .modal-dialog {
+  max-width: 800px !important; /* 保持你的商品詳情 modal 原始寬度 */
+}
+
+#rentDetailModal.modal .modal-content {
+  width: auto !important; /* 重置寬度設定 */
 }

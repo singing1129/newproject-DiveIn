@@ -1064,95 +1064,110 @@ export default function RentProductDetail() {
               key={product.id}
               className="col-12 col-sm-6 col-md-4 col-lg-3 you-may-like-product mb-4"
             >
-              <Link
-                href={`/rent/${product.id}`}
-                passHref
-                style={{
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  color: "none",
-                }}
-                onClick={(e) => {
-                  if (e.defaultPrevented) return; // 如果事件已被阻止，就不執行跳轉
-                }}
-              >
-                <div className="card border-0 h-100">
-                  <div className="d-flex justify-content-center align-items-center img-container">
-                    <Image
-                      src={product.img_url || "/image/rent/no-img.png"}
-                      className="product-img"
-                      alt={product.name}
-                      layout="intrinsic"
-                      width={248}
-                      height={248}
-                      objectFit="contain"
-                      priority
-                      unoptimized
-                    />
-                  </div>
-                  <div className="d-flex flex-column justify-content-start align-items-center card-body">
-                    <p className="product-brand">{product.brand}</p>
-                    <p className="product-name text-center">{product.name}</p>
-
-                    <div
-                      className={`price-container d-flex gap-3 ${
-                        product.price2 ? "has-discount" : ""
-                      }`}
-                    >
-                      <h6 className="product-price">NT$ {product.price} 元</h6>
-                      {product.price2 && (
-                        <h6 className="product-price2">
-                          NT$ {product.price2} 元
-                        </h6>
-                      )}
-                    </div>
-                    <div className="d-flex flex-row justify-content-center align-items-center product-color">
-                      {product.color_rgb && product.color_rgb !== "無顏色" ? (
-                        // 先將顏色陣列分割出來
-                        product.color_rgb
-                          .split(",")
-                          .slice(0, 3)
-                          .map((color, index) => (
-                            <span
-                              key={index}
-                              className="color-box"
-                              style={{ backgroundColor: color.trim() }}
-                            ></span>
-                          ))
-                      ) : (
-                        <span
-                          className="color-box"
-                          style={{
-                            backgroundColor: "transparent",
-                            border: "none",
+              <div className="card-container position-relative">
+                <Link
+                  href={`/rent/${product.id}`}
+                  passHref
+                  style={{
+                    cursor: "pointer",
+                    textDecoration: "none",
+                    color: "none",
+                  }}
+                  onClick={(e) => {
+                    if (e.defaultPrevented) return; // 如果事件已被阻止，就不執行跳轉
+                  }}
+                >
+                  <div className="card border-0 h-100">
+                    <div className="d-flex justify-content-center align-items-center img-container">
+                      <Image
+                        src={product.img_url || "/image/rent/no-img.png"}
+                        className="product-img"
+                        alt={product.name}
+                        layout="intrinsic"
+                        width={248}
+                        height={248}
+                        objectFit="contain"
+                        priority
+                        unoptimized
+                      />
+                      <div className="favorite-button-wrapper">
+                        <FavoriteButton
+                          userId={userId}
+                          rentalId={product.id}
+                          isCircle={true}
+                          className="circle-style"
+                          onFavoriteChange={(newStatus) => {
+                            console.log(`${product.name} 收藏狀態:`, newStatus);
+                            // 這裡可以加入更新推薦列表的邏輯
                           }}
-                        ></span>
-                      )}
+                        />
+                      </div>
+                    </div>
+                    <div className="d-flex flex-column justify-content-start align-items-center card-body">
+                      <p className="product-brand">{product.brand}</p>
+                      <p className="product-name text-center">{product.name}</p>
 
-                      {/* 若顏色數量超過3，顯示 '...' */}
-                      {product.color_rgb &&
-                        product.color_rgb !== "無顏色" &&
-                        product.color_rgb.split(",").length > 3 && (
+                      <div
+                        className={`price-container d-flex gap-3 ${
+                          product.price2 ? "has-discount" : ""
+                        }`}
+                      >
+                        <h6 className="product-price">
+                          NT$ {product.price} 元
+                        </h6>
+                        {product.price2 && (
+                          <h6 className="product-price2">
+                            NT$ {product.price2} 元
+                          </h6>
+                        )}
+                      </div>
+                      <div className="d-flex flex-row justify-content-center align-items-center product-color">
+                        {product.color_rgb && product.color_rgb !== "無顏色" ? (
+                          // 先將顏色陣列分割出來
+                          product.color_rgb
+                            .split(",")
+                            .slice(0, 3)
+                            .map((color, index) => (
+                              <span
+                                key={index}
+                                className="color-box"
+                                style={{ backgroundColor: color.trim() }}
+                              ></span>
+                            ))
+                        ) : (
                           <span
                             className="color-box"
                             style={{
                               backgroundColor: "transparent",
                               border: "none",
-                              textAlign: "center",
-                              lineHeight: "7.5px",
                             }}
-                          >
-                            ...
-                          </span>
+                          ></span>
                         )}
-                    </div>
 
-                    {/* hover出現收藏 & 加入購物車 */}
-                    <div className="icon-container d-flex flex-row">
+                        {/* 若顏色數量超過3，顯示 '...' */}
+                        {product.color_rgb &&
+                          product.color_rgb !== "無顏色" &&
+                          product.color_rgb.split(",").length > 3 && (
+                            <span
+                              className="color-box"
+                              style={{
+                                backgroundColor: "transparent",
+                                border: "none",
+                                textAlign: "center",
+                                lineHeight: "7.5px",
+                              }}
+                            >
+                              ...
+                            </span>
+                          )}
+                      </div>
+
+                      {/* hover出現收藏 & 加入購物車 */}
+                      {/* <div className="icon-container d-flex flex-row"> */}
                       {/* 收藏按鈕 */}
-                      <div className="icon d-flex justify-content-center align-items-center">
-                        {/* 使用 FavoriteButton 元件，傳入必要的 props */}
-                        {product && (
+                      {/* <div className="icon d-flex justify-content-center align-items-center"> */}
+                      {/* 使用 FavoriteButton 元件，傳入必要的 props */}
+                      {/* {product && (
                           <FavoriteButton
                             userId={userId} // 用戶 ID
                             rentalId={product.id} // 商品的 rentalId
@@ -1166,10 +1181,11 @@ export default function RentProductDetail() {
                           />
                         )}
                       </div>
+                    </div> */}
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             </div>
           ))}
         </div>

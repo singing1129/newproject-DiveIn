@@ -1467,14 +1467,17 @@ export default function RentList() {
 
               {/* 2. 篩選條件區塊 */}
               <div className="d-flex flex-column sidebar-lists product-search">
-                  <form className="d-flex flex-row align-items-center search-box" action="">
-                    <input
-                      type="search"
-                      className="form-control"
-                      placeholder="Search"
-                    />
-                    <i className="bi bi-search"></i>
-                  </form>
+                <form
+                  className="d-flex flex-row align-items-center search-box"
+                  action=""
+                >
+                  <input
+                    type="search"
+                    className="form-control"
+                    placeholder="Search"
+                  />
+                  <i className="bi bi-search"></i>
+                </form>
               </div>
 
               {/* 篩選按鈕 */}
@@ -2232,6 +2235,38 @@ export default function RentList() {
                             priority
                             unoptimized
                           />
+                           {/* hover懸浮按鈕容器 */}
+                           <div className="hover-action-container">
+                            <div className="icon-group">
+                              {/* 收藏按鈕 */}
+                              <div className="icon-wrapper">
+                                <FavoriteButton
+                                  userId={userId}
+                                  rentalId={product.id}
+                                  isCircle
+                                  className="hover-action-btn"
+                                  onFavoriteChange={(newStatus) => {
+                                    console.log(
+                                      `${product.name} 收藏狀態:`,
+                                      newStatus
+                                    );
+                                  }}
+                                />
+                              </div>
+
+                              {/* 購物車按鈕 */}
+                              <div
+                                className="hover-action-btn"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleIconClick(product, e);
+                                }}
+                              >
+                                <i className="bi bi-cart"></i>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <div className="py-2 px-0 d-flex flex-column justify-content-start align-items-center card-body">
                           <p className="product-brand">
@@ -2273,31 +2308,8 @@ export default function RentList() {
                               ></span>
                             )}
                           </div>
-                          {/* 右上角hover */}
-                          <div className="icon-container d-flex flex-row justify-content-center align-items-center">
-                            <div className="icon d-flex justify-content-center align-items-center">
-                              {/* 使用 FavoriteButton 元件，傳入必要的 props */}
-                              {product && (
-                                <FavoriteButton
-                                  userId={userId} // 用戶 ID
-                                  rentalId={product.id} // 商品的 rentalId
-                                  className="icon d-flex justify-content-center align-items-center"
-                                  onFavoriteChange={(newFavoriteStatus) => {
-                                    console.log(
-                                      `${product.name} 收藏狀態改變為:`,
-                                      newFavoriteStatus
-                                    );
-                                  }}
-                                />
-                              )}
-                            </div>
-                            <div
-                              className="icon d-flex justify-content-center align-items-center"
-                              onClick={(e) => handleIconClick(product, e)}
-                            >
-                              <i className="bi bi-cart"></i>
-                            </div>
-                          </div>
+                         
+                         
                         </div>
                       </div>
                       {/* </Link> */}
