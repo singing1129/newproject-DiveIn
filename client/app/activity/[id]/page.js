@@ -647,8 +647,8 @@ export default function Home() {
                               <Calendar
                                 onChange={doSelectedDate}
                                 minDate={
-                                  new Date(v.earliestDate) > new Date()
-                                    ? new Date(v.earliestDate)
+                                  new Date(v.earliest_date) > new Date()
+                                    ? new Date(v.earliest_date)
                                     : new Date(tomorrow)
                                 }
                                 maxDate={new Date(v.date)}
