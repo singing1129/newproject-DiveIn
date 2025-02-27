@@ -28,8 +28,8 @@ export default function RentProductDetail() {
   const [quantity, setQuantity] = useState(1); // 租借數量
   const [selectedColor, setSelectedColor] = useState(null); // 選擇的顏色
 
-  const colorNames = products ? products.color_name.split(",") : []; // 如果 product 存在，則拆分顏色名稱
-  const colorRGBs = products ? products.color_rgb.split(",") : []; // 如果 product 存在，則拆分顏色 RGB 值
+  const colorNames = product && product.color_name ? product.color_name.split(",") : [];
+const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : [];
 
   const [startDate, setStartDate] = useState(""); // 租借開始日期
   const [endDate, setEndDate] = useState(""); // 租借結束日期
