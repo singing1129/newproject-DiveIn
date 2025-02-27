@@ -41,7 +41,7 @@
 
 .main-details .main-image {
   width: 100%;
-  aspect-ratio: 1; /* 保持正方形比例（高與寬相等） */
+  aspect-ratio: 1/1; /* 保持正方形比例（高與寬相等） */
   overflow: hidden; /* 隱藏超出部分 */
 }
 .main-details .main-image Image {
@@ -59,19 +59,43 @@
   cursor: pointer;
   overflow: hidden;
 }
+
+/* 小圖容器設定 */
 .main-details .small-images > div {
   position: relative;
+  flex: 0 0 23%; /* 不放大/不縮小 + 基礎寬度 */
+  aspect-ratio: 1/1; /* 強制正方形比例 */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* 防止圖片縮小 */
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+/* 行動裝置適配 */
+@media (max-width: 768px) {
+  .main-details .small-images > div {
+    flex-basis: 30%; /* 手機上顯示更大些 */
+  }
 }
 
+/* 圖片填充設定 */
 .main-details .small-images Image {
+  position: absolute;
   width: 100%;
   max-width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* 保持比例覆蓋容器 */
+  transition: transform 0.3s ease;
+}
+
+/* 懸浮互動效果 */
+.main-details .small-images > div:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-3px);
+}
+
+.main-details .small-images > div:hover Image {
+  transform: scale(1.05);
 }
 
 /* 設置空白元素的樣式 */
@@ -349,20 +373,48 @@
 }
 
 .under-details {
-  gap: 20px;
+  gap: 1px;
+  height: 80vh;
   margin: 20px 0;
   padding: 15px;
-  border: 1px solid var(--gray-300-color);
 }
 
 .tab-buttons {
-  gap: 25px;
+  margin-left: 0;
+  margin-bottom: -2px;
+  gap: 20px;
 }
 
 .tab-button {
-  border: 0;
-  background-color: transparent;
+  background: var(--white);
+  border: 1px solid var(--gray-100-color);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: bold;
+  /* z-index: 2;  */
 }
+
+/* 頁籤按鈕 - 滑鼠懸停 */
+.tab-button:hover {
+  background: var(--primary-light-color);
+  transform: translateY(-1px); 
+}
+
+/* 頁籤按鈕 - 選中狀態 */
+.tab-button.active {
+  background: var(--primary-color);
+  color: var(--white);
+  margin-bottom: -1px;
+  z-index: 3;
+}
+
+/* 選中狀態下，hover 不影響樣式 */
+.tab-button.active:hover {
+  background: var(--primary-color);
+  transform: none;
+}
+
 .tab-button .under-details-title {
   margin: 0;
   display: inline-block;
@@ -371,7 +423,6 @@
   font-weight: 700;
   padding: 9px 12px;
   text-align: center;
-  background-color: var(--gray-50-color);
 }
 
 .under-detail .under-details-content {
@@ -381,6 +432,7 @@
   font-weight: 400;
   text-align: left;
   padding: 15px;
+  border-top: 2px solid var(--gray-100-color);
 }
 .under-comments .under-comments-content {
   margin: 0;
@@ -389,11 +441,19 @@
   font-weight: 400;
   text-align: left;
   padding: 15px;
+  border-top: 2px solid var(--gray-100-color);
 }
 
 .under-brand {
   gap: 14px;
   padding: 15px;
+}
+
+.under-brand  span{
+  font-size: 14px;
+  color: var(--gray-600-color);
+  margin-left: 10px;
+  margin-bottom: 10px;
 }
 
 .under-brand .product-brand {
@@ -409,8 +469,10 @@
   font-size: 14px;
   font-weight: 400;
   padding-left: 30px;
+  line-height: 2;
   border-left: 3px solid var(--gray-200-color);
 }
+
 
 .you-may-likes {
   margin: 20px 0 30px 0;
@@ -418,11 +480,11 @@
 
 .you-may-like .you-may-like-title {
   margin: 0;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 20px;
+  margin-bottom: 30px;
   color: var(--primary-color);
   text-align: center;
-  font-size: 36px;
+  font-size: 30px;
   font-weight: 700;
   padding-bottom: 15px;
 }
@@ -466,8 +528,8 @@
   padding: 10px;
   font-size: 14px;
   text-align: center;
-  height: 40px; /* 固定高度 */
-  line-height: 15px; /* 控制最多兩行 */
+  height: 50px; /* 固定高度 */
+  line-height: 20px; /* 控制最多兩行 */
   display: -webkit-box;
   -webkit-line-clamp: 2; /* 顯示最多兩行 */
   -webkit-box-orient: vertical;
@@ -633,7 +695,6 @@
 .circle-button:hover i.bi {
   color: var(--white);
 }
-
 
 /* .circle-style.active {
   background: var(--primary-color) !important;

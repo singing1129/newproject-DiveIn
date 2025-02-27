@@ -257,14 +257,14 @@ export default function RentProductDetail() {
           const totalCost = unitPrice * quantity * daysDiff + deposit;
 
           // 更新日期範圍文字的顯示
-          dateRangeText.textContent = `租賃日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
+          dateRangeText.textContent = `租借日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
 
           // 更新價格明細
           priceDetailsText.innerHTML = `
-            <div>單價：${unitPrice.toLocaleString("zh-TW")} 元</div>
+            <div>每日租金：${unitPrice.toLocaleString("zh-TW")} 元</div>
+            <div>每日押金：${deposit.toLocaleString("zh-TW")} 元</div>
             <div>數量：${quantity} 個</div>
-            <div>天數：${daysDiff} 天</div>
-            <div>押金：${deposit.toLocaleString("zh-TW")} 元</div>
+            <div>租借總天數：${daysDiff} 天</div>
           `;
 
           // 更新總費用文字
@@ -764,7 +764,7 @@ export default function RentProductDetail() {
         <div className="main-details d-flex flex-row justify-content-between align-items-start">
           <div className="row">
             {/* 圖片區域 */}
-            <div className="px-3 col-12 col-md-6 col-lg-6 order-1 mx-auto d-flex flex-column gap-5">
+            <div className="px-3 col-12 col-md-6 col-lg-6 order-1 mx-auto d-flex flex-column gap-2">
               <div className="main-image">
                 <Image
                   src={mainImage} // 動態設置大圖的 src
@@ -857,8 +857,6 @@ export default function RentProductDetail() {
                 <p className="rules-title">租借規則</p>
                 <ul className="rules-content">
                   <li>租借本人出示潛水證</li>
-                  <li>租用需先付款，並提供個人證件一張</li>
-                  <li>完成租借表單並完成簽名</li>
                   <li>如有遺失或損害，需修復原有狀況或是全新賠償</li>
                   <li>
                     租借與歸還時間限每日上午8:00至
@@ -868,6 +866,7 @@ export default function RentProductDetail() {
                     以天計價，非24小時制度。例如:
                     12/18日下午2點租借，12/19下午2點歸還，則算兩天
                   </li>
+                  <li>計價方式：(每日租金 + 每日押金) x 數量 x 租借天數</li>
                 </ul>
               </div>
             </div>
@@ -999,9 +998,9 @@ export default function RentProductDetail() {
                 >
                   加入購物車
                 </button>
-                <button type="button" className="mybtn btn-buy flex-grow-1">
+                {/* <button type="button" className="mybtn btn-buy flex-grow-1">
                   直接購買
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
@@ -1009,9 +1008,9 @@ export default function RentProductDetail() {
       </div>
 
       {/* 商品描述及品牌介紹 */}
-      <div className="col-12 d-flex flex-column mt-4 under-details">
+      <div className="col-12 d-flex flex-column under-details">
         {/* 分頁按鈕 */}
-        <div className="d-flex flex-row justify-content-center align-items-center tab-buttons">
+        <div className="d-flex flex-row align-items-center tab-buttons">
           <button
             className={`tab-button ${
               activeTab === "description" ? "active" : ""
@@ -1035,9 +1034,9 @@ export default function RentProductDetail() {
                 <p>{product.description2 || product.description}</p>
               </div>
               <div className="d-flex flex-column under-brand">
-                <p className="product-brand">品牌介紹</p>
+                <p className="product-brand">品牌介紹<span>-</span><span>{product.brand_name}</span></p>
                 <div className="d-flex flex-column under-details-brand">
-                  來自義大利的複合材料製造商C4創立於1986年，初始研發的是自行車使用之碳纖維材料，隨後將這樣的材料技術延伸至自由潛水/水中漁獵的裝備；卓越的性能與粗獷的外型，受到許多專業玩家的喜愛。
+                  {product.brand_description}
                 </div>
               </div>
             </div>

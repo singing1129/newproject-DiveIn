@@ -16,6 +16,9 @@ router.get("/", async (req, res) => {
   const maxPrice = parseFloat(req.query.maxPrice); // 最高價格
   const color_id = req.query.color_id || null;
 
+  //搜索功能
+  const search = req.query.search || null; // 搜索關鍵字
+
   const offset = (page - 1) * limit; // 計算偏移量
 
   // 設置默認排序條件
@@ -39,6 +42,7 @@ router.get("/", async (req, res) => {
       minPrice,
       maxPrice,
       color_id,
+      search,
       limit,
       offset,
     });
@@ -87,6 +91,13 @@ router.get("/", async (req, res) => {
       }
     }
 
+    // 處理搜索關鍵字
+    let searchCondition = "";
+    if (search) {
+      searchCondition = " AND (rb.name LIKE ? OR ri.name LIKE ?)";
+      params.push(`%${search}%`, `%${search}%`); // 使用 % 來實現模糊匹配
+    }
+
     // 獲取商品資料
     const query = `
         SELECT
@@ -99,6 +110,8 @@ router.get("/", async (req, res) => {
         ri_img.img_url AS img_url,
         rb.id AS brand_id,
         rb.name AS brand_name,
+        rb.description AS brand_description,
+        rb.imgUrl AS brand_img_url,
         GROUP_CONCAT(DISTINCT rc.id ORDER BY rc.id ASC) AS color_id,
         GROUP_CONCAT(DISTINCT rc.name ORDER BY rc.id ASC) AS color_name,
         GROUP_CONCAT(DISTINCT rc.rgb ORDER BY rc.id ASC) AS color_rgb
@@ -112,10 +125,11 @@ router.get("/", async (req, res) => {
       WHERE ri.is_deleted = FALSE
       ${category_big_id ? "AND rcb.id = ?" : ""}
       ${category_small_id ? "AND rcs.id = ?" : ""}
-      ${letterCondition} /* 使用 letterCondition 過濾字母分類 */
-      ${brand_id ? "AND rb.id = ?" : ""} /* 使用 brand_id 過濾品牌 */
-      ${priceCondition} /* 使用 priceCondition 過濾價格區間 */
-      ${colorCondition} /* 使用 colorCondition 過濾顏色 */
+      ${letterCondition} /* 過濾字母分類 */
+      ${brand_id ? "AND rb.id = ?" : ""} /* 過濾品牌 */
+      ${priceCondition} /* 過濾價格區間 */
+      ${colorCondition} /* 過濾顏色 */
+      ${searchCondition} /* 過濾搜索關鍵字 */
       GROUP BY ri.id
       ${orderBy} /* 確保 orderBy 不為空 */
       LIMIT ${limit} OFFSET ${offset};
@@ -159,10 +173,11 @@ router.get("/", async (req, res) => {
       WHERE ri.is_deleted = FALSE
       ${category_big_id ? "AND rcb.id = ?" : ""}
       ${category_small_id ? "AND rcs.id = ?" : ""}
-      ${letterCondition} /* 使用 letterCondition 過濾字母分類 */
-      ${brand_id ? "AND rb.id = ?" : ""} /* 使用 brand_id 過濾品牌 */
-      ${priceCondition} /* 使用 priceCondition 過濾價格區間 */
-      ${colorCondition} /* 使用 colorCondition 過濾顏色 */
+      ${letterCondition} /* 過濾字母分類 */
+      ${brand_id ? "AND rb.id = ?" : ""} /* 過濾品牌 */
+      ${priceCondition} /* 過濾價格區間 */
+      ${colorCondition} /* 過濾顏色 */
+      ${searchCondition} /* 過濾搜索關鍵字 */
       `,
       params
     );

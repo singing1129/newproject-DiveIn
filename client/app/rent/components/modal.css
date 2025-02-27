@@ -77,11 +77,11 @@
 
 /* 取消按鈕樣式 */
 .cancel-button {
-  background-color: #ff4d4d; /* 紅色 */
-  color: #fff; /* 白色文字 */
+  background-color: var(--secondary-color); 
+  color: var(--white); 
   border: none;
-  border-radius: 8px; /* 圓角 */
-  padding: 10px 20px; /* 內邊距 */
+  border-radius: 8px; 
+  padding: 10px 20px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
@@ -91,7 +91,7 @@
 }
 
 .cancel-button:hover {
-  background-color: #e60000; /* 滑鼠懸停時的深紅色 */
+  background-color: var(--secondary-deep-color); /* 滑鼠懸停時的深紅色 */
   transform: translateY(-2px); /* 懸停時稍微上移 */
 }
 
@@ -101,8 +101,8 @@
 
 /* 確認按鈕樣式 */
 .confirm-button {
-  background-color: #4caf50; /* 綠色 */
-  color: #fff; /* 白色文字 */
+  background-color: var(--primary-color); 
+  color: var(--white);
   border: none;
   border-radius: 8px; /* 圓角 */
   padding: 10px 20px; /* 內邊距 */
@@ -114,7 +114,7 @@
 }
 
 .confirm-button:hover {
-  background-color: #45a049; /* 滑鼠懸停時的深綠色 */
+  background-color: var(--primary-deep-color); /* 滑鼠懸停時的深綠色 */
   transform: translateY(-2px); /* 懸停時稍微上移 */
 }
 

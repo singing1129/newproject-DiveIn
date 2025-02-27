@@ -9,6 +9,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  pointer-events: none;
   z-index: 1051; /* 比 bootstrap modal 高 1 層 */
   opacity: 1;
   transition: opacity 0.3s ease;
@@ -20,6 +21,7 @@
 }
 
 .custom-message-modal .modal-content {
+  pointer-events: auto;
   background: var(--white) !important;
   border: none;
   border-radius: 12px !important;
@@ -100,6 +102,18 @@
   }
 }
 
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out !important;
+}
+
 /* 對應 Bootstrap 的動畫時長和時間函數 */
 .custom-message-modal.modal-overlay.show .modal-content {
   animation: modalSlideIn 0.3s ease-out; /* Bootstrap 使用 300ms */
@@ -165,9 +179,25 @@
   padding: 8px 20px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  /* transition: background-color 0.2s; */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* 過渡效果 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 陰影效果 */
 }
 
 .confirm-btn:hover {
-  background-color: #0056b3;
+  background-color: var(--primary-deep-color)!important;
+  transform: translateY(-2px); /* 懸停時稍微上移 */
+}
+.confirm-button:active {
+  transform: translateY(0); /* 點擊時恢復原位 */
+}
+.confirm-button:disabled {
+  background-color: #cccccc; /* 灰色 */
+  color: #666666; /* 深灰色文字 */
+  cursor: not-allowed; /* 禁用游標 */
+  box-shadow: none; /* 移除陰影 */
+}
+.disable-interaction {
+  pointer-events: none;
+  user-select: none; /* 可選：禁止用戶選擇文本 */
 }
