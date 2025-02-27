@@ -14,6 +14,7 @@ import "./modal.css";
 import "../../../public/globals.css";
 import "rc-slider/assets/index.css";
 import RentBrand from "./RentBrand"; // 匯入，處理品牌專區
+import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
 import { debounce } from "lodash"; // 引入 debounce 解決刷新有參數的介面資料閃動問題
 
 import { useCart } from "@/hooks/cartContext"; // 加入購物車
@@ -23,6 +24,7 @@ const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function RentList() {
+  const userId = 1; // 或者從 localStorage 中獲取：const userId = localStorage.getItem("userId");
   const [products, setProducts] = useState([]); // 儲存從後端獲取的商品資料
   const [loading, setLoading] = useState(true); // 加載狀態
   const [currentPage, setCurrentPage] = useState(1); // 當前頁數
@@ -1328,7 +1330,9 @@ export default function RentList() {
     const getColorRGB = (colorName) => {
       // 假設 product.color_name 和 product.color_rgb 都是以逗號分隔的字符串
       if (product.color_name && product.color_rgb) {
-        const colorNames = product.color_name ? product.color_name.split(",") : [];
+        const colorNames = product.color_name
+          ? product.color_name.split(",")
+          : [];
         const colorRGBs = product.color_rgb ? product.color_rgb.split(",") : [];
 
         // 查找選擇的顏色並返回對應的 RGB 值
@@ -2260,7 +2264,20 @@ export default function RentList() {
                           {/* 右上角hover */}
                           <div className="icon-container d-flex flex-row justify-content-center align-items-center">
                             <div className="icon d-flex justify-content-center align-items-center">
-                              <i className="bi bi-heart"></i>
+                              {/* 使用 FavoriteButton 元件，傳入必要的 props */}
+                              {product && (
+                                <FavoriteButton
+                                  userId={userId} // 用戶 ID
+                                  rentalId={product.id} // 商品的 rentalId
+                                  className="icon d-flex justify-content-center align-items-center"
+                                  onFavoriteChange={(newFavoriteStatus) => {
+                                    console.log(
+                                      `${product.name} 收藏狀態改變為:`,
+                                      newFavoriteStatus
+                                    );
+                                  }}
+                                />
+                              )}
                             </div>
                             <div
                               className="icon d-flex justify-content-center align-items-center"

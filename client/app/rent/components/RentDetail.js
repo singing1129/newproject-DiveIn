@@ -14,26 +14,30 @@ import "./RentDetail.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 // import "./modal2.css"; // 我定義的你可能會喜歡modalcss(跟rentlist同支)
 import "../../../public/globals.css";
-import HeartIcon from "./HeartIcon/HeartIcon";
 import { useCart } from "@/hooks/cartContext"; // 加入購物車
+import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
 
 const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function RentProductDetail() {
+  // 暫時寫死 userId，將來可以從登入狀態或 JWT 中獲取
+  const userId = 1; // 或者從 localStorage 中獲取：const userId = localStorage.getItem("userId");
   const { id } = useParams(); // 取得動態路由參數
-  const [products, setProducts] = useState(null); // 商品資料
+  const [isLoading, setIsLoading] = useState(true);
   const [product, setProduct] = useState(null); // 商品資料
   const [quantity, setQuantity] = useState(1); // 租借數量
   const [selectedColor, setSelectedColor] = useState(null); // 選擇的顏色
 
-  const colorNames = product && product.color_name ? product.color_name.split(",") : [];
-const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : [];
+  const colorNames =
+    product && product.color_name ? product.color_name.split(",") : [];
+  const colorRGBs =
+    product && product.color_rgb ? product.color_rgb.split(",") : [];
 
   const [startDate, setStartDate] = useState(""); // 租借開始日期
   const [endDate, setEndDate] = useState(""); // 租借結束日期
-  const [isFavorite, setIsFavorite] = useState(0); // 愛心收藏功能
+  // const [isFavorite, setIsFavorite] = useState(0); // 愛心收藏功能
   const [loading, setLoading] = useState(true); // 加載狀態
   const [error, setError] = useState(null); // 錯誤狀態
   const { fetchCart } = useCart(); // 從 cartContext 中獲取 fetchCart 方法
@@ -150,36 +154,21 @@ const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : 
     fetchProduct();
   }, [id]);
 
+  // 加載中或未找到商品的處理
+  // if (isLoading) {
+  //   return <div>加載中...</div>;
+  // }
+
+  // if (!product) {
+  //   return <div>未找到商品</div>;
+  // }
+
   const handleColorClick = (colorName, colorRGB) => {
     if (selectedColor === colorName) {
       setSelectedColor(null); // 如果已經選中，則取消選擇
     } else {
       setSelectedColor(colorName); // 如果未選中，則更新選中的顏色
     }
-  };
-
-  const HeartIcon = ({ isFavorite, onClick }) => {
-    return (
-      <div className="heart-icon" onClick={onClick}>
-        <i className={`bi bi-heart ${isFavorite ? "filled" : ""}`}></i>
-      </div>
-    );
-  };
-
-  // 判斷收藏的愛心狀態
-  const handleClick = () => {
-    const newIsFavorite = isFavorite === 0 ? 1 : 0;
-   setIsFavorite(newIsFavorite);
-   alert(newIsFavorite ? '收藏成功！' : '收藏取消！');
-
-    // 這裡可以加入後端 API 呼叫，更新 is_like 狀態
-    // axios.post(`/api/rent-item/${id}/update-favorite`, { isLike: newIsFavorite })
-    //   .then(response => {
-    //     console.log("後端更新成功:", response.data);
-    //   })
-    //   .catch(error => {
-    //     console.error("後端更新失敗:", error);
-    //   });
   };
 
   // 根據是否有特價動態調整價格樣式
@@ -243,12 +232,6 @@ const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : 
         const endDate = selectedDates[1];
 
         if (startDate && endDate) {
-          // const formattedStartDate = instance.formatDate(
-          //   startDate,
-          //   "Y年m月d日"
-          // );
-          // const formattedEndDate = instance.formatDate(endDate, "Y年m月d日");
-          // 顯示用格式
           const displayStartDate = instance.formatDate(startDate, "Y年m月d日");
           const displayEndDate = instance.formatDate(endDate, "Y年m月d日");
 
@@ -898,7 +881,9 @@ const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : 
                 <div className="product-name-fav d-flex flex-row justify-content-between align-items-center">
                   <p className="product-name">{product.name}</p>
                   <div className="product-name-fav">
-                    <HeartIcon isFavorite={isFavorite} onClick={handleClick} />
+                    {product && (
+                      <FavoriteButton userId={userId} rentalId={product.id} />
+                    )}
                   </div>
                 </div>
                 <div className="stars d-flex flex-row">
@@ -1087,6 +1072,9 @@ const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : 
                   textDecoration: "none",
                   color: "none",
                 }}
+                onClick={(e) => {
+                  if (e.defaultPrevented) return; // 如果事件已被阻止，就不執行跳轉
+                }}
               >
                 <div className="card border-0 h-100">
                   <div className="d-flex justify-content-center align-items-center img-container">
@@ -1161,18 +1149,23 @@ const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : 
 
                     {/* hover出現收藏 & 加入購物車 */}
                     <div className="icon-container d-flex flex-row">
+                      {/* 收藏按鈕 */}
                       <div className="icon d-flex justify-content-center align-items-center">
-                        <i className="bi bi-heart"></i>
+                        {/* 使用 FavoriteButton 元件，傳入必要的 props */}
+                        {product && (
+                          <FavoriteButton
+                            userId={userId} // 用戶 ID
+                            rentalId={product.id} // 商品的 rentalId
+                            className="icon d-flex justify-content-center align-items-center"
+                            onFavoriteChange={(newFavoriteStatus) => {
+                              console.log(
+                                `${product.name} 收藏狀態改變為:`,
+                                newFavoriteStatus
+                              );
+                            }}
+                          />
+                        )}
                       </div>
-                      {/* <div
-                        className="icon d-flex justify-content-center align-items-center"
-                        onClick={(e) => {
-                          e.stopPropagation(); // 阻止事件冒泡
-                          handleIconClick(product, e);
-                        }}
-                      >
-                        <i className="bi bi-cart"></i>
-                      </div> */}
                     </div>
                   </div>
                 </div>
@@ -1183,4 +1176,16 @@ const colorRGBs = product && product.color_rgb ? product.color_rgb.split(",") : 
       </div>
     </div>
   );
+}
+
+{
+  /* <div
+                        className="icon d-flex justify-content-center align-items-center"
+                        onClick={(e) => {
+                          e.stopPropagation(); // 阻止事件冒泡
+                          handleIconClick(product, e);
+                        }}
+                      >
+                        <i className="bi bi-cart"></i>
+                      </div> */
 }
