@@ -18,7 +18,7 @@ export default function GroupDetailPage() {
     if (!user) {
       showToast("請先登入！", { autoClose: 2000 });
       setTimeout(() => {
-        window.location = "/member/login";
+        window.location = "/admin/login";
       }, 2000);
     }
   }, []);
