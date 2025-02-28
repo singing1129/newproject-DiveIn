@@ -254,7 +254,8 @@ export default function RentProductDetail() {
           const deposit = Number(unitPrice * 0.3);
 
           // 計算總費用
-          const totalCost = unitPrice * quantity * daysDiff + deposit * quantity * daysDiff;
+          const totalCost =
+            unitPrice * quantity * daysDiff + deposit * quantity * daysDiff;
 
           // 更新日期範圍文字的顯示
           dateRangeText.textContent = `租借日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
@@ -899,7 +900,17 @@ export default function RentProductDetail() {
                   <p className="product-price2">NT${product.price2}/日</p>
                 )}
                 <p className="product-price">NT${product.price}/日</p>
-                <p className="product-description">{product.description}</p>
+                <div className="product-description">
+                  {product.description?.split("\n").map((line, index) => (
+                    <div
+                      key={index}
+                      style={{ fontSize: "14px", lineHeight: "1.6" }}
+                    >
+                      {line}
+                      <br />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="details-select d-flex flex-column">
                 <div className="product-color">
@@ -1029,12 +1040,56 @@ export default function RentProductDetail() {
           {activeTab === "description" && (
             <div className="under-detail">
               <div className="d-flex flex-column under-details-content">
-                <p>{product.description2 || product.description}</p>
+                <div>
+                  {(product.description2 || product.description)
+                    ?.split("\n")
+                    .map((line, index) => (
+                      <div
+                        key={index}
+                        style={{ fontSize: "14px", lineHeight: "1.6" }}
+                      >
+                        {line}
+                        <br />
+                      </div>
+                    ))}
+                </div>
               </div>
               <div className="d-flex flex-column under-brand">
-                <p className="product-brand">品牌介紹<span>-</span><span>{product.brand_name}</span></p>
-                <div className="d-flex flex-column under-details-brand">
-                  {product.brand_description}
+                <p className="product-brand">
+                  品牌介紹<span>-</span>
+                  <span>{product.brand_name}</span>
+                </p>
+                <div className="d-flex under-details-brand">
+                  {/* 品牌 Logo 和描述 */}
+
+                  {/* 品牌 Logo */}
+                  {product.brand_img_url && (
+                    <Image
+                      src={
+                        product.brand_img_url.startsWith("/") ||
+                        product.brand_img_url.startsWith("http")
+                          ? product.brand_img_url
+                          : `/${product.brand_img_url}`
+                      }
+                      alt={`${product.brand_name} Logo`}
+                      width={50} // 設置寬度
+                      height={50} // 設置高度
+                      className="brand-logo"
+                    />
+                  )}
+                  {/* 品牌描述 */}
+                  <div className="brand-description">
+                    {product.brand_description
+                      .split("\n")
+                      .map((line, index) => (
+                        <div
+                          key={index}
+                          style={{ fontSize: "14px", lineHeight: "1.6" }}
+                        >
+                          {line}
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1043,7 +1098,86 @@ export default function RentProductDetail() {
             <div className="under-comments">
               <div className="d-flex flex-column under-comments-content">
                 {/* 這裡放會員評價的內容 */}
-                <p>切版用：暫無評價。</p>
+                <div className="reviews-container">
+                  {/* 會員評價 1 */}
+                  <div className="review-card">
+                    <div className="user-info">
+                      <Image
+                        src="/avatar3.jpg"
+                        alt="User Avatar"
+                        className="user-avatar"
+                        width={150}
+                        height={150}
+                      />
+                      <div className="user-details">
+                        <div className="user-name-email">
+                          <span className="user-name">張三</span>
+                          <span className="user-email">
+                            (zhangsan@example.com)
+                          </span>
+                        </div>
+                        <div className="user-rating">
+                          ⭐⭐⭐⭐⭐ {/* 5 顆星 */}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="user-comment">
+                      這是我用過最好的產品！服務非常周到，物流也很快，強烈推薦給大家！
+                    </p>
+                  </div>
+
+                  {/* 會員評價 2 */}
+                  <div className="review-card">
+                    <div className="user-info">
+                      <Image
+                        src="/avatar3.jpg"
+                        alt="User Avatar"
+                        className="user-avatar"
+                        width={150}
+                        height={150}
+                      />
+                      <div className="user-details">
+                        <div className="user-name-email">
+                          <span className="user-name">李四</span>
+                          <span className="user-email">(lisi@example.com)</span>
+                        </div>
+                        <div className="user-rating">
+                          ⭐⭐⭐⭐ {/* 4 顆星 */}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="user-comment">
+                      產品質量不錯，但價格稍微有點高。客服態度很好，解決問題很迅速。
+                    </p>
+                  </div>
+
+                  {/* 會員評價 3 */}
+                  <div className="review-card">
+                    <div className="user-info">
+                      <Image
+                        src="/avatar3.jpg"
+                        alt="User Avatar"
+                        className="user-avatar"
+                        width={150}
+                        height={150}
+                      />
+                      <div className="user-details">
+                        <div className="user-name-email">
+                          <span className="user-name">王五</span>
+                          <span className="user-email">
+                            (wangwu@example.com)
+                          </span>
+                        </div>
+                        <div className="user-rating">
+                          ⭐⭐⭐⭐⭐ {/* 5 顆星 */}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="user-comment">
+                      非常滿意的一次購物體驗！產品功能強大，使用起來非常順手，值得推薦！
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

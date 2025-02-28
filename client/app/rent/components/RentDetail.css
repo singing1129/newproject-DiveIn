@@ -156,14 +156,17 @@
   font-weight: 700;
 }
 
-.main-details .rent-rules .rules-content {
+.main-details .rent-rules .rules-content{
   color: var(--gray-600-color);
   font-size: 14px;
   font-weight: 400;
   list-style-type: decimal;
   list-style-position: inside;
-  padding: 0px 0px 0px 30px;
+  padding: 0px 0px 0px 20px;
   border-left: 3px solid var(--gray-200-color);
+}
+.main-details .rent-rules .rules-content li{
+  font-size: 14px;
 }
 
 .main-details .rent-rules .rules-content li {
@@ -172,7 +175,7 @@
 }
 
 .main-details .details-text {
-  gap: 5px;
+  gap: 10px;
 }
 
 .main-details .details-titles {
@@ -182,9 +185,10 @@
 .main-details .details-titles .product-brand {
   margin: 0;
   color: var(--gray-600-color);
-  /* font-size: 24px; */
+  font-size: 14px;
   font-weight: 700;
 }
+
 .main-details .details-titles .product-name-fav {
   position: relative;
 }
@@ -308,6 +312,7 @@
 .no-colors {
   color: var(--gray-600-color);
   font-style: italic;
+  font-size: 14px;
 }
 
 .main-details .product-amount .amount-title {
@@ -379,7 +384,6 @@
 
 .under-details {
   gap: 1px;
-  height: 80vh;
   margin: 20px 0;
   padding: 15px;
 }
@@ -436,6 +440,7 @@
   font-size: 14px;
   font-weight: 400;
   text-align: left;
+  line-height: 2;
   padding: 15px;
   border-top: 2px solid var(--gray-100-color);
 }
@@ -449,7 +454,80 @@
   border-top: 2px solid var(--gray-100-color);
 }
 
+.user-reviews {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.reviews-title {
+  text-align: center;
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.reviews-container {
+  display: flex;
+  gap: 20px; /* 評價卡片之間的間距 */
+  flex-wrap: wrap; /* 讓卡片自動換行 */
+}
+
+.review-card {
+  flex: 1 1 calc(33.333% - 20px); /* 每行顯示 3 則評價 */
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  /* border-radius: 50%; */
+  margin-right: 10px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--black);
+}
+
+.user-email {
+  font-size: 14px;
+  color: var(--gray-600-color);
+  margin-left: 10px;
+}
+
+.user-rating {
+  font-size: 20px;
+  color: #ffc107; /* 星星顏色 */
+  margin-bottom: 10px;
+}
+
+.user-comment {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
 .under-brand {
+  height: 100%;
   gap: 14px;
   padding: 15px;
 }
@@ -468,7 +546,7 @@
   font-weight: 700;
 }
 
-.under-brand .under-details-brand {
+.under-details-brand {
   margin: 0;
   color: var(--gray-600-color);
   font-size: 14px;
@@ -476,6 +554,23 @@
   padding-left: 30px;
   line-height: 2;
   border-left: 3px solid var(--gray-200-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 品牌 Logo 的樣式 */
+.under-details-brand .brand-logo {
+  width: 100px;
+  height: 100px; 
+  margin-right: 16px; 
+  object-fit: cover;
+}
+
+/* 品牌描述的樣式 */
+.under-details-brand .brand-description {
+  white-space: pre-line; /* 保留換行符號並自動換行 */
+  flex: 1; /* 讓描述佔滿剩餘空間 */
 }
 
 
