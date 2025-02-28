@@ -521,9 +521,21 @@ export default function ProductDetail() {
                 <div className="mt-3 descriptionField">
                   <div>
                     <h4>{product.name}</h4>
+                    {/* 原本的描述 */}
                     <p className="custom-border">
                       {product.detailed_description}
                     </p>
+
+                    {/* 添加從 product_detail 獲取的詳細描述 */}
+                    {product.details &&
+                      product.details.map((detail, index) => (
+                        <div
+                          key={`detail-${index}`}
+                          className="product-detail-item mb-4"
+                        >
+                          {detail.content}
+                        </div>
+                      ))}
                   </div>
                 </div>
               ) : (

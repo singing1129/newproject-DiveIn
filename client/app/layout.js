@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { CartProvider } from "@/hooks/cartContext";
+import { Providers } from "@/providers";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../public/globals.css";
 // import 'bootstrap/dist/js/bootstrap.bundle.js';
@@ -9,7 +10,6 @@ import Breadcrumb from "./components/Breadcrumb/breadcrumb";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { AuthProvider } from "@/hooks/useAuth";
 import Script from "next/script";
 
 import { Noto_Sans_TC } from "next/font/google";
@@ -64,7 +64,7 @@ export default function RootLayout({ children }) {
         ></Script>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AuthProvider>
+        <Providers>
           <Header />
           <CartProvider>
             {/* <Breadcrumb /> */}
@@ -72,7 +72,7 @@ export default function RootLayout({ children }) {
             <ToastContainer />
           </CartProvider>
           <Footer />
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

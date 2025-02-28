@@ -44,10 +44,11 @@ import ecpayRouter from "../routes/ecpay/index.js";
 import linepayRouter from "../routes/linepay/index.js";
 // 訂單
 import orderRouter from "../routes/order/index.js";
+// 密碼重設
+import passwordResetRouter from "../routes/admin/passwordReset.js";
 
 // 建立 Express 應用程式
 const app = express();
-
 
 // 設定允許的跨域來源
 const whiteList = ["http://localhost:3000", "http://localhost:3001"];
@@ -95,6 +96,9 @@ apiRouter.use("/ecpay", ecpayRouter);
 apiRouter.use("/linepay", linepayRouter);
 //order
 apiRouter.use("/order", orderRouter);
+// 密碼重設
+apiRouter.use("/passwordReset", passwordResetRouter);
+
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);
