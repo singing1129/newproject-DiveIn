@@ -183,6 +183,17 @@ router.post("/add", async (req, res) => {
       }
 
       case "rental": {
+        // 從請求中獲取顏色和品牌名稱
+        const { color, rentalBrand } = req.body;
+
+        // 檢查品牌名稱是否存在
+        if (!rentalBrand) {
+          return res.status(400).json({
+            success: false,
+            message: "品牌名稱不可為空",
+          });
+        }
+
         if (!startDate || !endDate) {
           return res.status(400).json({
             success: false,
@@ -240,10 +251,13 @@ router.post("/add", async (req, res) => {
           });
         }
 
-        const stock = rental[0].stock === null ? Infinity : parseInt(rental[0].stock, 10);
+        const stock =
+          rental[0].stock === null ? Infinity : parseInt(rental[0].stock, 10);
         if (isNaN(stock)) {
-            console.error("庫存數據異常:", rental[0].stock);
-            return res.status(500).json({ success: false, message: "庫存數據異常" });
+          console.error("庫存數據異常:", rental[0].stock);
+          return res
+            .status(500)
+            .json({ success: false, message: "庫存數據異常" });
         }
 
         //檢查此次租借數量是否超過庫存
@@ -253,6 +267,7 @@ router.post("/add", async (req, res) => {
             message: "商品庫存不足",
           });
         }
+        
 
         // 修改SQL查詢使用CAST確保數字類型
         const [rentals] = await pool.execute(
@@ -293,15 +308,16 @@ router.post("/add", async (req, res) => {
           });
         }
 
-        // 檢查購物車內是否已有相同商品和日期
+        // 檢查購物車內是否已有相同商品、日期以及顏色
         const [existingItem] = await pool.execute(
           `SELECT id, quantity 
            FROM cart_rental_items 
            WHERE cart_id = ? 
            AND rental_id = ? 
            AND start_date = ? 
-           AND end_date = ?`,
-          [cartId, rentalId, startDate, endDate]
+           AND end_date = ? 
+           AND color = ?`,
+          [cartId, rentalId, startDate, endDate, color]
         );
 
         if (existingItem.length > 0) {
@@ -314,20 +330,26 @@ router.post("/add", async (req, res) => {
           // 新增項目
           await pool.execute(
             `INSERT INTO cart_rental_items 
-             (cart_id, rental_id, start_date, end_date, quantity) 
-             VALUES (?, ?, ?, ?, ?)`,
-            [cartId, rentalId, startDate, endDate, quantity]
+             (cart_id, rental_id, start_date, end_date, quantity, color, rentalBrand) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+              cartId,
+              rentalId,
+              startDate,
+              endDate,
+              quantity,
+              color || null,
+              rentalBrand,
+            ]
           );
         }
-
+        res.status(200).json({
+          success: true,
+          message: "商品已加入購物車",
+        });
         break;
       }
     }
-
-    res.status(200).json({
-      success: true,
-      message: "商品已加入購物車",
-    });
   } catch (error) {
     console.error("加入購物車失敗:", error);
     res.status(500).json({ success: false, message: "加入購物車失敗" });
@@ -414,36 +436,53 @@ router.get("/:userId", async (req, res) => {
     );
 
     // 4. 獲取租借項目並計算租期
+    //
     const [rentals] = await pool.execute(
       `SELECT 
         cri.id,
         cri.quantity,
         cri.start_date,
         cri.end_date,
+        rb.name AS rentalBrand,
         ri.id AS rental_id,
         ri.name AS rental_name,
         ri.price,
         ri.price2 AS discounted_price,
         ri.deposit,
         rim.img_url AS image_url,
-        DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days
+      DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
+      cri.color
       FROM cart_rental_items cri
       JOIN rent_item ri ON cri.rental_id = ri.id
+      JOIN rent_specification rs ON ri.id = rs.rent_item_id
+      JOIN rent_brand rb ON rs.brand_id = rb.id
       LEFT JOIN rent_image rim ON ri.id = rim.rent_item_id AND rim.is_main = 1
-      WHERE cri.cart_id = ?`,
+      LEFT JOIN rent_color rc ON rs.color_id = rc.id
+      WHERE cri.cart_id = ?
+      GROUP BY cri.id`,
       [cartId]
     );
     // 開始結構
     const processedRentals = rentals.map((item) => {
       // 特價允許null
+      // 使用特價價格，如果沒有特價就用原價
       const pricePerDay = item.discounted_price || item.price;
+      // 租借總費用=單價*數量*總天數
       const rentalFee = pricePerDay * item.rental_days * item.quantity;
+
+      // nana新增：每日押金 = 單價的 30%
+      const deposit = pricePerDay * 0.3;
+
+      // nana新增：押金總費用 = 押金 * 數量 * 總天數
+      const depositFee = deposit * item.quantity * item.rental_days;
 
       return {
         ...item,
+        price_per_day: pricePerDay,
         rental_fee: rentalFee, //租借總費用
-        deposit_fee: item.deposit * item.quantity, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
-        subtotal: rentalFee + item.deposit * item.quantity, //總押金＋租借費用=總費用
+        deposit_fee: depositFee, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
+        subtotal: rentalFee + depositFee, //總押金＋租借費用=總費用
+        brand_name: item.brand_name,
       };
     });
 
