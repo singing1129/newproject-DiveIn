@@ -254,8 +254,7 @@ export default function RentProductDetail() {
           const deposit = Number(unitPrice * 0.3);
 
           // 計算總費用
-          const totalCost =
-            unitPrice * quantity * daysDiff + deposit * quantity * daysDiff;
+          const totalCost = (unitPrice + quantity) * daysDiff * quantity;
 
           // 更新日期範圍文字的顯示
           dateRangeText.textContent = `租借日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
@@ -636,19 +635,22 @@ export default function RentProductDetail() {
 
     // 檢查商品是否有顏色規格
     const hasColorSpecifications =
-      product.specifications && product.specifications.length > 0;
+      product.specifications &&
+      product.specifications.some((spec) => spec.color); // 檢查 specifications 中的 color 欄位是否有值
 
-    // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
-    if (hasColorSpecifications && !selectedColor) {
-      alert("請選擇商品顏色！");
-      return;
+    let selectedColorRGB = null;
+    if (hasColorSpecifications) {
+      // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
+      if (!selectedColor) {
+        alert("請選擇商品顏色！");
+        return;
+      }
+      // 獲取選擇的顏色 RGB 值
+      const selectedSpec = product.specifications.find(
+        (spec) => spec.color === selectedColor
+      );
+      selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
     }
-
-    // 獲取選擇的顏色 RGB 值
-    const selectedSpec = product.specifications.find(
-      (spec) => spec.color === selectedColor
-    );
-    const selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
 
     const cartData = {
       userId: 1, // (寫死)
@@ -663,6 +665,11 @@ export default function RentProductDetail() {
       endDate: formattedEndDate, // 轉換為 YYYY-MM-DD 格式
       price: product.price, // 有特價選取特價的價格，沒有的話就是原價  product.price2 ? product.price2 : product.price
     };
+    // 只有在有顏色規格時才加入顏色資訊
+    // if (hasColorSpecifications) {
+    //   cartData.color = selectedColor;
+    //   cartData.colorRGB = selectedColorRGB;
+    // }
 
     console.log("傳遞的資料:", cartData); // 檢查資料格式
 
@@ -1079,7 +1086,7 @@ export default function RentProductDetail() {
                   )}
                   {/* 品牌描述 */}
                   <div className="brand-description">
-                    {product.brand_description
+                    {(product.brand_description || "")
                       .split("\n")
                       .map((line, index) => (
                         <div
