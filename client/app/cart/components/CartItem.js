@@ -153,20 +153,30 @@ const CartItem = ({ item, type = "products" }) => {
           <div className="info-display">
             <div className="info-content">
               <div className="info-row">
-                <span className="info-label">租賃期間：</span>
+                <span className="info-label">
+                  租借期間{" "}
+                  <span className="days">： ({item.rental_days}天)</span>
+                </span>
                 <div className="info-value">
-                  <div>{item.start_date}</div>
-                  <div>~ {item.end_date}</div>
-                  <div className="days">({item.rental_days}天)</div>
+                  <div>自 {item.start_date}</div>
+                  <div>至 {item.end_date}</div>
                 </div>
               </div>
               <div className="info-row">
+                <span className="info-label">顏色：</span>
+                <span className="info-value">
+                  {item.color || "無"}{" "}
+                </span>
+              </div>
+              <div className="info-row">
                 <span className="info-label">每日租金：</span>
-                <span className="info-value">NT$ {item.discounted_price}</span>
+                <span className="info-value">
+                  NT$ {item.discounted_price ?? item.price}
+                </span>
               </div>
               <div className="info-row">
                 <span className="info-label">押金：</span>
-                <span className="info-value">NT$ {item.deposit_fee}</span>
+                <span className="info-value">NT$ {item.deposit}</span>
               </div>
             </div>
           </div>
@@ -216,7 +226,7 @@ const CartItem = ({ item, type = "products" }) => {
             {type === "rentals" ? "每日租金：" : "單價："}
           </span>
           <span className="text-muted">
-            ${type === "rentals" ? item.discounted_price : item.price}
+            ${type === "rentals" ? item.price_per_day : item.price}
           </span>
         </div>
       </div>
@@ -235,9 +245,9 @@ const CartItem = ({ item, type = "products" }) => {
             {type === "rentals"
               ? Number(item.discounted_price) * quantity * item.rental_days
               : Number(item.price) * quantity}
-            {type === "rentals" && item.deposit_fee > 0 && (
+            {type === "rentals" && item.deposit > 0 && (
               <div className="text-muted small">
-                (押金：NT$ {item.deposit_fee})
+                (押金：NT$ {item.deposit})
               </div>
             )}
           </div>

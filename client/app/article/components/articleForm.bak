@@ -76,33 +76,26 @@ const ArticleForm = () => {
   };
 
   // 提交表單
-  const [submitStatus, setSubmitStatus] = useState(""); // "draft" 或 "published"
-
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // 防止表單預設提交行為
+
     const formData = new FormData();
     formData.append("new_title", new_title);
     formData.append("new_content", new_content);
+    formData.append("new_categoryBig", new_categoryBig);
     formData.append("new_categorySmall", new_categorySmall);
-    formData.append("tags", JSON.stringify(tagsList));
-
-    // 根據 submitStatus 設定 status 和 publish_at
-    const publishAt =
-      submitStatus === "published" ? new Date().toISOString() : null;
-    formData.append("status", submitStatus);
-    formData.append("publish_at", publishAt);
-
+    formData.append("tags", JSON.stringify(tagsList)); // 必須轉成 JSON 字串
     if (new_coverImage) formData.append("new_coverImage", new_coverImage);
 
     try {
       const response = await fetch("http://localhost:3005/api/article/create", {
         method: "POST",
-        body: formData,
+        body: formData, // 必須用 FormData 傳送
       });
 
-      const data = await response.json();
+      const data = await response.json(); // 確保能解析 JSON
       if (data.success) {
-        alert(submitStatus === "draft" ? "草稿儲存成功！" : "文章發表成功！");
+        alert("文章發表成功！");
       } else {
         alert("發表失敗：" + (data.message || "請稍後再試"));
       }
@@ -217,18 +210,10 @@ const ArticleForm = () => {
 
         {/* 按鈕 */}
         <div className="btnarea">
-          <button
-            type="button"
-            className="btn article-create-btn"
-            onClick={() => setSubmitStatus("draft")}
-          >
+          <button type="submit" className="btn article-create-btn">
             儲存草稿
           </button>
-          <button
-            type="button"
-            className="btn article-create-btn"
-            onClick={() => setSubmitStatus("published")}
-          >
+          <button type="submit" className="btn article-create-btn">
             發表文章
           </button>
         </div>

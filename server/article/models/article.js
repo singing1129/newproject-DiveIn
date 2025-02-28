@@ -1,4 +1,4 @@
-import db from "../../config/articleDb.js";  // 引入 articleDb.js
+import { db } from "../../config/articleDb.js";  // 引入 articleDb.js
 
 // 取得所有未刪除的文章
 const getAllArticles = async () => {
