@@ -21,7 +21,7 @@ router.get("/list/:id", async (req, res) => {
         WHERE groups.id = ${id}
         GROUP BY groups.id, activity_city.name, groups_image.img_url, activity_country.name, users.name `
         const [rows] = await pool.execute(sql);
-        // console.log(rows[0]);
+        console.log(rows[0]);
         res.status(200).json({
             status: "success",
             message: "成功獲取資料",

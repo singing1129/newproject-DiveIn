@@ -27,10 +27,9 @@ router.post("/join", async (req, res) => {
         console.log(maxNumber[0].max_number);
         if(nowNumber[0].participant_number >= maxNumber[0].max_number){
             const updateStatus = `UPDATE groups SET status = 1 WHERE id = ${id} `
-            
+            const doUpdateStatus = await pool.execute(updateStatus)
+            console.log(doUpdateStatus);
         }
-
-
         res.status(200).json({
             status: "success",
             message: "新建跟團資料成功"

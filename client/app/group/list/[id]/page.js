@@ -13,7 +13,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function GroupDetailPage() {
   const [count, setCount] = useState(0);
+  if (useParams()) { }
   const { id } = useParams();
+  console.log(useParams());
   // 設定api路徑
   const api = "http://localhost:3005/api";
 
@@ -29,7 +31,7 @@ export default function GroupDetailPage() {
         .then((res) => {
           console.log(res.data.data[0]);
           setGroup(res.data.data[0]);
-          setDescription(res.data.data[0].description.split("\n"));
+          // setDescription(res.data.data[0].description.split("\n"));
         })
         .catch((error) => {
           console.log(error);
@@ -47,6 +49,7 @@ export default function GroupDetailPage() {
   // 加入揪團
   const { user } = useAuth();
   const doJoin = async () => {
+    console.log("dojoin");
     if (!user) {
       alert("請先登入！");
       return;
@@ -566,12 +569,12 @@ export default function GroupDetailPage() {
               </div>
               已揪 {group.participant_number} / {group.max_number}
             </div>
-            
+
             {/* OK 設定好可選人數限制 */}
             {(group.max_number - group.participant_number) > 0 ? (
               <>
-            <div className="fs-20px fw-bold"> 可加人數：{(group.max_number - group.participant_number)} </div>
-              <div className="fw-bold fs-18px">人數</div>
+                <div className="fs-20px fw-bold"> 可加人數：{(group.max_number - group.participant_number)} </div>
+                <div className="fw-bold fs-18px">人數</div>
                 <div className="input-group count-group">
                   <button
                     className="btn fs-18px"
@@ -603,15 +606,14 @@ export default function GroupDetailPage() {
                 </div>
 
                 <div className="text-center">
-                  {
-                    user.id == group.user_id ? (
-                      <button className="btn edit-btn fs-20px">
-                        修改揪團
-                      </button>
-                    ) : (<button className="btn join-btn fs-20px" onClick={doJoin}>
+                  {!user || user.id != group.user_id ? (
+                    <button className="btn join-btn fs-20px" onClick={doJoin}>
                       加入跟團
                     </button>
-                    )
+                  ) : (<button className="btn edit-btn fs-20px">
+                    修改揪團
+                  </button>
+                  )
                   }
                 </div>
               </>
