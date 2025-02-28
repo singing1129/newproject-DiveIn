@@ -24,8 +24,8 @@ export const serverConfig = {
   smtp: {
     provider: 'gmail',
     host: 'smtp.gmail.com',
-    user: 'diveinmfee60@gmail.com',
-    pass: 'mfee60divein',
+    user: 'wc5894@gmail.com',
+    pass: 'qzfsmfunhkqivqvs',
   },
   jwt: {
     secret: "access_token_secret",

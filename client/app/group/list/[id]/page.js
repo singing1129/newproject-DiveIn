@@ -31,7 +31,7 @@ export default function GroupDetailPage() {
         .then((res) => {
           console.log(res.data.data[0]);
           setGroup(res.data.data[0]);
-          // setDescription(res.data.data[0].description.split("\n"));
+          setDescription(res.data.data[0].description.split("\n"));
         })
         .catch((error) => {
           console.log(error);
@@ -62,6 +62,8 @@ export default function GroupDetailPage() {
       group_id: group.id,
       user_id: user.id,
       number: count,
+      group_name: group.name,
+      group_date:group.date
     };
 
     console.log(joinInformation);
