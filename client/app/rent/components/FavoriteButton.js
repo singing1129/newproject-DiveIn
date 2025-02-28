@@ -2,13 +2,12 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import MessageModal from "./MessageModal";
 
-
 const FavoriteButton = ({
   rentalId,
   userId = 1, // 預設值改為可從 props 傳入
   className = "", // 允許傳入自訂 class
   isCircle = false, // 是否為圓形背景樣式
-  onFavoriteChange // 收藏狀態改變的回調
+  onFavoriteChange, // 收藏狀態改變的回調
 }) => {
   const [isFavorite, setIsFavorite] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +15,8 @@ const FavoriteButton = ({
   const [modalMessage, setModalMessage] = useState("");
 
   // 合併基礎樣式與自訂樣式
-  const baseClass = isCircle 
-    ? "icon d-flex justify-content-center align-items-center" 
+  const baseClass = isCircle
+    ? "icon d-flex justify-content-center align-items-center"
     : "heart-icon";
 
   const containerClass = `
@@ -27,24 +26,26 @@ const FavoriteButton = ({
     ${isCircle ? "circle-style" : ""}
   `;
 
-
   // 初始化的時候先檢查收藏狀態（是否已經收藏）
   useEffect(() => {
     // console.log("Checking favorite status for:", rentalId);
 
-    const checkFavoriteStatus = async () => {
-      if (!userId || !rentalId) return; // 確保參數存在
-
+    const checkFavoriteStatus = async (userId, rentalId) => {
       try {
-        const response = await axios.get(
-          "http://localhost:3005/api/favorites/check",
-          {
-            params: { userId, rentalId }, // 傳遞 userId 和 rentalId 來檢查收藏狀態
-          }
-        );
-        setIsFavorite(response.data.is_like); // 設定收藏狀態
+        const response = await axios.get('http://localhost:3005/api/favorites/check', {
+          params: { userId, rentalId }
+        });
+    
+        if (response.data.success) {
+          setIsFavorite(response.data.isFavorite); // 更新 isFavorite 狀態
+        } else {
+          console.error('請求失敗:', response.data.message);
+        }
       } catch (error) {
-        console.error("檢查收藏狀態失敗:", error);
+        console.error('請求失敗:', error);
+        if (error.response && error.response.status === 404) {
+          console.error('API 端點不存在，請檢查後端路由');
+        }
       }
     };
 
@@ -80,6 +81,11 @@ const FavoriteButton = ({
           userId,
           type,
           itemIds: [itemId], // 將 itemId 包裝成陣列，與後端參數符合
+        },
+        {
+          headers: {
+            "Content-Type": "application/json", // 設置為 JSON 格式
+          },
         }
       );
 
@@ -103,30 +109,33 @@ const FavoriteButton = ({
   // 返回 JSX
   return (
     <>
-  <div
-    className={`${containerClass.trim()} ${
-      isCircle ? 'circle-button' : ''
-    } ${isFavorite ? 'favorited' : ''}`}
-    onClick={handleClick}
-    style={{ 
-      cursor: isLoading ? "not-allowed" : "pointer",
-      pointerEvents: isLoading ? "none" : "auto"
-    }}
-  >
-    <i className={`bi ${isFavorite ? "bi-heart-fill" : "bi-heart"}`}></i>
-    {isLoading && <span className="loading-dot"></span>}
-  </div>
+      <div
+        className={`${containerClass.trim()} ${
+          isCircle ? "circle-button" : ""
+        } ${isFavorite ? "favorited" : ""}`}
+        onClick={handleClick}
+        style={{
+          cursor: isLoading ? "not-allowed" : "pointer",
+          pointerEvents: isLoading ? "none" : "auto",
+        }}
+      >
+        <i className={`bi ${isFavorite ? "bi-heart-fill" : "bi-heart"}`}></i>
+        {isLoading && <span className="loading-dot"></span>}
+      </div>
 
-  <MessageModal
-    message={modalMessage}
-    show={showModal}
-    onClose={() => setShowModal(false)}
-  />
+      <MessageModal
+        message={modalMessage}
+        show={showModal}
+        onClose={() => setShowModal(false)}
+      />
 
-  {showModal && (
-    <div className="modal-backdrop fade show" style={{ display: "block" }} />
-  )}
-</>
+      {showModal && (
+        <div
+          className="modal-backdrop fade show"
+          style={{ display: "block" }}
+        />
+      )}
+    </>
   );
 };
 

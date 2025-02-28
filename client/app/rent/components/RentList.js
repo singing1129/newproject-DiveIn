@@ -56,14 +56,13 @@ export default function RentList() {
   const [brands, setBrands] = useState([]); // 存儲過濾後的品牌列表
 
   // 價格專區
-  const [priceRange, setPriceRange] = useState([0, 50000]); // 滑塊的價格區間
+  const [priceRange, setPriceRange] = useState([0, 15000]); // 滑塊的價格區間
   const [isPriceFilterActive, setIsPriceFilterActive] = useState(false);
   const [minPrice, setMinPrice] = useState(0); // 最低價格輸入框的值
-  const [maxPrice, setMaxPrice] = useState(50000); // 最高價格輸入框的值
-  const [tempPriceRange, setTempPriceRange] = useState([0, 50000]); // 臨時價格區間
+  const [maxPrice, setMaxPrice] = useState(15000); // 最高價格輸入框的值
+  const [tempPriceRange, setTempPriceRange] = useState([0, 15000]); // 臨時價格區間
 
   //顏色專區
-
   const [colors, setColors] = useState([]); // 存儲顏色資料
   const [selectedColorId, setSelectedColorId] = useState(null);
 
@@ -80,8 +79,7 @@ export default function RentList() {
   const [saleProducts, setSaleProducts] = useState([]);
 
   // 搜索功能
-  const [search, setSearchTerm] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]); // 儲存過濾後的商品數據
+  const [search, setSearch] = useState("");
 
   //商品列表頁跳出modal選擇詳細資訊
   const [modalVisible, setModalVisible] = useState(false);
@@ -118,8 +116,7 @@ export default function RentList() {
       brand_id,
       minPrice = null,
       maxPrice = null,
-      color_id = null,
-      search = null
+      color_id = null
     ) => {
       const params = new URLSearchParams();
       params.set("page", page || 1);
@@ -185,7 +182,7 @@ export default function RentList() {
         if (color_id) url.searchParams.set("color_id", color_id);
         if (search) url.searchParams.set("search", search);
 
-        console.log("API 請求 URL:", url.toString()); // 調試信息
+        // console.log("API 請求 URL:", url.toString()); // 調試信息
 
         const response = await fetch(url);
         const result = await response.json();
@@ -241,9 +238,9 @@ export default function RentList() {
     const letter = searchParams.get("letter") || null;
     const brand_id = parseInt(searchParams.get("brand_id")) || null;
     const minPrice = parseInt(searchParams.get("minPrice")) || 0;
-    const maxPrice = parseInt(searchParams.get("maxPrice")) || 50000;
+    const maxPrice = parseInt(searchParams.get("maxPrice")) || 15000;
     const color_id = parseInt(searchParams.get("color_id")) || null;
-    const search = parseInt(searchParams.get("search")) || null;
+    const search = searchParams.get("search") || null;
 
     setCurrentPage(page);
     setItemsPerPage(limit);
@@ -253,9 +250,9 @@ export default function RentList() {
     setSelectedLetter(letter);
     setSelectedBrand(brand_id);
     setPriceRange([minPrice, maxPrice]);
-    setIsPriceFilterActive(minPrice > 0 || maxPrice < 50000);
+    setIsPriceFilterActive(minPrice > 0 || maxPrice < 15000);
     setSelectedColorId(color_id);
-    setSearchTerm(search);
+    setSearch(search);
 
     // 先檢查 localStorage 是否有快取
     const cacheKey = `products_${page}_${limit}_${sort}_${bigCategory}_${smallCategory}_${letter}_${brand_id}`;
@@ -293,21 +290,25 @@ export default function RentList() {
         setSelectedSort("下拉選取排序條件");
     }
     // 根據 URL 參數初始化商品列表
-    debouncedFetchProducts(
-      page,
-      sort,
-      limit,
-      bigCategory,
-      smallCategory,
-      letter,
-      brand_id,
-      minPrice,
-      maxPrice,
-      color_id,
-      search
-    );
+    if (search) {
+      // 如果有搜索關鍵字，調用 fetchSearchResults
+      fetchSearch(search, page, limit);
+    } else {
+      // 如果沒有搜索關鍵字，調用 fetchProducts
+      debouncedFetchProducts(
+        page,
+        sort,
+        limit,
+        bigCategory,
+        smallCategory,
+        letter,
+        brand_id,
+        minPrice,
+        maxPrice,
+        color_id
+      );
+    }
 
-    // 更新 URL 參數
     updateUrlParams(
       page,
       limit,
@@ -319,7 +320,7 @@ export default function RentList() {
       minPrice,
       maxPrice,
       color_id,
-      search
+      search // 傳遞搜索關鍵字
     );
   }, [searchParams, debouncedFetchProducts, updateUrlParams]);
 
@@ -641,134 +642,103 @@ export default function RentList() {
   };
 
   // 搜索區塊
-  const fetchRentList = async (filters) => {
-    const {
-      category_big_id,
-      category_small_id,
-      brand_id,
-      letter,
-      minPrice,
-      maxPrice,
-      color_id,
-      page,
-      limit,
-      sort,
-      search,
-    } = filters;
-
+  const fetchSearch = async (search, page = 1, limit = 16) => {
     try {
-      const response = await fetch(
-        `/rent?category_big_id=${category_big_id}&category_small_id=${category_small_id}&brand_id=${brand_id}&letter=${letter}&minPrice=${minPrice}&maxPrice=${maxPrice}&color_id=${color_id}&page=${page}&limit=${limit}&sort=${sort}&search=${search}`
-      );
-      const data = await response.json();
-      return data;
+      if (!search || search.trim() === "") {
+        // 如果搜索關鍵字為空，直接返回
+        setProducts([]); // 清空搜索結果
+        setCurrentPage(1);
+        setTotalPages(1);
+        setTotalProducts(0);
+        return;
+      }
+
+      const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005";
+      const url = new URL(`${API_BASE_URL}/api/rent/search`);
+      url.searchParams.set("search", encodeURIComponent(search)); // 搜索關鍵字
+      url.searchParams.set("page", page);
+      url.searchParams.set("limit", limit);
+
+      const response = await fetch(url);
+      const result = await response.json();
+
+      if (result.error) {
+        // 如果 API 返回錯誤訊息
+        console.error("API 返回錯誤:", result.error);
+        setProducts([]); // 清空搜索結果
+        setCurrentPage(1);
+        setTotalPages(1);
+        setTotalProducts(0);
+      } else if (result && result.data) {
+        // 如果 API 返回正確的數據
+        setProducts(result.data);
+        setCurrentPage(result.page);
+        setTotalPages(result.totalPages);
+        setTotalProducts(result.total);
+      } else {
+        console.error("API 返回的搜索結果格式不正確:", result);
+      }
     } catch (error) {
-      console.error("請求失敗:", error);
+      console.error("搜索失敗:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSearchChange = (event) => {
-    const term = event.target.value;
-    setSearchTerm(term); // 更新搜索關鍵字
-    setCurrentPage(1); // 重置頁碼為 1
-
-    // 觸發 API 請求
-    debouncedFetchProducts(
-      1, // page
-      sort, // sort
-      itemsPerPage, // limit
-      selectedBigCategory, // category_big_id
-      selectedSmallCategory, // category_small_id
-      selectedLetter, // letter
-      selectedBrandId, // brand_id
-      isPriceFilterActive ? priceRange[0] : null, // minPrice
-      isPriceFilterActive ? priceRange[1] : null, // maxPrice
-      selectedColorId, // color_id
-      term // search
-    );
-
-    // 更新 URL 參數
-    updateUrlParams(
-      1, // page
-      itemsPerPage, // limit
-      sort, // sort
-      selectedBigCategory, // category_big_id
-      selectedSmallCategory, // category_small_id
-      selectedLetter, // letter
-      selectedBrandId, // brand_id
-      isPriceFilterActive ? priceRange[0] : null, // minPrice
-      isPriceFilterActive ? priceRange[1] : null, // maxPrice
-      selectedColorId, // color_id
-      term // search
-    );
+  // 處理搜索輸入變化
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    debouncedSearch(value);
   };
 
-  const handleSearchSubmit = () => {
-    setCurrentPage(1); // 重置頁碼為 1
+  // 防抖搜索函數
+  const debouncedSearch = debounce(async (search) => {
+    if (search.trim() === "") {
+      // 如果搜索關鍵字為空，清除搜索結果並重新獲取所有商品
+      setSearch("");
+      debouncedFetchProducts(
+        currentPage,
+        sort,
+        itemsPerPage,
+        selectedBigCategory,
+        selectedSmallCategory,
+        selectedLetter,
+        selectedBrandId,
+        isPriceFilterActive ? priceRange[0] : null,
+        isPriceFilterActive ? priceRange[1] : null,
+        selectedColorId
+      );
+      return;
+    }
 
-    // 觸發 API 請求
-    fetchProducts(
-      1, // page
-      sort, // sort
-      itemsPerPage, // limit
-      selectedBigCategory, // category_big_id
-      selectedSmallCategory, // category_small_id
-      selectedLetter, // letter
-      selectedBrandId, // brand_id
-      isPriceFilterActive ? priceRange[0] : null, // minPrice
-      isPriceFilterActive ? priceRange[1] : null, // maxPrice
-      selectedColorId, // color_id
-      search // search
-    );
+    setLoading(true);
+    try {
+      // 調用 fetchSearch 獲取搜索結果
+      await fetchSearch(search, currentPage, itemsPerPage);
+    } catch (error) {
+      console.error("搜尋失敗:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, 300);
 
-    // 更新 URL 參數
-    updateUrlParams(
-      1, // page
-      itemsPerPage, // limit
-      sort, // sort
-      selectedBigCategory, // category_big_id
-      selectedSmallCategory, // category_small_id
-      selectedLetter, // letter
-      selectedBrandId, // brand_id
-      isPriceFilterActive ? priceRange[0] : null, // minPrice
-      isPriceFilterActive ? priceRange[1] : null, // maxPrice
-      selectedColorId, // color_id
-      search // search
-    );
-  };
-
+  // 清除搜索條件
   const handleClearSearch = () => {
-    setSearchTerm(""); // 清除搜索條件
-    setCurrentPage(1); // 重置頁碼為 1
-
-    // 觸發 API 請求
-    fetchProducts(
-      1, // page
-      sort, // sort
-      itemsPerPage, // limit
-      selectedBigCategory, // category_big_id
-      selectedSmallCategory, // category_small_id
-      selectedLetter, // letter
-      selectedBrandId, // brand_id
-      isPriceFilterActive ? priceRange[0] : null, // minPrice
-      isPriceFilterActive ? priceRange[1] : null, // maxPrice
-      selectedColorId, // color_id
-      "" // 清除搜索條件
-    );
-
-    // 更新 URL 參數
-    updateUrlParams(
-      1, // page
-      itemsPerPage, // limit
-      sort, // sort
-      selectedBigCategory, // category_big_id
-      selectedSmallCategory, // category_small_id
-      selectedLetter, // letter
-      selectedBrandId, // brand_id
-      isPriceFilterActive ? priceRange[0] : null, // minPrice
-      isPriceFilterActive ? priceRange[1] : null, // maxPrice
-      selectedColorId, // color_id
-      "" // 清除搜索條件
+    setSearch("");
+    setProducts([]); // 清空搜索結果
+    debouncedFetchProducts(
+      currentPage,
+      sort,
+      itemsPerPage,
+      selectedBigCategory,
+      selectedSmallCategory,
+      selectedLetter,
+      selectedBrandId,
+      isPriceFilterActive ? priceRange[0] : null,
+      isPriceFilterActive ? priceRange[1] : null,
+      selectedColorId
     );
   };
 
@@ -1563,41 +1533,29 @@ export default function RentList() {
 
               {/* 2. 篩選條件區塊 */}
               <div className="d-flex flex-column sidebar-lists product-search">
-                <form
-                  className="d-flex flex-row align-items-center search-box"
-                  onSubmit={(e) => {
-                    e.preventDefault(); // 防止表單提交
-                    handleSearchSubmit();
-                  }}
-                >
+                <div className="d-flex flex-row align-items-center search-box">
                   <input
                     type="search"
                     className="form-control"
                     placeholder="Search"
-                    value={search}
+                    value={search ?? ""}
                     onChange={handleSearchChange}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault(); // 防止表單提交
-                        handleSearchSubmit();
-                      }
-                    }}
                   />
                   {/* 清除條件圖標 */}
                   {search && (
                     <i
                       className="bi bi-x"
-                      onClick={handleClearSearch} // 清除搜索條件
-                      style={{ cursor: "pointer", marginRight: "30px" }} // 調整間距
+                      onClick={handleClearSearch}
+                      style={{ cursor: "pointer", marginRight: "30px" }}
                     />
                   )}
                   {/* 搜索圖標 */}
                   <i
                     className="bi bi-search"
-                    onClick={handleSearchSubmit} // 保留提交功能
+                    onClick={() => debouncedSearch(search)} // 手動搜索
                     style={{ cursor: "pointer" }}
                   />
-                </form>
+                </div>
               </div>
 
               {/* 篩選按鈕 */}
@@ -1649,12 +1607,12 @@ export default function RentList() {
                 <div className="product-filter-price">
                   <div className="d-flex justify-content-between align-items-center">
                     <p className="filter-subtitle">價格區間</p>
-                    {(priceRange[0] > 0 || priceRange[1] < 50000) && ( // 如果有設定價格範圍
+                    {(priceRange[0] > 0 || priceRange[1] < 15000) && ( // 如果有設定價格範圍
                       <i
                         className="bi bi-x clear-filter"
                         onClick={() => {
-                          setPriceRange([0, 50000]); // 重置價格範圍
-                          setTempPriceRange([0, 50000]); // 重置臨時價格區間
+                          setPriceRange([0, 15000]); // 重置價格範圍
+                          setTempPriceRange([0, 15000]); // 重置臨時價格區間
                           setIsPriceFilterActive(false); // 停用價格篩選
 
                           // 觸發商品列表更新
@@ -1667,7 +1625,7 @@ export default function RentList() {
                             selectedLetter,
                             selectedBrandId,
                             0, // 重置最小價格
-                            50000 // 重置最大價格
+                            15000 // 重置最大價格
                           );
 
                           // 更新 URL 參數（移除價格條件）
@@ -1680,7 +1638,7 @@ export default function RentList() {
                             selectedLetter,
                             selectedBrandId,
                             0, // 重置最小價格
-                            50000 // 重置最大價格
+                            15000 // 重置最大價格
                           );
                         }}
                       ></i>
@@ -1746,7 +1704,7 @@ export default function RentList() {
                     className="custom-slider"
                     range
                     min={0}
-                    max={50000}
+                    max={15000}
                     value={tempPriceRange}
                     onChange={(value) => {
                       setTempPriceRange(value);
@@ -2331,7 +2289,7 @@ export default function RentList() {
               <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4 product-lists">
                 {/* 商品卡片cards */}
                 {loading ? (
-                  <p className="">租借商品加載中...</p> // 後續有空弄哩哩摳摳
+                  <p>租借商品加載中...</p> // 後續有空弄哩哩摳摳
                 ) : (
                   Array.isArray(products) &&
                   products.map((product) => (

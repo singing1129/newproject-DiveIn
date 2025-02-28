@@ -17,6 +17,13 @@
   font-size: 24px;
   font-weight: 700;
 }
+.modal-body .product-amount .btn-outline-secondary {
+  border: 1px solid var(--gray-300-color);
+}
+.modal-body .product-amount .btn-outline-secondary:hover {
+  background-color: var(--primary-color);
+  border: 1px solid var(--white);
+}
 
 .modal-body .product-color {
   gap: 10px;
@@ -29,14 +36,18 @@
   display: inline-block;
   margin-right: 8px;
   filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.4));
-  cursor: pointer; 
+  cursor: pointer;
   transition: all 0.3s ease;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.1));
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(0, 0, 0, 0.1)
+  );
 }
 .modal-body .product-color .colors .color-box:hover {
   /* transform: scale(1.1); 放大 */
   border-color: var(--black); /* 邊框變深 */
-  box-shadow: 0 0 10px rgba(200, 200, 200, 0.1) /* 陰影 */
+  box-shadow: 0 0 10px rgba(200, 200, 200, 0.1); /* 陰影 */
 }
 /* 當顏色被選中時，顯示黑色邊框 */
 .modal-body .product-color .colors .color-box.selected {
@@ -72,15 +83,12 @@
   color: var(--gray-600-color);
 }
 
-
-
-
 /* 取消按鈕樣式 */
 .cancel-button {
-  background-color: var(--secondary-color); 
-  color: var(--white); 
+  background-color: var(--secondary-color);
+  color: var(--white);
   border: none;
-  border-radius: 8px; 
+  border-radius: 8px;
   padding: 10px 20px;
   font-size: 16px;
   font-weight: bold;
@@ -101,7 +109,7 @@
 
 /* 確認按鈕樣式 */
 .confirm-button {
-  background-color: var(--primary-color); 
+  background-color: var(--primary-color);
   color: var(--white);
   border: none;
   border-radius: 8px; /* 圓角 */

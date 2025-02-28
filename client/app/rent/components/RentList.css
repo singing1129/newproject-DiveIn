@@ -77,7 +77,7 @@
 /* 側欄搜索 */
 .search-box {
   width: 100%;
-  max-width: 300px;
+  /* max-width: 300px; */
   position: relative; /* 新增這行，確保內部的 .search-box i 可以正確定位 */
 }
 

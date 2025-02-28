@@ -319,12 +319,17 @@
   padding: 14px 9px 14px 0px;
 }
 
-.main-details .product-amount .amounts .quantity-btn {
+.main-details .product-amount .amounts .btn-outline-secondary {
   font-size: 12px;
   color: var(--gray-600-color);
   background-color: var(--white);
   border: 0.5px solid var(--gray-100-color);
   padding: 9px 14px;
+}
+.main-details .product-amount .amounts .btn-outline-secondary:hover {
+  color: var(--white);
+  background-color: var(--primary-color);
+  border: 1px solid var(--white);
 }
 
 .main-details .product-amount .amounts .minus {

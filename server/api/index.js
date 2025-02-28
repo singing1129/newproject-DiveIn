@@ -25,6 +25,7 @@ import rentColorRouter from "../routes/rent/colors.js";
 import rentNewRouter from "../routes/rent/new-arrivals.js";
 import rentDiscountedRouter from "../routes/rent/new-discounted.js";
 import rentFilterRouter from "../routes/rent/filter.js";
+import rentSearchRouter from "../routes/rent/search.js";
 import rentDetailRouter from "../routes/rent/detail.js";
 import rentRecommendedRouter from "../routes/rent/recommended.js";
 import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態文章頁
@@ -113,6 +114,7 @@ apiRouter.use("/rent", rentColorRouter); // 負責 `/api/rent/colors`
 apiRouter.use("/rent", rentNewRouter); // 負責 `/api/rent/new-arrivals`
 apiRouter.use("/rent", rentDiscountedRouter); // 負責 `/api/rent/new-discounted`
 apiRouter.use("/rent", rentFilterRouter); // 負責 `/api/rent/filter`
+apiRouter.use("/rent", rentSearchRouter); // 負責 `/api/rent/search`
 apiRouter.use("/rent", rentDetailRouter); // 負責 `/api/rent/:id`
 apiRouter.use("/rent", rentRecommendedRouter); // 負責 `/api/rent/:id/recommended`
 // 文章相關路由

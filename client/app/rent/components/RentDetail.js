@@ -254,7 +254,7 @@ export default function RentProductDetail() {
           const deposit = Number(unitPrice * 0.3);
 
           // 計算總費用
-          const totalCost = unitPrice * quantity * daysDiff + deposit;
+          const totalCost = unitPrice * quantity * daysDiff + deposit * quantity * daysDiff;
 
           // 更新日期範圍文字的顯示
           dateRangeText.textContent = `租借日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
@@ -856,15 +856,13 @@ export default function RentProductDetail() {
               <div className="rent-rules d-flex flex-column">
                 <p className="rules-title">租借規則</p>
                 <ul className="rules-content">
-                  <li>租借本人出示潛水證</li>
+                  <li>限本站會員租借</li>
                   <li>如有遺失或損害，需修復原有狀況或是全新賠償</li>
                   <li>
-                    租借與歸還時間限每日上午8:00至
-                    下午5:00，過時則以多借一天計算
+                    租借與歸還時間限每日上午8:00至下午5:00，過時則以多借一天計算
                   </li>
                   <li>
-                    以天計價，非24小時制度。例如:
-                    12/18日下午2點租借，12/19下午2點歸還，則算兩天
+                    以天計價，非24小時制度，例如：12/18日下午2:00租借，12/19下午2:00歸還，則算兩天
                   </li>
                   <li>計價方式：(每日租金 + 每日押金) x 數量 x 租借天數</li>
                 </ul>
