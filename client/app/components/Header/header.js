@@ -6,11 +6,9 @@ import { FiShoppingCart } from "react-icons/fi";
 import Link from "next/link";
 import HeaderPop from "./headerPop"; // 引入 HeaderPop 組件
 
-
 export default function Header() {
   const [showPop, setShowPop] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
-
 
   const handleMouseEnter = (menu) => {
     setShowPop(true);
