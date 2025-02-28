@@ -95,6 +95,9 @@ const ArticleForm = () => {
       return;
     }
 
+    // 在這裡打印 tagsList，檢查標籤數據
+    console.log("tagsList:", tagsList);
+
     const formData = new FormData();
     formData.append("new_title", new_title);
     formData.append("new_content", new_content);

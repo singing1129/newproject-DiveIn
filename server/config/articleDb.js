@@ -36,13 +36,13 @@ export const db = {
   },
 
   // 建立新文章
-  createArticle: async ({ title, content, coverImage, category_id }) => {
-    const { results } = await query(
-      "INSERT INTO article (title, content, coverImage, category_id, created_at) VALUES (?, ?, ?, ?, NOW())",
-      [title, content, coverImage, category_id]
-    );
-    return results.insertId; // 返回插入的文章 ID
-  },
+  // createArticle: async ({ title, content, coverImage, category_id }) => {
+  //   const { results } = await query(
+  //     "INSERT INTO article (title, content, coverImage, category_id, created_at) VALUES (?, ?, ?, ?, NOW())",
+  //     [title, content, coverImage, category_id]
+  //   );
+  //   return results.insertId; // 返回插入的文章 ID
+  // },
 
   // 更新文章
   updateArticle: async (id, { title, content, coverImage, category_id }) => {
@@ -109,30 +109,30 @@ export const db = {
     return results;
   },
 
-  // 新增：插入文章與標籤的關聯
-  insertArticleTag: async (articleId, tagId) => {
-    const { results } = await query(
-      "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
-      [articleId, tagId]
-    );
-    return results.affectedRows > 0; // 返回是否插入成功
-  },
+  // // 新增：插入文章與標籤的關聯
+  // insertArticleTag: async (articleId, tagId) => {
+  //   const { results } = await query(
+  //     "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
+  //     [articleId, tagId]
+  //   );
+  //   return results.affectedRows > 0; // 返回是否插入成功
+  // },
 
-  // 新增：檢查標籤是否存在
-  checkTagExists: async (tagName) => {
-    const { results } = await query(
-      "SELECT id FROM article_tag_small WHERE tag_name = ?",
-      [tagName]
-    );
-    return results.length > 0 ? results[0].id : null; // 返回標籤 ID 或 null
-  },
+  // // 新增：檢查標籤是否存在
+  // checkTagExists: async (tagName) => {
+  //   const { results } = await query(
+  //     "SELECT id FROM article_tag_small WHERE tag_name = ?",
+  //     [tagName]
+  //   );
+  //   return results.length > 0 ? results[0].id : null; // 返回標籤 ID 或 null
+  // },
 
-  // 新增：插入新標籤
-  insertTag: async (tagName) => {
-    const { results } = await query(
-      "INSERT INTO article_tag_small (tag_name) VALUES (?)",
-      [tagName]
-    );
-    return results.insertId; // 返回插入的標籤 ID
-  },
+  // // 新增：插入新標籤
+  // insertTag: async (tagName) => {
+  //   const { results } = await query(
+  //     "INSERT INTO article_tag_small (tag_name) VALUES (?)",
+  //     [tagName]
+  //   );
+  //   return results.insertId; // 返回插入的標籤 ID
+  // },
 };

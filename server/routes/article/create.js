@@ -33,12 +33,54 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
+// 在 handleTags 函式中添加更多錯誤檢查
+const handleTags = async (tags, articleId) => {
+  if (!Array.isArray(tags)) {
+    throw new Error("標籤格式錯誤：標籤應為陣列");
+  }
+
+  try {
+    for (let tag of tags) {
+      // 檢查標籤是否存在
+      const { results: existingTag } = await db.query(
+        "SELECT id FROM article_tag_small WHERE tag_name = ?",
+        [tag]
+      );
+
+      let tagId;
+      if (existingTag && existingTag.length > 0) {
+        tagId = existingTag[0].id; // 使用現有標籤的 ID
+      } else {
+        // 插入新標籤
+        const { results: tagResult } = await db.query(
+          "INSERT INTO article_tag_small (tag_name) VALUES (?)",
+          [tag]
+        );
+        if (!tagResult || !tagResult.insertId) {
+          throw new Error("標籤插入失敗");
+        }
+        tagId = tagResult.insertId; // 獲取新插入標籤的 ID
+      }
+
+      // 將標籤與文章關聯
+      await db.query(
+        "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
+        [articleId, tagId]
+      );
+    }
+  } catch (error) {
+    console.error("❌ 處理標籤時發生錯誤：", error);
+    throw error; // 將錯誤拋出，讓上層函式處理
+  }
+};
+
 // 文章創建 API 路由
 router.post("/create", upload.single("new_coverImage"), async (req, res) => {
   console.log("req.body:", req.body); // 調試：打印非文件字段
   console.log("req.file:", req.file); // 調試：打印文件字段
 
-  const {
+  // 確保 new_tags 已經正確解析
+  let {
     new_title,
     new_content,
     new_categorySmall,
@@ -46,12 +88,26 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
     status = "draft",
   } = req.body;
 
+  // 確保 new_tags 是陣列
+  try {
+    if (typeof new_tags === "string") {
+      new_tags = JSON.parse(new_tags);
+    }
+    if (!Array.isArray(new_tags)) {
+      throw new Error("標籤應為 JSON 陣列");
+    }
+  } catch (error) {
+    return res.status(400).json({ message: "標籤格式錯誤，應為 JSON 陣列" });
+  }
+
+  console.log("接收到的 tags:", new_tags); // 確保變數已經正確初始化
+
   const coverImagePath = req.file
     ? `/uploads/article/${req.file.filename}`
     : null;
   const currentDate = new Date();
+  const publishAt = status === "published" ? currentDate : null;
 
-  // 檢查必要的字段
   if (!new_title || !new_content || !new_categorySmall || !new_tags) {
     return res.status(400).json({ message: "所有字段都是必需的！" });
   }
@@ -68,15 +124,13 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
         userId,
         status,
         currentDate,
-        status === "published" ? currentDate : null,
+        publishAt,
         0,
         0,
         0,
       ]
     );
 
-    // 調試：檢查插入文章的返回值
-    console.log("articleResult:", articleResult);
     if (!articleResult || articleResult.insertId === 0) {
       throw new Error("無法獲取文章 ID");
     }
@@ -86,53 +140,12 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
     if (coverImagePath) {
       await db.query(
         "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
-        [articleId, coverImagePath, 0]
+        [articleId, coverImagePath, 1]
       );
     }
 
     // 處理標籤
-    let tagArray;
-    try {
-      tagArray = JSON.parse(new_tags);
-      if (!Array.isArray(tagArray)) {
-        tagArray = [tagArray]; // 如果 new_tags 是單個標籤，轉換為數組
-      }
-    } catch (error) {
-      console.error("new_tags 解析失敗：", new_tags);
-      return res.status(400).json({ message: "標籤格式錯誤" });
-    }
-
-    // 檢查 tagArray 是否為數組
-    if (!Array.isArray(tagArray)) {
-      console.error("new_tags 不是有效的數組：", new_tags);
-      return res.status(400).json({ message: "標籤格式錯誤" });
-    }
-
-    for (let tag of tagArray) {
-      // 檢查標籤是否已存在
-      const [existingTag] = await db.query(
-        "SELECT id FROM article_tag_small WHERE tag_name = ?",
-        [tag]
-      );
-
-      let tagId;
-      if (existingTag.length > 0) {
-        tagId = existingTag[0].id; // 使用現有標籤的 ID
-      } else {
-        // 插入新標籤
-        const { results: tagResult } = await db.query(
-          "INSERT INTO article_tag_small (tag_name) VALUES (?)",
-          [tag]
-        );
-        tagId = tagResult.insertId; // 獲取新標籤的 ID
-      }
-
-      // 關聯標籤與文章
-      await db.query(
-        "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
-        [articleId, tagId]
-      );
-    }
+    await handleTags(new_tags, articleId);
 
     res
       .status(200)
@@ -143,186 +156,29 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
   }
 });
 
-// 處理文章封面圖片上傳
-router.post("/upload-image", upload.single("coverImage"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: "請選擇圖片" });
-  }
-
-  const imageUrl = `/uploads/article/${req.file.filename}`;
-
-  try {
-    // 將圖片信息存儲到 article_image 資料表
-    const { results } = await db.query(
-      "INSERT INTO article_image (img_url, is_main) VALUES (?, ?)",
-      [imageUrl, 1] // is_main 設為 1
-    );
-
-    res.status(200).json({
-      success: true,
-      imageUrl,
-      imageId: results.insertId, // 可選：返回圖片的 ID
-    });
-  } catch (error) {
-    console.error("❌ 封面圖片上傳失敗：", error);
-    res.status(500).json({ success: false, message: "封面圖片上傳失敗" });
-  }
-});
-
-// 新增 CKEditor 圖片上傳路由
-router.post("/upload", upload.single("articleImage"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: "請選擇圖片" });
-  }
-
-  const imageUrl = `/uploads/article/${req.file.filename}`;
-
-  try {
-    // 將圖片信息存儲到 article_image 資料表
-    const { results } = await db.query(
-      "INSERT INTO article_image (img_url, is_main) VALUES (?, ?)",
-      [imageUrl, 0] // is_main 設為 0
-    );
-
-    res.status(200).json({
-      success: true,
-      url: imageUrl, // CKEditor 需要的返回格式
-      imageId: results.insertId, // 可選：返回圖片的 ID
-    });
-  } catch (error) {
-    console.error("❌ 圖片上傳失敗：", error);
-    res.status(500).json({ success: false, message: "圖片上傳失敗" });
-  }
-});
-
-// 更新文章 API
-router.put("/update/:id", upload.single("cover_image"), async (req, res) => {
-  const articleId = req.params.id;
-  const {
-    new_title,
-    new_content,
-    new_article_category_small_id,
-    new_status,
-    new_tags,
-  } = req.body;
-  let coverImagePath = req.file
-    ? `/uploads/article/${req.file.filename}`
-    : null;
-
-  try {
-    // 檢查必要的字段
-    if (
-      !new_title ||
-      !new_content ||
-      !new_article_category_small_id ||
-      !new_tags
-    ) {
-      return res.status(400).json({ message: "所有字段都是必需的！" });
-    }
-
-    // 如果沒有新圖片，保留舊的圖片
-    async function getCoverImagePath(articleId, coverImagePath) {
-      if (!coverImagePath) {
-        const [oldCover] = await db.query(
-          "SELECT cover_image FROM article WHERE id = ?",
-          [articleId]
-        );
-        return oldCover.length > 0 ? oldCover[0].cover_image : null;
-      }
-      return coverImagePath;
-    }
-
-    // 更新文章資料
-    await db.query(
-      "UPDATE article SET title = ?, content = ?, article_category_small_id = ?, status = ?, cover_image = ? WHERE id = ?",
-      [
-        new_title,
-        new_content,
-        new_article_category_small_id,
-        new_status,
-        coverImagePath,
-        articleId,
-      ]
-    );
-
-    // 刪除舊的標籤關聯
-    await db.query("DELETE FROM article_tag_big WHERE article_id = ?", [
-      articleId,
-    ]);
-
-    // 重新關聯標籤
-    const tagArray = JSON.parse(new_tags);
-    for (let tag of tagArray) {
-      const [existingTag] = await db.query(
-        "SELECT id FROM article_tag_small WHERE tag_name = ?",
-        [tag]
-      );
-      let tagId;
-
-      if (existingTag.length > 0) {
-        tagId = existingTag[0].id;
-      } else {
-        const [tagResult] = await db.query(
-          "INSERT INTO article_tag_small (tag_name) VALUES (?)",
-          [tag]
-        );
-        tagId = tagResult.insertId;
-      }
-
-      // 關聯標籤與文章
-      await db.query(
-        "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
-        [articleId, tagId]
-      );
-    }
-
-    res
-      .status(200)
-      .json({ success: true, message: "文章更新成功！", articleId });
-  } catch (error) {
-    console.error("❌ 文章更新失敗：", error);
-    res.status(500).json({ success: false, message: "更新文章時發生錯誤" });
-  }
-});
-
 // 草稿儲存 API
 router.post("/save-draft", async (req, res) => {
   const { new_title, new_content, new_article_category_small_id, new_tags } =
     req.body;
-  console.log("🔍 接收到的请求数据:", req.body); // 打印请求数据
-  try {
-    // 檢查必要的字段
-    if (
-      !new_title ||
-      !new_content ||
-      !new_article_category_small_id ||
-      !new_tags
-    ) {
-      return res.status(400).json({ message: "所有字段都是必需的！" });
-    }
 
-    // 插入草稿資料
-    const [draftResult] = await db.query(
+  if (
+    !new_title ||
+    !new_content ||
+    !new_article_category_small_id ||
+    !new_tags
+  ) {
+    return res.status(400).json({ message: "所有字段都是必需的！" });
+  }
+
+  try {
+    const draftResult = await db.query(
       'INSERT INTO article (title, content, article_category_small_id, status) VALUES (?, ?, ?, "draft")',
       [new_title, new_content, new_article_category_small_id]
     );
     const draftId = draftResult.insertId;
 
-    // 插入並關聯標籤
-    const tagArray = JSON.parse(new_tags);
-    for (let tag of tagArray) {
-      const [tagResult] = await db.query(
-        "INSERT IGNORE INTO article_tag_small (tag_name) VALUES (?)",
-        [tag]
-      );
-      const tagId = tagResult.insertId;
-
-      // 關聯標籤與草稿文章
-      await db.query(
-        "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
-        [draftId, tagId]
-      );
-    }
+    // 處理標籤
+    await handleTags(new_tags, draftId);
 
     res.status(200).json({ success: true, message: "草稿儲存成功！", draftId });
   } catch (error) {
@@ -334,10 +190,7 @@ router.post("/save-draft", async (req, res) => {
 // 新建文章所需分類與標籤資料 API (GET)
 router.get("/data", async (req, res) => {
   try {
-    // 取得分類
     const { category_big, category_small } = await db.getCategories();
-
-    // 取得標籤
     const tags = await db.getTags();
 
     res.status(200).json({
@@ -352,9 +205,8 @@ router.get("/data", async (req, res) => {
   }
 });
 
-// 測試路由
-router.get("/create", (req, res) => {
-  res.send("這是文章創建頁面");
-});
+// 圖片上傳路由
+router.post("/upload-image", (req, res) => handleImageUpload(req, res, 1));
+router.post("/upload", (req, res) => handleImageUpload(req, res, 0));
 
 export default router;
