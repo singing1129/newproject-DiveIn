@@ -1,8 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import axios from "axios";
-import "./articleList.css";
+
+import "./article.css";
 
 export default function ArticleDetail() {
   const { id } = useParams(); // 從 URL 中獲取文章 ID
@@ -10,6 +13,20 @@ export default function ArticleDetail() {
   const [loading, setLoading] = useState(true); // 加載狀態
   const [error, setError] = useState(null); // 錯誤狀態
   const [relatedArticles, setRelatedArticles] = useState([]); // 相關文章
+
+  const backendURL = "http://localhost:3005";
+  const defaultImage = "/uploads/article/no_is_main.png";
+
+  const [imageUrl, setImageUrl] = useState(defaultImage);
+
+  useEffect(() => {
+    if (article && article.img_url) {
+      const fullImageUrl = article.img_url.startsWith("http")
+        ? article.img_url
+        : `${backendURL}${article.img_url || defaultImage}`;
+      setImageUrl(fullImageUrl);
+    }
+  }, [article]);
 
   useEffect(() => {
     // 從 API 獲取文章數據
@@ -84,10 +101,11 @@ export default function ArticleDetail() {
         {Number(reply.level) === 1 && (
           <div className="reply1">
             <img
-              src="../img/article/reply1.jpg"
-              className="reply-avatar1"
+              src="../img/article/reply2.jpg"
+              className="reply-avatar2"
               alt=""
             />
+
             <div className="reply-details1">
               <div className="reply-header1">
                 <div>
@@ -163,14 +181,13 @@ export default function ArticleDetail() {
           </div>
         </div>
         <div className="main-photo">
-          <img
-            src={
-              article.img_url && article.img_url !== ""
-                ? article.img_url
-                : "/default-image.jpg"
-            }
-            className="img-fluid"
-            alt="main-photo"
+          <Image
+            src={imageUrl}
+            alt="Article Thumbnail"
+            fill
+            style={{ objectFit: "cover" }}
+            sizes="(max-width: 768px) 100vw, 50vw"
+            onError={() => setImageUrl(defaultImage)}
           />
         </div>
         <div className="article-content-area">{article.content}</div>
@@ -242,46 +259,60 @@ const TagList = ({ tags }) => {
           <button className="more-btn">更多</button>
         </div>
         {/* related article */}
+        {/* related article */}
         <div className="related-article-area-title">相關文章</div>
 
         <div className="related-article-area row row-cols-1 row-cols-md-2">
-          {relatedArticles.map((relatedArticle, index) => (
-            <div className="related-card" key={index}>
-              <div className="img-container">
-                <img
-                  src={
-                    relatedArticle.img_url ||
-                    "../img/article/article-ex-main-photo.jpeg"
-                  }
-                  alt="..."
-                />
-              </div>
-              <div className="card-body">
-                <div className="card-title">{relatedArticle.title}</div>
-                <div className="card-content">{relatedArticle.content}</div>
-                <div className="related-tag-area">
-                  {Array.isArray(relatedArticle.tags) ? (
-                    relatedArticle.tags.map((tag, index) => (
-                      <span key={index} className="tag">
-                        #{tag.trim()}
-                      </span>
-                    ))
-                  ) : (
-                    <span>No tags available</span>
-                  )}
+          {relatedArticles.map((relatedArticle, index) => {
+            // 為每篇相關文章生成獨立的圖片 URL
+            const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
+              ? relatedArticle.img_url
+              : `${backendURL}${relatedArticle.img_url || defaultImage}`;
+
+            return (
+              <div className="related-card" key={index}>
+                <div className="img-container">
+                  <Image
+                    className="article-list-card-photo-img"
+                    src={relatedImageUrl}
+                    alt="Article Thumbnail"
+                    width={300} // 設置寬度
+                    height={200} // 設置高度
+                    style={{ objectFit: "cover", objectPosition: "center" }}
+                    onError={(e) => {
+                      e.currentTarget.src = defaultImage;
+                    }}
+                  />
                 </div>
-                <div className="others-reply-area">
-                  <div className="good1">
-                    <i className="fa-regular fa-thumbs-up"></i>1
+                <div className="card-body">
+                  <div className="card-title">{relatedArticle.title}</div>
+                  <div className="card-content">{relatedArticle.content}</div>
+                  <div className="related-tag-area">
+                    {Array.isArray(relatedArticle.tags) ? (
+                      relatedArticle.tags.map((tag, index) => (
+                        <span key={index} className="tag">
+                          #{tag.trim()}
+                        </span>
+                      ))
+                    ) : (
+                      <span>No tags available</span>
+                    )}
                   </div>
-                  <div className="comment">
-                    <i className="fa-regular fa-thumbs-down"></i>10
+                  <div className="others-reply-area">
+                    <div className="good1">
+                      <i className="fa-regular fa-thumbs-up"></i>
+                      {relatedArticle.likes_count || 0} {/* 顯示點讚數 */}
+                    </div>
+                    <div className="comment">
+                      <i className="fa-regular fa-thumbs-down"></i>
+                      {relatedArticle.dislikes_count || 0} {/* 顯示點踩數 */}
+                    </div>
+                    <div className="others-reply">回覆</div>
                   </div>
-                  <div className="others-reply">回覆</div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

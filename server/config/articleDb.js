@@ -35,33 +35,6 @@ export const db = {
     return results[0]; // 返回單篇文章
   },
 
-  // 建立新文章
-  // createArticle: async ({ title, content, coverImage, category_id }) => {
-  //   const { results } = await query(
-  //     "INSERT INTO article (title, content, coverImage, category_id, created_at) VALUES (?, ?, ?, ?, NOW())",
-  //     [title, content, coverImage, category_id]
-  //   );
-  //   return results.insertId; // 返回插入的文章 ID
-  // },
-
-  // 更新文章
-  updateArticle: async (id, { title, content, coverImage, category_id }) => {
-    const { results } = await query(
-      "UPDATE article SET title = ?, content = ?, coverImage = ?, category_id = ?, updated_at = NOW() WHERE id = ?",
-      [title, content, coverImage, category_id, id]
-    );
-    return results.affectedRows > 0; // 返回是否更新成功
-  },
-
-  // 軟刪除文章
-  deleteArticle: async (id) => {
-    const { results } = await query(
-      "UPDATE article SET isDeleted = 1 WHERE id = ?",
-      [id]
-    );
-    return results.affectedRows > 0; // 返回是否刪除成功
-  },
-
   // 取得所有分類
   getCategories: async () => {
     // 先查詢大分類資料
@@ -109,30 +82,21 @@ export const db = {
     return results;
   },
 
-  // // 新增：插入文章與標籤的關聯
-  // insertArticleTag: async (articleId, tagId) => {
+  // // 更新文章
+  // updateArticle: async (id, { title, content, coverImage, category_id }) => {
   //   const { results } = await query(
-  //     "INSERT INTO article_tag_big (article_id, article_tag_small_id) VALUES (?, ?)",
-  //     [articleId, tagId]
+  //     "UPDATE article SET title = ?, content = ?, coverImage = ?, category_id = ?, updated_at = NOW() WHERE id = ?",
+  //     [title, content, coverImage, category_id, id]
   //   );
-  //   return results.affectedRows > 0; // 返回是否插入成功
+  //   return results.affectedRows > 0; // 返回是否更新成功
   // },
 
-  // // 新增：檢查標籤是否存在
-  // checkTagExists: async (tagName) => {
+  // // 軟刪除文章
+  // deleteArticle: async (id) => {
   //   const { results } = await query(
-  //     "SELECT id FROM article_tag_small WHERE tag_name = ?",
-  //     [tagName]
+  //     "UPDATE article SET isDeleted = 1 WHERE id = ?",
+  //     [id]
   //   );
-  //   return results.length > 0 ? results[0].id : null; // 返回標籤 ID 或 null
-  // },
-
-  // // 新增：插入新標籤
-  // insertTag: async (tagName) => {
-  //   const { results } = await query(
-  //     "INSERT INTO article_tag_small (tag_name) VALUES (?)",
-  //     [tagName]
-  //   );
-  //   return results.insertId; // 返回插入的標籤 ID
+  //   return results.affectedRows > 0; // 返回是否刪除成功
   // },
 };

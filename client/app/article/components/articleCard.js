@@ -13,29 +13,27 @@ export default function ArticleCard({ article }) {
       : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`
   );
 
-
   // 生成完整的圖片 URL
   useEffect(() => {
     const fullImageUrl = article.img_url?.startsWith("http")
       ? article.img_url
       : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`;
-  
+
     setImageUrl(fullImageUrl); // 更新 imageUrl 狀態
   }, [article.img_url]);
 
   return (
     <div className="article-list-card">
       <div className="article-list-card-photo">
-      <Image
-  className="article-list-card-photo-img"
-  src={imageUrl}
-  alt="Article Thumbnail"
-  fill
-  style={{ objectFit: "cover" }}
-  sizes="(max-width: 768px) 100vw, 50vw"  // 根據視窗寬度設置大小
-  onError={() => setImageUrl(defaultImage)}
-/>
-
+        <Image
+          className="article-list-card-photo-img"
+          src={imageUrl}
+          alt="Article Thumbnail"
+          fill
+          style={{ objectFit: "cover" }}
+          sizes="(max-width: 768px) 100vw, 50vw" // 根據視窗寬度設置大小
+          onError={() => setImageUrl(defaultImage)}
+        />
       </div>
 
       <div className="article-list-card-text">
