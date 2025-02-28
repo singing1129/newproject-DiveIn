@@ -68,6 +68,25 @@ router.get("/", async (req, res) => {
       [...params, Number(limit), Number(offset)]
     );
 
+    // 處理圖片 URL
+    const fullRows = rows.map((row) => {
+      // 如果 img_url 存在並且是相對路徑
+      if (
+        row.img_url &&
+        !row.img_url.startsWith("http") &&
+        !row.img_url.startsWith("/uploads")
+      ) {
+        row.img_url = `/uploads${row.img_url}`;
+      }
+
+      // 如果 img_url 為 null 或空值，補充預設圖片
+      if (!row.img_url) {
+        row.img_url = "/uploads/article/no_is_main.png";
+      }
+
+      return row;
+    });
+    
     // 查詢總數
     const [[{ totalCount }]] = await pool.execute(
       `
@@ -84,7 +103,7 @@ router.get("/", async (req, res) => {
 
     res.json({
       status: "success",
-      data: rows,
+      data: fullRows, // 返回完整的圖片 URL
       pagination: {
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
@@ -137,15 +156,27 @@ router.get("/:id", async (req, res) => {
 
     const article = articleRows[0];
 
-    // 查詢文章圖片
+    // 查詢文章封面，僅返回 is_main = 1 的圖片
     const [imageRows] = await pool.execute(
       `
-      SELECT img_url, is_main
-      FROM article_image
-      WHERE article_id = ?
-      `,
+  SELECT img_url, is_main
+  FROM article_image
+  WHERE article_id = ? AND is_main = 1
+  `,
       [articleId]
     );
+
+    // 如果沒有找到主圖片，則補上預設圖片
+    if (imageRows.length === 0) {
+      imageRows.push({ img_url: "/piblic/uploads/article/no_is_main.png" }); // 沒有主圖片時使用預設圖片
+    }
+
+    // 處理圖片 URL
+    imageRows.forEach((image) => {
+      if (image.img_url && !image.img_url.startsWith("http")) {
+        image.img_url = `/uploads${image.img_url}`;
+      }
+    });
 
     // 查詢文章標籤
     const [tagRows] = await pool.execute(

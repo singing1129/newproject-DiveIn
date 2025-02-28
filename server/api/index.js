@@ -4,6 +4,7 @@ import cors from "cors";
 import logger from "morgan";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { fileURLToPath } from "url";
 import createError from "http-errors";
 // 路由模組
 import productRouter from "../routes/products/index.js";
@@ -48,9 +49,12 @@ import orderRouter from "../routes/order/index.js";
 // 建立 Express 應用程式
 const app = express();
 
+// 獲取文章當前文件的目錄路徑
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 設定允許的跨域來源
-const whiteList = ["http://localhost:3000", "http://localhost:3001"];
+const whiteList = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3005"];
 const corsOptions = {
   credentials: true,
   origin(origin, callback) {
@@ -70,8 +74,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logger("dev"));
 app.use(express.static(path.join(process.cwd(), "../public")));
 
-// 提供 uploads 目錄下的靜態文件服務
-app.use("/uploads/article", express.static(path.join(process.cwd(), "public", "uploads")));
+// 提供靜態文件服務
+app.use(
+  "/uploads/article",
+  express.static(path.join(__dirname, "..", "public", "uploads", "article"))
+);
 
 // 測試 API
 app.get("/", (req, res) => {

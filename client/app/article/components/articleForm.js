@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import axios from "axios";
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 
 const ArticleForm = () => {
+  const router = useRouter();
   const [new_title, setTitle] = useState("");
   const [new_content, setContent] = useState("");
   const [new_categoryBig, setCategoryBig] = useState("");
@@ -12,6 +15,12 @@ const ArticleForm = () => {
   const [tagsList, setTagsList] = useState([]);
   const [new_coverImage, setCoverImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState(""); // "draft" 或 "published"
+
+  // 按鈕點擊事件，跳轉不同頁面
+  const handleButtonClick = (path) => {
+    router.push(path);
+  };
 
   // 新增的狀態
   const [categoriesBig, setCategoriesBig] = useState([]); // 大分類
@@ -78,8 +87,6 @@ const ArticleForm = () => {
   };
 
   // 提交表單
-  const [submitStatus, setSubmitStatus] = useState(""); // "draft" 或 "published"
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -92,14 +99,9 @@ const ArticleForm = () => {
     formData.append("new_title", new_title);
     formData.append("new_content", new_content);
     formData.append("new_categorySmall", new_categorySmall);
-    formData.append("new_tags", JSON.stringify(tagsList)); // 注意：改為 new_tags
+    formData.append("new_tags", JSON.stringify(tagsList));
     formData.append("status", submitStatus);
     if (new_coverImage) formData.append("new_coverImage", new_coverImage);
-
-    // 調試：打印 FormData 內容
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
 
     try {
       const response = await fetch("http://localhost:3005/api/article/create", {
@@ -114,6 +116,11 @@ const ArticleForm = () => {
       const data = await response.json();
       if (data.success) {
         alert(submitStatus === "draft" ? "草稿儲存成功！" : "文章發表成功！");
+
+        // ✅ 確保瀏覽器環境加載後才執行 router.push
+        setTimeout(() => {
+          router.push("/article");
+        }, 500);
       } else {
         alert("發表失敗：" + (data.message || "請稍後再試"));
       }
@@ -125,9 +132,24 @@ const ArticleForm = () => {
 
   return (
     <div className="create-form">
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <div className="create-title">發表新文章</div>
+      <div className="article-controls-btn">
+        <span className="create-title">發表新文章</span>
+        <span className="btn" onClick={() => handleButtonClick("/article")}>
+          <span className="btn-icon">
+            <i className="fa-solid fa-rotate-left"></i>
+          </span>
+          返回列表
+        </span>
+        <span className="btn">
+          {/* onClick={() => handleButtonClick("/article/mine")} */}
+          <span className="btn-icon">
+            <i className="fa-solid fa-bookmark"></i>
+          </span>
+          我的文章
+        </span>
+      </div>
 
+      <form onSubmit={handleSubmit} encType="multipart/form-data">
         {/* 封面圖片 */}
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
@@ -135,9 +157,10 @@ const ArticleForm = () => {
             {previewImage ? (
               <img src={previewImage} alt="封面預覽" className="upload-image" />
             ) : (
-              <div className="upload-square-icon"></div>
+              <span>請選擇圖片</span>
             )}
           </label>
+
           <input
             type="file"
             id="new_coverImage"

@@ -94,12 +94,13 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
     let tagArray;
     try {
       tagArray = JSON.parse(new_tags);
+      if (!Array.isArray(tagArray)) {
+        tagArray = [tagArray]; // 如果 new_tags 是單個標籤，轉換為數組
+      }
     } catch (error) {
       console.error("new_tags 解析失敗：", new_tags);
       return res.status(400).json({ message: "標籤格式錯誤" });
     }
-
-    console.log("tagArray:", tagArray); // 調試：打印解析後的標籤數組
 
     // 檢查 tagArray 是否為數組
     if (!Array.isArray(tagArray)) {
@@ -113,22 +114,17 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
         "SELECT id FROM article_tag_small WHERE tag_name = ?",
         [tag]
       );
-      console.log("existingTag:", existingTag); // 調試：打印查詢結果
-
-      if (!Array.isArray(existingTag)) {
-        throw new Error("資料庫查詢返回值格式錯誤");
-      }
 
       let tagId;
       if (existingTag.length > 0) {
-        tagId = existingTag[0].id;
+        tagId = existingTag[0].id; // 使用現有標籤的 ID
       } else {
         // 插入新標籤
         const { results: tagResult } = await db.query(
           "INSERT INTO article_tag_small (tag_name) VALUES (?)",
           [tag]
         );
-        tagId = tagResult.insertId;
+        tagId = tagResult.insertId; // 獲取新標籤的 ID
       }
 
       // 關聯標籤與文章

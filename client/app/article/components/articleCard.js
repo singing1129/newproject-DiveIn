@@ -5,22 +5,37 @@ import Image from "next/image";
 import "./articleList.css";
 
 export default function ArticleCard({ article }) {
+  const backendURL = "http://localhost:3005";
+  // 在 useState 內設定初始圖片網址
+  const [imageUrl, setImageUrl] = useState(
+    article.img_url?.startsWith("http")
+      ? article.img_url
+      : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`
+  );
+
+
+  // 生成完整的圖片 URL
+  useEffect(() => {
+    const fullImageUrl = article.img_url?.startsWith("http")
+      ? article.img_url
+      : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`;
+  
+    setImageUrl(fullImageUrl); // 更新 imageUrl 狀態
+  }, [article.img_url]);
+
   return (
     <div className="article-list-card">
       <div className="article-list-card-photo">
-        <Image
-          className="article-list-card-photo-img"
-          src={
-            article.img_url && article.img_url !== ""
-              ? article.img_url
-              : "/default-image.jpg"
-          }
-          alt="Article Thumbnail"
-          layout="fill" // 使用 fill 使图片自动填充容器
-          objectFit="cover" // 保持图片填充并裁剪
-          objectPosition="center" // 确保图片居中
-          priority // 提高图片加载优先级
-        />
+      <Image
+  className="article-list-card-photo-img"
+  src={imageUrl}
+  alt="Article Thumbnail"
+  fill
+  style={{ objectFit: "cover" }}
+  sizes="(max-width: 768px) 100vw, 50vw"  // 根據視窗寬度設置大小
+  onError={() => setImageUrl(defaultImage)}
+/>
+
       </div>
 
       <div className="article-list-card-text">

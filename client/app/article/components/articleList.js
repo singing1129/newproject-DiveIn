@@ -56,6 +56,11 @@ const ArticleListPage = () => {
     setSortOption(e.target.value);
   };
 
+  // 按鈕點擊事件，跳轉不同頁面
+  const handleButtonClick = (path) => {
+    router.push(path);
+  };
+
   if (!articles) {
     return <div>載入中...</div>;
   }
@@ -82,7 +87,10 @@ const ArticleListPage = () => {
             </div>
             {/* 跳頁面btn */}
             <div className="article-controls-btn">
-              <button className="btn">
+              <button
+                className="btn"
+                onClick={() => handleButtonClick("/article/create")}
+              >
                 {" "}
                 <span className="btn-icon">
                   <i className="fa-solid fa-pen"></i>
@@ -90,6 +98,7 @@ const ArticleListPage = () => {
                 新增文章
               </button>
               <button className="btn">
+                {/* onClick={() => handleButtonClick("/article/mine")} */}
                 <span className="btn-icon">
                   <i className="fa-solid fa-bookmark"></i>
                 </span>
@@ -97,12 +106,12 @@ const ArticleListPage = () => {
               </button>
             </div>
           </div>
-       
-            {/* 文章card */}
-            {articles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-       
+
+          {/* 文章card */}
+           {articles.map((article) => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
+
           {/* 分頁 */}
           <div className="custom-pagination">
             <div className="page-item">
