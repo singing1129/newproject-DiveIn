@@ -29,6 +29,7 @@ import rentFilterRouter from "../routes/rent/filter.js";
 import rentSearchRouter from "../routes/rent/search.js";
 import rentDetailRouter from "../routes/rent/detail.js";
 import rentRecommendedRouter from "../routes/rent/recommended.js";
+import rentIdColorRouter from "../routes/rent/idcolors.js";
 import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態文章頁
 import articleCreateRouter from "../routes/article/create.js"; // 取得新建文章所需的分類/標籤 & 新增文章
 // import articleSidebarRouter from "../routes/article/sidebar.js"; // 側邊欄篩選數據
@@ -127,6 +128,7 @@ apiRouter.use("/rent", rentFilterRouter); // 負責 `/api/rent/filter`
 apiRouter.use("/rent", rentSearchRouter); // 負責 `/api/rent/search`
 apiRouter.use("/rent", rentDetailRouter); // 負責 `/api/rent/:id`
 apiRouter.use("/rent", rentRecommendedRouter); // 負責 `/api/rent/:id/recommended`
+apiRouter.use("/rent", rentIdColorRouter); // 負責 `/api/rent/:id/colors`
 // 文章相關路由
 apiRouter.use("/article", articleRouter); // `/api/article` 文章列表 & 文章內容
 apiRouter.use("/article", articleCreateRouter); // `/api/article/create` 新增文章、取得新建文章所需數據

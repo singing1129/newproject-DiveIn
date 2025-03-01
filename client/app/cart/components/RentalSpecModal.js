@@ -1,58 +1,95 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./RentalSpecModal.css";
 
 const RentalSpecModal = ({ item, onClose, onUpdate }) => {
   const [startDate, setStartDate] = useState(item.start_date);
   const [endDate, setEndDate] = useState(item.end_date);
-  const [color, setColor] = useState(item.color);
+  const [color, setColor] = useState(item.color); // 存儲顏色中文名稱，跟購物車cart-rental-item邏輯對應
   const [error, setError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
+  const [allColors, setAllColors] = useState([]); // 存儲所有顏色選項（包括中文名稱和 RGB 色碼）
 
-  // 處理日期區間驗證
-  const validateDates = () => {
-    if (new Date(endDate) < new Date(startDate)) {
-      setError("結束日期不能早於起始日期");
-      return false;
-    }
-    setError("");
-    return true;
-  };
+  // 從 API 獲取該商品的所有顏色選項
+  useEffect(() => {
+    const fetchColors = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3005/api/rent/${item.id}/colors`
+        );
+        setAllColors(response.data.data); // 設置所有顏色選項
+      } catch (error) {
+        console.error("獲取商品顏色選項失敗:", error);
+      }
+    };
 
+    fetchColors();
+  }, [item.id]);
+
+  // 處理提交
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // 驗證日期區間
-    if (!validateDates()) return;
+    if (new Date(endDate) < new Date(startDate)) {
+      setError("結束日期不能早於起始日期");
+      return;
+    }
+
+    // // 調錯用
+    // console.log("傳遞的資料：", {
+    //   userId: 1, // 替換為實際的用戶 ID
+    //   type: "rental",
+    //   itemId: item.id,
+    //   startDate,
+    //   endDate,
+    //   color, // 傳遞顏色中文名稱
+    // });
 
     try {
       const response = await axios.put(
         `http://localhost:3005/api/cart/update`,
         {
-          userId: 1,
-          type: "rentals",
+          userId: 1, // 替換為實際的用戶 ID
+          type: "rental",
           itemId: item.id,
           startDate,
           endDate,
-          color: colorRGBs,
+          color, // 傳遞顏色中文名稱
+          quantity: item.quantity, // 固定傳遞購物車中的當前數量，避免報錯
         }
       );
 
-      onUpdate(response.data);
+      // console.log("更新成功，返回資料：", response.data);
+
+      // 手動傳遞更新後的資料給父組件
+      onUpdate({
+        id: item.id,
+        start_date: startDate,
+        end_date: endDate,
+        color,
+        quantity: item.quantity,
+      });
+
+      // 關閉 Modal
       onClose();
     } catch (error) {
       console.error("更新租借訂單資訊失敗:", error);
+      if (error.response) {
+        console.error("API 返回的錯誤狀態碼:", error.response.status);
+        console.error("API 返回的錯誤資料:", error.response.data);
+      }
       alert("更新失敗，請稍後再試");
     }
   };
-
-  // 處理關閉modal
+  
+  // 處理關閉 modal
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
       onClose();
       setIsClosing(false);
-    }, 50);
+    }, 100);
   };
 
   return (
@@ -101,25 +138,22 @@ const RentalSpecModal = ({ item, onClose, onUpdate }) => {
               <div className="form-group">
                 <label className="color-title">顏色</label>
                 <div className="product-color">
-                  <div className="colors">
+                  <div className="colors d-flex flex-row">
                     {/* 檢查是否有顏色資料 */}
-                    {item.colors && item.colors.length > 0 ? (
-                      item.colors.map((colorOption, index) => {
-                        const colorRGB = item.colorRGBs[index]; // 獲取對應的 colorRGB
-                        return (
-                          <div
-                            key={colorOption}
-                            className={`color-box ${
-                              color === colorOption ? "selected" : ""
-                            }`}
-                            onClick={() => setColor(colorOption)}
-                            style={{ backgroundColor: colorRGB }} // 使用 colorRGB
-                            title={colorOption}
-                          ></div>
-                        );
-                      })
+                    {allColors.length > 0 ? (
+                      allColors.map((colorOption) => (
+                        <div
+                          key={colorOption.color_id}
+                          className={`color-box ${
+                            color === colorOption.color_name ? "selected" : ""
+                          }`}
+                          style={{ backgroundColor: colorOption.color_rgb }} // 使用 color_rgb
+                          onClick={() => setColor(colorOption.color_name)} // 更新顏色中文名稱
+                          title={colorOption.color_name}
+                        ></div>
+                      ))
                     ) : (
-                      <p>暫無可選顏色</p> // 如果沒有顏色資料，顯示提示訊息
+                      <p className="no-colors">本商品暫無其他顏色</p>
                     )}
                   </div>
                 </div>
@@ -127,7 +161,7 @@ const RentalSpecModal = ({ item, onClose, onUpdate }) => {
             </div>
 
             {/* 按鈕區 */}
-            <div className="modal-actions">
+            <div className="modal-footer">
               <button type="button" className="cancel-button" onClick={onClose}>
                 取消
               </button>
