@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
     if (sort === "oldest") orderBy = "a.publish_at ASC";
     else if (sort === "popular") orderBy = "a.view_count DESC";
     else if (sort === "all") orderBy = "a.id DESC"; // 顯示所有文章（不依照熱門或最新）
-    
+
     // 篩選條件
     let whereClause = "a.is_deleted = FALSE";
     let params = [];
@@ -336,25 +336,66 @@ router.get("/users/:users_id", async (req, res) => {
 });
 
 // 刪除文章路由
-router.delete("/article/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 
+  const connection = await pool.getConnection();
+
   try {
-    // 刪除文章的 SQL 語句
-    await pool.execute(`UPDATE article SET is_deleted = TRUE WHERE id = ?`, [
+    // 開始交易
+    await connection.beginTransaction();
+
+    // 1. 更新 article 表中的 is_deleted 為 1
+    await connection.execute(`UPDATE article SET is_deleted = 1 WHERE id = ?`, [
       id,
     ]);
+
+    // 2. 更新 article_image 表中的 is_deleted 為 1
+    await connection.execute(
+      `UPDATE article_image SET is_deleted = 1 WHERE article_id = ?`,
+      [id]
+    );
+
+    // 3. 刪除 article_likes_dislikes 表中的資料
+    await connection.execute(
+      `DELETE FROM article_likes_dislikes WHERE article_id = ?`,
+      [id]
+    );
+
+    // 4. 更新 article_reply 表中的 is_deleted 為 1
+    await connection.execute(
+      `UPDATE article_reply SET is_deleted = 1 WHERE article_id = ?`,
+      [id]
+    );
+
+    // 5. 刪除 article_tag_big 表中的資料
+    await connection.execute(
+      `DELETE FROM article_tag_big WHERE article_id = ?`,
+      [id]
+    );
+
+    // 提交交易
+    await connection.commit();
+
+    // 回傳成功訊息
     res.json({
       status: "success",
-      message: "文章已成功刪除",
+      message: "文章及相關資料已成功刪除",
     });
   } catch (error) {
-    console.error("❌ 刪除文章失敗：", error);
+    // 回滾交易
+    await connection.rollback();
+
+    console.error("❌ 刪除文章及相關資料失敗：", error);
+
     res.status(500).json({
       status: "error",
-      message: "刪除文章失敗",
+      message: "刪除文章及相關資料失敗",
       error: error.message,
     });
+  } finally {
+    // 釋放連接
+    connection.release();
   }
 });
 

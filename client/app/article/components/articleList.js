@@ -98,7 +98,6 @@ const ArticleListPage = () => {
 
       const res = await fetch(url);
       const data = await res.json();
-      console.log("API Response:", data); // 檢查 API 回傳的資料
 
       if (!data.pagination) {
         console.error("Pagination data is missing in API response");
@@ -202,13 +201,14 @@ const ArticleListPage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+
               {/* 清空按鈕 */}
               {searchQuery && (
                 <button className="clear-button" onClick={handleClearSearch}>
                   <i className="fa-solid fa-times"></i>
                 </button>
               )}
-              <button onClick={handleSearch}>搜尋</button>
+              <button className="search-button" onClick={handleSearch}>搜尋</button>
             </div>
 
             {/* 跳頁面btn */}
