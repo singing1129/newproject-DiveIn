@@ -464,7 +464,8 @@ router.get("/:userId", async (req, res) => {
         ri.deposit,
         rim.img_url AS image_url,
       DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
-      cri.color
+      cri.color,
+      rc.rgb AS colorRGB
       FROM cart_rental_items cri
       JOIN rent_item ri ON cri.rental_id = ri.id
       JOIN rent_specification rs ON ri.id = rs.rent_item_id
@@ -492,6 +493,9 @@ router.get("/:userId", async (req, res) => {
       // nana新增：押金總費用 = 押金 * 數量 * 總天數
       const depositFee = deposit * item.quantity * item.rental_days;
 
+      // nana: 檢查是否有顏色資料
+      const hasColor = item.color && item.colorRGB;
+
       return {
         ...item,
         price_per_day: pricePerDay,
@@ -499,6 +503,8 @@ router.get("/:userId", async (req, res) => {
         deposit_fee: depositFee, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
         subtotal: rentalFee + depositFee, //總押金＋租借費用=總費用
         brand_name: item.brand_name,
+        colors: hasColor ? [item.color] : [], // 如果有顏色，返回顏色陣列，否則返回空陣列
+        colorRGBs: hasColor ? [item.colorRGB] : [], // 如果有顏色 RGB，返回 RGB 陣列，否則返回空陣列
       };
     });
 
@@ -769,7 +775,6 @@ router.put("/update", async (req, res) => {
           });
         }
 
-        
         // 如果要更換租期
         if (startDate && endDate) {
           const start = new Date(startDate);

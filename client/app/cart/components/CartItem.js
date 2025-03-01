@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./CartItem.css";
 import SpecModal from "./SpecModal";
+import RentalSpecModal from "./RentalSpecModal";
 import { useCart } from "@/hooks/cartContext";
 import useFavorite from "@/hooks/useFavorite";
 
@@ -13,6 +14,8 @@ const CartItem = ({ item, type = "products" }) => {
   const [quantity, setQuantity] = useState(item.quantity);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  // 租借修改資料的 modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 根據類型獲取正確的 ID
   const getFavoriteId = () => {
@@ -112,6 +115,20 @@ const CartItem = ({ item, type = "products" }) => {
     }
   };
 
+  // 新增處理 租借修改資訊的 Modal 關閉
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  // 新增處理 租借修改資訊的 Modal 更新
+  const handleModalUpdate = (updatedItem) => {
+    // 更新 UI 中的租借資訊
+    item.start_date = updatedItem.start_date;
+    item.end_date = updatedItem.end_date;
+    item.color = updatedItem.color;
+    setIsModalOpen(false);
+  };
+
   const renderQuantityControl = () => (
     <div className="quantity-control">
       <button
@@ -187,23 +204,27 @@ const CartItem = ({ item, type = "products" }) => {
         );
       case "rentals":
         return (
-          <div className="info-display">
-            <div className="info-content">
-              <div className="info-row">
-                <span className="info-label">
-                  租借期間{" "}
-                  <span className="days">： ({item.rental_days}天)</span>
-                </span>
-                <div className="info-value">
-                  <div>自 {item.start_date}</div>
-                  <div>至 {item.end_date}</div>
+          <>
+            <div
+              className="rent-display"
+              onClick={() => setIsModalOpen(true)} // 觸發 修改資訊的 Modal
+            >
+              <div className="rent-content">
+                <div className="rent-row">
+                  <span className="rent-label">
+                    租借期間{" "}
+                    <span className="days">： ({item.rental_days}天)</span>
+                  </span>
+                  <div className="rent-value">
+                    <div>自 {item.start_date}</div>
+                    <div>至 {item.end_date}</div>
+                  </div>
                 </div>
-              </div>
-              <div className="info-row">
-                <span className="info-label">顏色：</span>
-                <span className="info-value">{item.color || "無"} </span>
-              </div>
-              {/* <div className="info-row">
+                <div className="rent-row">
+                  <span className="info-label">顏色：</span>
+                  <span className="info-value">{item.color || "無"} </span>
+                </div>
+                {/* <div className="info-row">
                 <span className="info-label">每日租金：</span>
                 <span className="info-value">
                   NT$ {item.discounted_price ?? item.price}
@@ -213,8 +234,26 @@ const CartItem = ({ item, type = "products" }) => {
                 <span className="info-label">押金：</span>
                 <span className="info-value">NT$ {item.deposit}</span>
               </div> */}
+              </div>
+              <span
+                className="edit-mark"
+                onClick={(e) => {
+                  e.stopPropagation(); // 阻止事件冒泡
+                  setIsModalOpen(true);
+                }}
+              >
+                修改
+              </span>
             </div>
-          </div>
+            
+            {isModalOpen && (
+              <RentalSpecModal
+                item={item}
+                onClose={() => setIsModalOpen(false)}
+                onUpdate={handleModalUpdate}
+              />
+            )}
+          </>
         );
       default:
         return null;
