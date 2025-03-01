@@ -8,6 +8,8 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import flatpickr from "flatpickr";
+import React from "react";
+
 import "flatpickr/dist/flatpickr.min.css";
 import "./flatpickr.css"; // 我定義的小日曆css
 import "./RentDetail.css";
@@ -16,6 +18,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../../../public/globals.css";
 import { useCart } from "@/hooks/cartContext"; // 加入購物車
 import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
+import AddToCartButton from "./AddToCartButton";
 
 const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 
@@ -1007,13 +1010,14 @@ export default function RentProductDetail() {
                 </div>
               </div>
               <div className="d-flex flex-row justify-content-between align-items-center product-btns">
-                <button
+              <button
                   type="button"
                   className="mybtn btn-cart flex-grow-1"
                   onClick={handleAddToCart}
                 >
                   加入購物車
                 </button>
+                {/* <AddToCartButton onClick={handleAddToCart} /> */}
                 {/* <button type="button" className="mybtn btn-buy flex-grow-1">
                   直接購買
                 </button> */}
