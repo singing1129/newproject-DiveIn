@@ -4,7 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import "./articleList.css";
 
-export default function ArticleCard({ article }) {
+export default function ArticleCard({
+  article,
+  isMyArticles,
+  onDeleteSuccess,
+}) {
   const backendURL = "http://localhost:3005";
   // 在 useState 內設定初始圖片網址
   const [imageUrl, setImageUrl] = useState(
@@ -12,6 +16,27 @@ export default function ArticleCard({ article }) {
       ? article.img_url
       : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`
   );
+
+  //刪除文章
+  const handleDelete = async () => {
+    if (!confirm("確定要刪除此文章嗎？")) return;
+
+    try {
+      const response = await fetch(`${backendURL}/api/article/${article.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        alert("文章刪除成功");
+        onDeleteSuccess();
+      } else {
+        alert("刪除失敗");
+      }
+    } catch (error) {
+      console.error("刪除失敗:", error);
+      alert("刪除時發生錯誤");
+    }
+  };
 
   // 生成完整的圖片 URL
   useEffect(() => {
@@ -65,6 +90,13 @@ export default function ArticleCard({ article }) {
         </div>
         <div className="article-list-card-content">{article.content}</div>
         <div className="article-list-card-btn">
+          {/* 只有在“我的文章”页面才显示删除按钮 */}
+          {isMyArticles && (
+            <button className="btn btn-danger" onClick={handleDelete}>
+              刪除
+            </button>
+          )}
+           {/* 更多按钮 */}
           <Link href={`/article/${article.id}`} passHref>
             <button className="btn">更多</button>
           </Link>

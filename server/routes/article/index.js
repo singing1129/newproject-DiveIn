@@ -26,10 +26,11 @@ router.get("/", async (req, res) => {
     const offset = (page - 1) * limit;
 
     // 排序條件
-    let orderBy = "a.publish_at DESC";
+    let orderBy = "a.publish_at DESC"; // 預設最新
     if (sort === "oldest") orderBy = "a.publish_at ASC";
     else if (sort === "popular") orderBy = "a.view_count DESC";
-
+    else if (sort === "all") orderBy = "a.id DESC"; // 顯示所有文章（不依照熱門或最新）
+    
     // 篩選條件
     let whereClause = "a.is_deleted = FALSE";
     let params = [];
@@ -245,9 +246,9 @@ router.get("/:id", async (req, res) => {
 });
 
 /** 📝 獲取某個用戶的文章列表 */
-router.get("/user/:user_id", async (req, res) => {
+router.get("/users/:users_id", async (req, res) => {
   try {
-    const { user_id } = req.params;
+    const { users_id } = req.params;
     const {
       page = 1,
       limit = 10,
@@ -263,7 +264,7 @@ router.get("/user/:user_id", async (req, res) => {
 
     // 篩選條件
     let whereClause = "a.is_deleted = FALSE AND a.users_id = ?";
-    const params = [user_id];
+    const params = [users_id];
 
     // 查詢文章列表
     const [rows] = await pool.execute(
@@ -334,5 +335,27 @@ router.get("/user/:user_id", async (req, res) => {
   }
 });
 
+// 刪除文章路由
+router.delete("/article/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 刪除文章的 SQL 語句
+    await pool.execute(`UPDATE article SET is_deleted = TRUE WHERE id = ?`, [
+      id,
+    ]);
+    res.json({
+      status: "success",
+      message: "文章已成功刪除",
+    });
+  } catch (error) {
+    console.error("❌ 刪除文章失敗：", error);
+    res.status(500).json({
+      status: "error",
+      message: "刪除文章失敗",
+      error: error.message,
+    });
+  }
+});
 
 export default router;

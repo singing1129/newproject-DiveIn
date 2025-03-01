@@ -1,3 +1,5 @@
+import React, { useRef } from "react";
+
 class MyUploadAdapter {
   constructor(loader, articleId) {
     this.loader = loader;
