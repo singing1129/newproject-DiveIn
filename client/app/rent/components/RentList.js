@@ -5,6 +5,7 @@ import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 import dynamic from "next/dynamic";
 import Slider from "rc-slider";
 import flatpickr from "flatpickr";
@@ -24,7 +25,34 @@ const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function RentList() {
-  const userId = 1; // 或者從 localStorage 中獲取：const userId = localStorage.getItem("userId");
+  const router = useRouter();
+  const redirectToLogin = () => {
+    router.push("/login"); // 跳轉到登錄頁面
+  };
+
+  const [token, setToken] = useState(null);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    // 確保 localStorage 只在客戶端使用
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("loginWithToken");
+      setToken(storedToken);
+
+      if (storedToken) {
+        const decoded = jwtDecode(storedToken);
+        setUserId(decoded.id);
+
+        // 輸出會員 ID 和 Token
+        console.log("Token:", storedToken);
+        console.log("會員 ID:", decoded.id);
+      }
+    }
+  }, []);
+
+  console.log("User ID from Token:", userId); // 調試訊息：檢查會員 ID
+
+  // const userId = 1; // 或者從 localStorage 中獲取：const userId = localStorage.getItem("userId");
   const [products, setProducts] = useState([]); // 儲存從後端獲取的商品資料
   const [loading, setLoading] = useState(true); // 加載狀態
   const [currentPage, setCurrentPage] = useState(1); // 當前頁數
@@ -101,7 +129,7 @@ export default function RentList() {
   }); // 租借日期
 
   // 動態更新網址參數（根據每頁顯示資料數、分頁、排序條件）
-  const router = useRouter();
+  // const router = useRouter();
   const searchParams = useSearchParams();
 
   // 更新 URL 查詢參數，回傳後端
@@ -1368,6 +1396,27 @@ export default function RentList() {
 
   // 加入購物車
   const handleAddToCart = async () => {
+    // 檢查會員是否已登錄
+    const token = localStorage.getItem("loginWithToken");
+
+    if (!token) {
+      alert("請先登錄以加入購物車");
+      redirectToLogin();
+      return;
+    }
+
+    const decoded = jwtDecode(token);
+    const userId = decoded.id;
+
+    console.log("Token:", token); // 調試訊息：檢查 Token
+    console.log("User ID:", userId); // 調試訊息：檢查會員 ID
+
+    if (!userId) {
+      alert("會員 ID 無效，請重新登錄");
+      redirectToLogin();
+      return;
+    }
+
     if (!product) {
       alert("租借訂單資料未加載完成，請稍後再試！");
       return;
@@ -1412,7 +1461,6 @@ export default function RentList() {
       return null; // 如果沒有找到對應顏色，則返回 null
     };
 
-    // 範例：獲取選擇的顏色 RGB
     if (selectedColor) {
       const selectedColorRGB = getColorRGB(selectedColor);
       if (selectedColorRGB) {
@@ -1423,7 +1471,7 @@ export default function RentList() {
     }
 
     const cartData = {
-      userId: 1, // (寫死)
+      userId: parseInt(userId, 10),
       type: "rental", // (寫死)
       rentalId: product.id, // 商品 ID
       rentalName: product.name, // 商品名稱
@@ -1439,7 +1487,11 @@ export default function RentList() {
     console.log("傳遞的資料:", cartData); // 檢查資料格式
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/cart/add`, cartData);
+      const response = await axios.post(`${API_BASE_URL}/cart/add`, cartData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data.success) {
         // fetchCart(1); // 讓購物車重新從後端獲取最新數據

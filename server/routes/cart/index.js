@@ -1,11 +1,12 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
+import { checkToken } from "../../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/add", async (req, res) => {
+router.post("/add", checkToken, async (req, res) => {
   const {
-    userId,
+    // userId,
     type,
     variantId,
     projectId,
@@ -16,6 +17,9 @@ router.post("/add", async (req, res) => {
     date,
     time,
   } = req.body;
+
+  // 從 req.decoded 中獲取會員 ID
+  const userId = req.decoded.id;
 
   try {
     // 1. 基本驗證
@@ -28,6 +32,30 @@ router.post("/add", async (req, res) => {
     if (!quantity || quantity < 1) {
       return res.status(400).json({ success: false, message: "數量必須大於0" });
     }
+
+    // // 03.02:測試針對租借功能進行會員驗證
+    // if (type === "rental") {
+    //   // 檢查是否有 Token
+    //   const token = req.get("Authorization");
+    //   if (!token || !token.startsWith("Bearer ")) {
+    //     return res.status(401).json({
+    //       status: "error",
+    //       message: "無驗證資料，請重新登入",
+    //     });
+    //   }
+
+    //   // 驗證 Token
+    //   const decoded = jwt.verify(token.slice(7), process.env.JWT_SECRET_KEY);
+    //   if (!decoded || !decoded.id) {
+    //     return res.status(401).json({
+    //       status: "error",
+    //       message: "驗證資料已失效，請重新登入",
+    //     });
+    //   }
+
+    //   // 將會員 ID 附加到 req.decoded
+    //   req.decoded = decoded;
+    // }
 
     // 2. 檢查購物車是否存在
     let [cart] = await pool.execute(
@@ -185,9 +213,6 @@ router.post("/add", async (req, res) => {
       case "rental": {
         // 從請求中獲取顏色和品牌名稱
         const { color, rentalBrand, colorRGB } = req.body;
-
-        console.log("接收到的顏色:", color); // 確認接收到的顏色
-        console.log("接收到的顏色 RGB:", colorRGB); // 確認接收到的顏色 RGB
 
         // 檢查品牌名稱是否存在
         if (!rentalBrand) {
@@ -785,11 +810,11 @@ router.put("/update", async (req, res) => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
-        // if (startDate && endDate && color) {
-        //   const start = new Date(startDate);
-        //   const end = new Date(endDate);
-        //   const today = new Date();
-        //   today.setHours(0, 0, 0, 0);
+          // if (startDate && endDate && color) {
+          //   const start = new Date(startDate);
+          //   const end = new Date(endDate);
+          //   const today = new Date();
+          //   today.setHours(0, 0, 0, 0);
 
           if (isNaN(start.getTime()) || isNaN(end.getTime())) {
             return res.status(400).json({

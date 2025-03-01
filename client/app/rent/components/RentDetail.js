@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation"; // 修正匯入路徑 //獲取 url 當中的 id
+import { jwtDecode } from "jwt-decode";
+
 import axios from "axios";
 import dynamic from "next/dynamic"; // 動態導入，動態加載 flatpickr，從而避免伺服器端渲染時的問題
-import { useParams } from "next/navigation"; // 獲取 url 當中的 id，useParams修改為useSearchParams 更改
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,15 +20,40 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../../../public/globals.css";
 import { useCart } from "@/hooks/cartContext"; // 加入購物車
 import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
-import AddToCartButton from "./AddToCartButton";
+// import AddToCartButton from "./AddToCartButton"; // 最後有時間回來補充加入購物車的動態效果
 
 const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function RentProductDetail() {
-  // 暫時寫死 userId，將來可以從登入狀態或 JWT 中獲取
-  const userId = 1; // 或者從 localStorage 中獲取：const userId = localStorage.getItem("userId");
+  const router = useRouter();
+  const redirectToLogin = () => {
+    router.push("/login"); // 跳轉到登錄頁面
+  };
+
+  const [token, setToken] = useState(null);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    // 確保 localStorage 只在客戶端使用
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("loginWithToken");
+      setToken(storedToken);
+
+      if (storedToken) {
+        const decoded = jwtDecode(storedToken);
+        setUserId(decoded.id);
+
+        // 輸出會員 ID 和 Token
+        console.log("Token:", storedToken);
+        console.log("會員 ID:", decoded.id);
+      }
+    }
+  }, []);
+
+  console.log("User ID from Token:", userId); // 調試訊息：檢查會員 ID
+
   const { id } = useParams(); // 取得動態路由參數
   const [isLoading, setIsLoading] = useState(true);
   const [product, setProduct] = useState(null); // 商品資料
@@ -82,8 +109,7 @@ export default function RentProductDetail() {
         }
         const result = await response.json(); // 解析後端返回的 JSON
         const data = result.data; // 提取 data 物件
-
-        console.log("後端返回的資料:", data); // 檢查資料結構
+        // console.log("後端返回的資料:", data); // 檢查資料結構
         setProduct(data);
 
         // 設置預設大圖
@@ -93,8 +119,6 @@ export default function RentProductDetail() {
           (images && images[0]?.img_url) ||
           "/image/rent/no-img.png"; // 如果沒有圖片，顯示"本商品暫時沒有圖片"的預設圖片
         setMainImage(mainImage);
-
-        console.log("Product images:", images); // 調試訊息
 
         // 獲取推薦商品
         const fetchRecommendedProducts = async (brand, categoryId, id) => {
@@ -616,6 +640,40 @@ export default function RentProductDetail() {
 
   // 加入購物車
   const handleAddToCart = async () => {
+    // 檢查會員是否已登錄
+    const token = localStorage.getItem("loginWithToken");
+
+    // if (token) {
+    //   console.log("Token found:", token);
+    // } else {
+    //   console.log("Token not found in localStorage");
+    // }
+
+    if (!token) {
+      alert("請先登錄以加入購物車");
+      redirectToLogin();
+      return;
+    }
+
+    const decoded = jwtDecode(token);
+    const userId = decoded.id;
+
+    console.log("Token:", token); // 調試訊息：檢查 Token
+    console.log("User ID:", userId); // 調試訊息：檢查會員 ID
+
+    if (!userId) {
+      alert("會員 ID 無效，請重新登錄");
+      redirectToLogin();
+      return;
+    }
+
+    // 檢查 userId 是否有效，等 -1 問題解決以後打開
+    // if (isNaN(userId) || userId <= 0) {
+    //   alert("會員 ID 無效，請重新登錄");
+    //   redirectToLogin();
+    //   return;
+    // }
+
     if (!product) {
       alert("租借訂單資料未加載完成，請稍後再試！");
       return;
@@ -643,7 +701,7 @@ export default function RentProductDetail() {
 
     let selectedColorRGB = null;
     if (hasColorSpecifications) {
-      // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
+      // 如果有顏色規格但未選擇顏色，則提示會員選擇顏色
       if (!selectedColor) {
         alert("請選擇商品顏色！");
         return;
@@ -655,8 +713,11 @@ export default function RentProductDetail() {
       selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
     }
 
+    // 前面token那邊已經有獲取會員 ID
+
     const cartData = {
-      userId: 1, // (寫死)
+      userId: parseInt(userId, 10), // 從 localStorage 中獲取的會員 ID，並轉換為數字
+      // userId: userId
       type: "rental", // (寫死)
       rentalId: product.id, // 商品 ID
       rentalName: product.name, // 商品名稱
@@ -668,19 +729,19 @@ export default function RentProductDetail() {
       endDate: formattedEndDate, // 轉換為 YYYY-MM-DD 格式
       price: product.price, // 有特價選取特價的價格，沒有的話就是原價  product.price2 ? product.price2 : product.price
     };
-    // 只有在有顏色規格時才加入顏色資訊
-    // if (hasColorSpecifications) {
-    //   cartData.color = selectedColor;
-    //   cartData.colorRGB = selectedColorRGB;
-    // }
 
-    console.log("傳遞的資料:", cartData); // 檢查資料格式
+    console.log("傳遞的租借購物車資料:", cartData); // 檢查資料格式
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/cart/add`, cartData);
+      const response = await axios.post(`${API_BASE_URL}/cart/add`, cartData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("API Response:", response.data); // 調試訊息：檢查 API 回應
 
       if (response.data.success) {
-        // fetchCart(1); // 讓購物車重新從後端獲取最新數據
         alert("成功加入購物車！");
       } else {
         alert(response.data.message || "加入購物車失敗");
@@ -707,53 +768,9 @@ export default function RentProductDetail() {
   const showPrevButton = currentImageIndex > 0;
   const showNextButton = currentImageIndex + 3 < product.images.length;
 
-  // 確認租借資訊
-  // const handleConfirmRent = () => {
-  //   const rentDate = document.getElementById('rentDate').value;
-  //   const rentQuantity = document.getElementById('rentQuantity').value;
-
-  //   if (!rentDate || !rentQuantity) {
-  //     alert('請填寫完整的租借資訊');
-  //     return;
-  //   }
-
-  //   // 將商品 ID、租借日期和數量發送到後端
-  //   addToCart(selectedProductId, rentDate, rentQuantity);
-
-  //   // 關閉 Modal
-  //   closeModal();
-  // };
-
-  // 加入購物車的函數
-  // const addToCart = async (productId, rentDate, rentQuantity) => {
-  //   try {
-  //     const response = await fetch('/add-to-cart', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         productId,
-  //         rentDate,
-  //         rentQuantity,
-  //       }),
-  //     });
-
-  //     const data = await response.json();
-  //     if (data.success) {
-  //       alert('商品已成功加入購物車');
-  //     } else {
-  //       alert('加入購物車失敗');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error:', error);
-  //     alert('發生錯誤，請稍後再試');
-  //   }
-  // };
-
   return (
     <div className="container py-4 mx-auto">
-      <Head>
+      {/* <Head>
         <title>租借商品詳情</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link
@@ -768,7 +785,7 @@ export default function RentProductDetail() {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
         />
-      </Head>
+      </Head> */}
 
       {/* 商品詳細資訊 */}
       <div className="row">
@@ -806,10 +823,7 @@ export default function RentProductDetail() {
                       const containerWidth = 538; // 小圖總容器
                       const gap = 10;
                       const imageCount = visibleImages.length;
-                      {
-                        /* const imageWidth =
-                        (containerWidth - (imageCount - 1) * gap) / imageCount; */
-                      }
+
                       const imageWidth = (containerWidth - (3 - 1) * gap) / 3;
                       const imageHeight = imageWidth; // 正方形
 
@@ -838,10 +852,7 @@ export default function RentProductDetail() {
                       const containerWidth = 538; // 小圖總容器
                       const gap = 10;
                       const imageCount = 3; // 最多顯示 3 張小圖
-                      {
-                        /* const imageWidth =
-                        (containerWidth - (imageCount - 1) * gap) / imageCount; */
-                      }
+
                       const imageWidth = (containerWidth - (3 - 1) * gap) / 3;
                       const imageHeight = imageWidth; // 正方形
 
@@ -1010,7 +1021,7 @@ export default function RentProductDetail() {
                 </div>
               </div>
               <div className="d-flex flex-row justify-content-between align-items-center product-btns">
-              <button
+                <button
                   type="button"
                   className="mybtn btn-cart flex-grow-1"
                   onClick={handleAddToCart}
@@ -1018,9 +1029,6 @@ export default function RentProductDetail() {
                   加入購物車
                 </button>
                 {/* <AddToCartButton onClick={handleAddToCart} /> */}
-                {/* <button type="button" className="mybtn btn-buy flex-grow-1">
-                  直接購買
-                </button> */}
               </div>
             </div>
           </div>
@@ -1077,10 +1085,12 @@ export default function RentProductDetail() {
                   {product.brand_img_url && (
                     <Image
                       src={
-                        product.brand_img_url.startsWith("/") ||
-                        product.brand_img_url.startsWith("http")
-                          ? product.brand_img_url
-                          : `/${product.brand_img_url}`
+                        product.brand_img_url
+                          ? product.brand_img_url.startsWith("/") ||
+                            product.brand_img_url.startsWith("http")
+                            ? product.brand_img_url
+                            : `/${product.brand_img_url}`
+                          : "/image/rent/no-brandimg.png"
                       }
                       alt={`${product.brand_name} Logo`}
                       width={50} // 設置寬度
