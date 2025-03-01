@@ -184,7 +184,10 @@ router.post("/add", async (req, res) => {
 
       case "rental": {
         // 從請求中獲取顏色和品牌名稱
-        const { color, rentalBrand } = req.body;
+        const { color, rentalBrand, colorRGB } = req.body;
+
+        console.log("接收到的顏色:", color); // 確認接收到的顏色
+        console.log("接收到的顏色 RGB:", colorRGB); // 確認接收到的顏色 RGB
 
         // 檢查品牌名稱是否存在
         if (!rentalBrand) {
@@ -251,6 +254,23 @@ router.post("/add", async (req, res) => {
           });
         }
 
+        // 檢查商品是否有顏色規格
+        const [specifications] = await pool.execute(
+          "SELECT * FROM rent_specification WHERE rent_item_id = ?",
+          [rentalId]
+        );
+
+        const hasColorSpecifications =
+          specifications && specifications.some((spec) => spec.color); // 檢查 specifications 中的 color 欄位是否有值
+
+        // 如果有顏色規格但未提供顏色，則返回錯誤
+        if (hasColorSpecifications && !color) {
+          return res.status(400).json({
+            success: false,
+            message: "請選擇商品顏色！",
+          });
+        }
+
         const stock =
           rental[0].stock === null ? Infinity : parseInt(rental[0].stock, 10);
         if (isNaN(stock)) {
@@ -267,7 +287,6 @@ router.post("/add", async (req, res) => {
             message: "商品庫存不足",
           });
         }
-        
 
         // 修改SQL查詢使用CAST確保數字類型
         const [rentals] = await pool.execute(
@@ -332,17 +351,12 @@ router.post("/add", async (req, res) => {
             `INSERT INTO cart_rental_items 
              (cart_id, rental_id, start_date, end_date, quantity, color, rentalBrand) 
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-              cartId,
-              rentalId,
-              startDate,
-              endDate,
-              quantity,
-              color || null,
-              rentalBrand,
-            ]
+            [cartId, rentalId, startDate, endDate, quantity, color, rentalBrand]
           );
+
+          console.log("插入的顏色:", color); // 確認插入的顏色
         }
+
         res.status(200).json({
           success: true,
           message: "商品已加入購物車",
@@ -353,7 +367,6 @@ router.post("/add", async (req, res) => {
   } catch (error) {
     console.error("加入購物車失敗:", error);
     res.status(500).json({ success: false, message: "加入購物車失敗" });
-    res.status(400).json({ success: false, message: "404 Error" });
   }
 });
 
@@ -451,7 +464,8 @@ router.get("/:userId", async (req, res) => {
         ri.deposit,
         rim.img_url AS image_url,
       DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
-      cri.color
+      cri.color,
+      rc.rgb AS colorRGB
       FROM cart_rental_items cri
       JOIN rent_item ri ON cri.rental_id = ri.id
       JOIN rent_specification rs ON ri.id = rs.rent_item_id
@@ -462,6 +476,9 @@ router.get("/:userId", async (req, res) => {
       GROUP BY cri.id`,
       [cartId]
     );
+
+    console.log("返回的租借商品數據:", rentals); // 確認返回的數據
+
     // 開始結構
     const processedRentals = rentals.map((item) => {
       // 特價允許null
@@ -476,6 +493,9 @@ router.get("/:userId", async (req, res) => {
       // nana新增：押金總費用 = 押金 * 數量 * 總天數
       const depositFee = deposit * item.quantity * item.rental_days;
 
+      // nana: 檢查是否有顏色資料
+      const hasColor = item.color && item.colorRGB;
+
       return {
         ...item,
         price_per_day: pricePerDay,
@@ -483,6 +503,8 @@ router.get("/:userId", async (req, res) => {
         deposit_fee: depositFee, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
         subtotal: rentalFee + depositFee, //總押金＋租借費用=總費用
         brand_name: item.brand_name,
+        colors: hasColor ? [item.color] : [], // 如果有顏色，返回顏色陣列，否則返回空陣列
+        colorRGBs: hasColor ? [item.colorRGB] : [], // 如果有顏色 RGB，返回 RGB 陣列，否則返回空陣列
       };
     });
 
@@ -733,7 +755,20 @@ router.put("/update", async (req, res) => {
         }
 
         // 檢查基本庫存
-        if (quantity > existingItem[0].stock) {
+        // if (quantity > existingItem[0].stock) {
+        //   return res.status(400).json({
+        //     success: false,
+        //     message: "商品庫存不足",
+        //   });
+        // }
+        // 處理 stock 為 null 或 undefined 的情況
+        const stock =
+          existingItem[0].stock === null || existingItem[0].stock === undefined
+            ? null
+            : existingItem[0].stock;
+
+        // 如果 stock 不為 null，則檢查庫存
+        if (stock !== null && quantity > stock) {
           return res.status(400).json({
             success: false,
             message: "商品庫存不足",

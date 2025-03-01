@@ -254,17 +254,17 @@ export default function RentProductDetail() {
           const deposit = Number(unitPrice * 0.3);
 
           // 計算總費用
-          const totalCost = unitPrice * quantity * daysDiff + deposit;
+          const totalCost = (unitPrice + quantity) * daysDiff * quantity;
 
           // 更新日期範圍文字的顯示
-          dateRangeText.textContent = `租賃日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
+          dateRangeText.textContent = `租借日期： 自 ${displayStartDate} 至 ${displayEndDate}`;
 
           // 更新價格明細
           priceDetailsText.innerHTML = `
-            <div>單價：${unitPrice.toLocaleString("zh-TW")} 元</div>
+            <div>每日租金：${unitPrice.toLocaleString("zh-TW")} 元</div>
+            <div>每日押金：${deposit.toLocaleString("zh-TW")} 元</div>
             <div>數量：${quantity} 個</div>
-            <div>天數：${daysDiff} 天</div>
-            <div>押金：${deposit.toLocaleString("zh-TW")} 元</div>
+            <div>租借總天數：${daysDiff} 天</div>
           `;
 
           // 更新總費用文字
@@ -635,19 +635,22 @@ export default function RentProductDetail() {
 
     // 檢查商品是否有顏色規格
     const hasColorSpecifications =
-      product.specifications && product.specifications.length > 0;
+      product.specifications &&
+      product.specifications.some((spec) => spec.color); // 檢查 specifications 中的 color 欄位是否有值
 
-    // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
-    if (hasColorSpecifications && !selectedColor) {
-      alert("請選擇商品顏色！");
-      return;
+    let selectedColorRGB = null;
+    if (hasColorSpecifications) {
+      // 如果有顏色規格但未選擇顏色，則提示用戶選擇顏色
+      if (!selectedColor) {
+        alert("請選擇商品顏色！");
+        return;
+      }
+      // 獲取選擇的顏色 RGB 值
+      const selectedSpec = product.specifications.find(
+        (spec) => spec.color === selectedColor
+      );
+      selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
     }
-
-    // 獲取選擇的顏色 RGB 值
-    const selectedSpec = product.specifications.find(
-      (spec) => spec.color === selectedColor
-    );
-    const selectedColorRGB = selectedSpec ? selectedSpec.color_rgb : null;
 
     const cartData = {
       userId: 1, // (寫死)
@@ -662,6 +665,11 @@ export default function RentProductDetail() {
       endDate: formattedEndDate, // 轉換為 YYYY-MM-DD 格式
       price: product.price, // 有特價選取特價的價格，沒有的話就是原價  product.price2 ? product.price2 : product.price
     };
+    // 只有在有顏色規格時才加入顏色資訊
+    // if (hasColorSpecifications) {
+    //   cartData.color = selectedColor;
+    //   cartData.colorRGB = selectedColorRGB;
+    // }
 
     console.log("傳遞的資料:", cartData); // 檢查資料格式
 
@@ -764,7 +772,7 @@ export default function RentProductDetail() {
         <div className="main-details d-flex flex-row justify-content-between align-items-start">
           <div className="row">
             {/* 圖片區域 */}
-            <div className="px-3 col-12 col-md-6 col-lg-6 order-1 mx-auto d-flex flex-column gap-5">
+            <div className="px-3 col-12 col-md-6 col-lg-6 order-1 mx-auto d-flex flex-column gap-2">
               <div className="main-image">
                 <Image
                   src={mainImage} // 動態設置大圖的 src
@@ -856,18 +864,15 @@ export default function RentProductDetail() {
               <div className="rent-rules d-flex flex-column">
                 <p className="rules-title">租借規則</p>
                 <ul className="rules-content">
-                  <li>租借本人出示潛水證</li>
-                  <li>租用需先付款，並提供個人證件一張</li>
-                  <li>完成租借表單並完成簽名</li>
+                  <li>限本站會員租借</li>
                   <li>如有遺失或損害，需修復原有狀況或是全新賠償</li>
                   <li>
-                    租借與歸還時間限每日上午8:00至
-                    下午5:00，過時則以多借一天計算
+                    租借與歸還時間限每日上午8:00至下午5:00，過時則以多借一天計算
                   </li>
                   <li>
-                    以天計價，非24小時制度。例如:
-                    12/18日下午2點租借，12/19下午2點歸還，則算兩天
+                    以天計價，非24小時制度，例如：12/18日下午2:00租借，12/19下午2:00歸還，則算兩天
                   </li>
+                  <li>計價方式：(每日租金 + 每日押金) x 數量 x 租借天數</li>
                 </ul>
               </div>
             </div>
@@ -902,7 +907,17 @@ export default function RentProductDetail() {
                   <p className="product-price2">NT${product.price2}/日</p>
                 )}
                 <p className="product-price">NT${product.price}/日</p>
-                <p className="product-description">{product.description}</p>
+                <div className="product-description">
+                  {product.description?.split("\n").map((line, index) => (
+                    <div
+                      key={index}
+                      style={{ fontSize: "14px", lineHeight: "1.6" }}
+                    >
+                      {line}
+                      <br />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="details-select d-flex flex-column">
                 <div className="product-color">
@@ -999,9 +1014,9 @@ export default function RentProductDetail() {
                 >
                   加入購物車
                 </button>
-                <button type="button" className="mybtn btn-buy flex-grow-1">
+                {/* <button type="button" className="mybtn btn-buy flex-grow-1">
                   直接購買
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
@@ -1009,9 +1024,9 @@ export default function RentProductDetail() {
       </div>
 
       {/* 商品描述及品牌介紹 */}
-      <div className="col-12 d-flex flex-column mt-4 under-details">
+      <div className="col-12 d-flex flex-column under-details">
         {/* 分頁按鈕 */}
-        <div className="d-flex flex-row justify-content-center align-items-center tab-buttons">
+        <div className="d-flex flex-row align-items-center tab-buttons">
           <button
             className={`tab-button ${
               activeTab === "description" ? "active" : ""
@@ -1032,12 +1047,56 @@ export default function RentProductDetail() {
           {activeTab === "description" && (
             <div className="under-detail">
               <div className="d-flex flex-column under-details-content">
-                <p>{product.description2 || product.description}</p>
+                <div>
+                  {(product.description2 || product.description)
+                    ?.split("\n")
+                    .map((line, index) => (
+                      <div
+                        key={index}
+                        style={{ fontSize: "14px", lineHeight: "1.6" }}
+                      >
+                        {line}
+                        <br />
+                      </div>
+                    ))}
+                </div>
               </div>
               <div className="d-flex flex-column under-brand">
-                <p className="product-brand">品牌介紹</p>
-                <div className="d-flex flex-column under-details-brand">
-                  來自義大利的複合材料製造商C4創立於1986年，初始研發的是自行車使用之碳纖維材料，隨後將這樣的材料技術延伸至自由潛水/水中漁獵的裝備；卓越的性能與粗獷的外型，受到許多專業玩家的喜愛。
+                <p className="product-brand">
+                  品牌介紹<span>-</span>
+                  <span>{product.brand_name}</span>
+                </p>
+                <div className="d-flex under-details-brand">
+                  {/* 品牌 Logo 和描述 */}
+
+                  {/* 品牌 Logo */}
+                  {product.brand_img_url && (
+                    <Image
+                      src={
+                        product.brand_img_url.startsWith("/") ||
+                        product.brand_img_url.startsWith("http")
+                          ? product.brand_img_url
+                          : `/${product.brand_img_url}`
+                      }
+                      alt={`${product.brand_name} Logo`}
+                      width={50} // 設置寬度
+                      height={50} // 設置高度
+                      className="brand-logo"
+                    />
+                  )}
+                  {/* 品牌描述 */}
+                  <div className="brand-description">
+                    {(product.brand_description || "")
+                      .split("\n")
+                      .map((line, index) => (
+                        <div
+                          key={index}
+                          style={{ fontSize: "14px", lineHeight: "1.6" }}
+                        >
+                          {line}
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1046,7 +1105,86 @@ export default function RentProductDetail() {
             <div className="under-comments">
               <div className="d-flex flex-column under-comments-content">
                 {/* 這裡放會員評價的內容 */}
-                <p>切版用：暫無評價。</p>
+                <div className="reviews-container">
+                  {/* 會員評價 1 */}
+                  <div className="review-card">
+                    <div className="user-info">
+                      <Image
+                        src="/avatar3.jpg"
+                        alt="User Avatar"
+                        className="user-avatar"
+                        width={150}
+                        height={150}
+                      />
+                      <div className="user-details">
+                        <div className="user-name-email">
+                          <span className="user-name">張三</span>
+                          <span className="user-email">
+                            (zhangsan@example.com)
+                          </span>
+                        </div>
+                        <div className="user-rating">
+                          ⭐⭐⭐⭐⭐ {/* 5 顆星 */}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="user-comment">
+                      這是我用過最好的產品！服務非常周到，物流也很快，強烈推薦給大家！
+                    </p>
+                  </div>
+
+                  {/* 會員評價 2 */}
+                  <div className="review-card">
+                    <div className="user-info">
+                      <Image
+                        src="/avatar3.jpg"
+                        alt="User Avatar"
+                        className="user-avatar"
+                        width={150}
+                        height={150}
+                      />
+                      <div className="user-details">
+                        <div className="user-name-email">
+                          <span className="user-name">李四</span>
+                          <span className="user-email">(lisi@example.com)</span>
+                        </div>
+                        <div className="user-rating">
+                          ⭐⭐⭐⭐ {/* 4 顆星 */}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="user-comment">
+                      產品質量不錯，但價格稍微有點高。客服態度很好，解決問題很迅速。
+                    </p>
+                  </div>
+
+                  {/* 會員評價 3 */}
+                  <div className="review-card">
+                    <div className="user-info">
+                      <Image
+                        src="/avatar3.jpg"
+                        alt="User Avatar"
+                        className="user-avatar"
+                        width={150}
+                        height={150}
+                      />
+                      <div className="user-details">
+                        <div className="user-name-email">
+                          <span className="user-name">王五</span>
+                          <span className="user-email">
+                            (wangwu@example.com)
+                          </span>
+                        </div>
+                        <div className="user-rating">
+                          ⭐⭐⭐⭐⭐ {/* 5 顆星 */}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="user-comment">
+                      非常滿意的一次購物體驗！產品功能強大，使用起來非常順手，值得推薦！
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1064,95 +1202,110 @@ export default function RentProductDetail() {
               key={product.id}
               className="col-12 col-sm-6 col-md-4 col-lg-3 you-may-like-product mb-4"
             >
-              <Link
-                href={`/rent/${product.id}`}
-                passHref
-                style={{
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  color: "none",
-                }}
-                onClick={(e) => {
-                  if (e.defaultPrevented) return; // 如果事件已被阻止，就不執行跳轉
-                }}
-              >
-                <div className="card border-0 h-100">
-                  <div className="d-flex justify-content-center align-items-center img-container">
-                    <Image
-                      src={product.img_url || "/image/rent/no-img.png"}
-                      className="product-img"
-                      alt={product.name}
-                      layout="intrinsic"
-                      width={248}
-                      height={248}
-                      objectFit="contain"
-                      priority
-                      unoptimized
-                    />
-                  </div>
-                  <div className="d-flex flex-column justify-content-start align-items-center card-body">
-                    <p className="product-brand">{product.brand}</p>
-                    <p className="product-name text-center">{product.name}</p>
-
-                    <div
-                      className={`price-container d-flex gap-3 ${
-                        product.price2 ? "has-discount" : ""
-                      }`}
-                    >
-                      <h6 className="product-price">NT$ {product.price} 元</h6>
-                      {product.price2 && (
-                        <h6 className="product-price2">
-                          NT$ {product.price2} 元
-                        </h6>
-                      )}
-                    </div>
-                    <div className="d-flex flex-row justify-content-center align-items-center product-color">
-                      {product.color_rgb && product.color_rgb !== "無顏色" ? (
-                        // 先將顏色陣列分割出來
-                        product.color_rgb
-                          .split(",")
-                          .slice(0, 3)
-                          .map((color, index) => (
-                            <span
-                              key={index}
-                              className="color-box"
-                              style={{ backgroundColor: color.trim() }}
-                            ></span>
-                          ))
-                      ) : (
-                        <span
-                          className="color-box"
-                          style={{
-                            backgroundColor: "transparent",
-                            border: "none",
+              <div className="card-container position-relative">
+                <Link
+                  href={`/rent/${product.id}`}
+                  passHref
+                  style={{
+                    cursor: "pointer",
+                    textDecoration: "none",
+                    color: "none",
+                  }}
+                  onClick={(e) => {
+                    if (e.defaultPrevented) return; // 如果事件已被阻止，就不執行跳轉
+                  }}
+                >
+                  <div className="card border-0 h-100">
+                    <div className="d-flex justify-content-center align-items-center img-container">
+                      <Image
+                        src={product.img_url || "/image/rent/no-img.png"}
+                        className="product-img"
+                        alt={product.name}
+                        layout="intrinsic"
+                        width={248}
+                        height={248}
+                        objectFit="contain"
+                        priority
+                        unoptimized
+                      />
+                      <div className="favorite-button-wrapper">
+                        <FavoriteButton
+                          userId={userId}
+                          rentalId={product.id}
+                          isCircle={true}
+                          className="circle-style"
+                          onFavoriteChange={(newStatus) => {
+                            console.log(`${product.name} 收藏狀態:`, newStatus);
+                            // 這裡可以加入更新推薦列表的邏輯
                           }}
-                        ></span>
-                      )}
+                        />
+                      </div>
+                    </div>
+                    <div className="d-flex flex-column justify-content-start align-items-center card-body">
+                      <p className="product-brand">{product.brand}</p>
+                      <p className="product-name text-center">{product.name}</p>
 
-                      {/* 若顏色數量超過3，顯示 '...' */}
-                      {product.color_rgb &&
-                        product.color_rgb !== "無顏色" &&
-                        product.color_rgb.split(",").length > 3 && (
+                      <div
+                        className={`price-container d-flex gap-3 ${
+                          product.price2 ? "has-discount" : ""
+                        }`}
+                      >
+                        <h6 className="product-price">
+                          NT$ {product.price} 元
+                        </h6>
+                        {product.price2 && (
+                          <h6 className="product-price2">
+                            NT$ {product.price2} 元
+                          </h6>
+                        )}
+                      </div>
+                      <div className="d-flex flex-row justify-content-center align-items-center product-color">
+                        {product.color_rgb && product.color_rgb !== "無顏色" ? (
+                          // 先將顏色陣列分割出來
+                          product.color_rgb
+                            .split(",")
+                            .slice(0, 3)
+                            .map((color, index) => (
+                              <span
+                                key={index}
+                                className="color-box"
+                                style={{ backgroundColor: color.trim() }}
+                              ></span>
+                            ))
+                        ) : (
                           <span
                             className="color-box"
                             style={{
                               backgroundColor: "transparent",
                               border: "none",
-                              textAlign: "center",
-                              lineHeight: "7.5px",
                             }}
-                          >
-                            ...
-                          </span>
+                          ></span>
                         )}
-                    </div>
 
-                    {/* hover出現收藏 & 加入購物車 */}
-                    <div className="icon-container d-flex flex-row">
+                        {/* 若顏色數量超過3，顯示 '...' */}
+                        {product.color_rgb &&
+                          product.color_rgb !== "無顏色" &&
+                          product.color_rgb.split(",").length > 3 && (
+                            <span
+                              className="color-box"
+                              style={{
+                                backgroundColor: "transparent",
+                                border: "none",
+                                textAlign: "center",
+                                lineHeight: "7.5px",
+                              }}
+                            >
+                              ...
+                            </span>
+                          )}
+                      </div>
+
+                      {/* hover出現收藏 & 加入購物車 */}
+                      {/* <div className="icon-container d-flex flex-row"> */}
                       {/* 收藏按鈕 */}
-                      <div className="icon d-flex justify-content-center align-items-center">
-                        {/* 使用 FavoriteButton 元件，傳入必要的 props */}
-                        {product && (
+                      {/* <div className="icon d-flex justify-content-center align-items-center"> */}
+                      {/* 使用 FavoriteButton 元件，傳入必要的 props */}
+                      {/* {product && (
                           <FavoriteButton
                             userId={userId} // 用戶 ID
                             rentalId={product.id} // 商品的 rentalId
@@ -1166,10 +1319,11 @@ export default function RentProductDetail() {
                           />
                         )}
                       </div>
+                    </div> */}
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             </div>
           ))}
         </div>

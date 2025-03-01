@@ -1,28 +1,51 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import MessageModal from "./MessageModal";
 
-const FavoriteButton = ({ rentalId }) => {
-  const [isFavorite, setIsFavorite] = useState(0); // 0: 未收藏, 1: 已收藏
-  const [isLoading, setIsLoading] = useState(false); // 按照建議加個加載狀態，避免 user 重複點擊
-  const userId = 1; // 直接將 userId 寫死為 1
+const FavoriteButton = ({
+  rentalId,
+  userId = 1, // 預設值改為可從 props 傳入
+  className = "", // 允許傳入自訂 class
+  isCircle = false, // 是否為圓形背景樣式
+  onFavoriteChange, // 收藏狀態改變的回調
+}) => {
+  const [isFavorite, setIsFavorite] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  // 合併基礎樣式與自訂樣式
+  const baseClass = isCircle
+    ? "icon d-flex justify-content-center align-items-center"
+    : "heart-icon";
+
+  const containerClass = `
+    ${baseClass}
+    ${className}
+    ${isFavorite ? "filled" : ""}
+    ${isCircle ? "circle-style" : ""}
+  `;
 
   // 初始化的時候先檢查收藏狀態（是否已經收藏）
   useEffect(() => {
-    console.log("Checking favorite status for:", rentalId);
+    // console.log("Checking favorite status for:", rentalId);
 
-    const checkFavoriteStatus = async () => {
-      if (!userId || !rentalId) return; // 確保參數存在
-
+    const checkFavoriteStatus = async (userId, rentalId) => {
       try {
-        const response = await axios.get(
-          "http://localhost:3005/api/favorites/check",
-          {
-            params: { userId, rentalId }, // 傳遞 userId 和 rentalId 來檢查收藏狀態
-          }
-        );
-        setIsFavorite(response.data.is_like); // 設定收藏狀態
+        const response = await axios.get('http://localhost:3005/api/favorites/check', {
+          params: { userId, rentalId }
+        });
+    
+        if (response.data.success) {
+          setIsFavorite(response.data.isFavorite); // 更新 isFavorite 狀態
+        } else {
+          console.error('請求失敗:', response.data.message);
+        }
       } catch (error) {
-        console.error("檢查收藏狀態失敗:", error);
+        console.error('請求失敗:', error);
+        if (error.response && error.response.status === 404) {
+          console.error('API 端點不存在，請檢查後端路由');
+        }
       }
     };
 
@@ -31,23 +54,22 @@ const FavoriteButton = ({ rentalId }) => {
 
   // 處理收藏按鈕點擊
   const handleClick = async (e) => {
-    
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
 
-    console.log("handleClick 被觸發");
-    console.log("userId:", userId);
-    console.log("type:", "rental");
-    console.log("itemId:", rentalId);
+    // console.log("handleClick 被觸發");
+    // console.log("userId:", userId);
+    // console.log("type:", "rental");
+    // console.log("itemId:", rentalId);
 
     if (isLoading) return; // 如果正在加載，則不執行
 
     setIsLoading(true); // 開始加載
 
     try {
-      console.log("準備發送請求...");
+      // console.log("準備發送請求...");
 
       const type = "rental";
       const itemId = rentalId;
@@ -59,30 +81,61 @@ const FavoriteButton = ({ rentalId }) => {
           userId,
           type,
           itemIds: [itemId], // 將 itemId 包裝成陣列，與後端參數符合
+        },
+        {
+          headers: {
+            "Content-Type": "application/json", // 設置為 JSON 格式
+          },
         }
       );
 
-      console.log(`${isFavorite === 0 ? "加入" : "移除"}收藏的回應:`, response);
+      // console.log(`${isFavorite === 0 ? "加入" : "移除"}收藏的回應:`, response);
 
-      setIsFavorite(isFavorite === 0 ? 1 : 0); // 更新收藏狀態
+      const newStatus = isFavorite === 0 ? 1 : 0; // 更新收藏狀態
+      setIsFavorite(newStatus);
+      onFavoriteChange?.(newStatus); // 觸發回調
+
+      // 顯示 Modal 訊息
+      setModalMessage(newStatus ? "已加入收藏！" : "已取消收藏！");
+      setShowModal(true);
     } catch (error) {
-      console.error("更新收藏狀態失敗:", error);
-      alert("更新收藏狀態失敗，請稍後再試");
+      setModalMessage("操作失敗，請稍後再試");
+      setShowModal(true);
     } finally {
-      setIsLoading(false); // 結束加載
+      setIsLoading(false);
     }
   };
 
   // 返回 JSX
   return (
-    <div
-      className={`heart-icon ${isFavorite ? "filled" : ""}`}
-      onClick={handleClick}
-      style={{ cursor: isLoading ? "not-allowed" : "pointer" }}
-    >
-      <i className={`bi ${isFavorite ? "bi-heart-fill" : "bi-heart"}`}></i>
-      {isLoading && <span>加載中...</span>}
-    </div>
+    <>
+      <div
+        className={`${containerClass.trim()} ${
+          isCircle ? "circle-button" : ""
+        } ${isFavorite ? "favorited" : ""}`}
+        onClick={handleClick}
+        style={{
+          cursor: isLoading ? "not-allowed" : "pointer",
+          pointerEvents: isLoading ? "none" : "auto",
+        }}
+      >
+        <i className={`bi ${isFavorite ? "bi-heart-fill" : "bi-heart"}`}></i>
+        {isLoading && <span className="loading-dot"></span>}
+      </div>
+
+      <MessageModal
+        message={modalMessage}
+        show={showModal}
+        onClose={() => setShowModal(false)}
+      />
+
+      {showModal && (
+        <div
+          className="modal-backdrop fade show"
+          style={{ display: "block" }}
+        />
+      )}
+    </>
   );
 };
 

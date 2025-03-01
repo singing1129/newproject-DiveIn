@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./CartItem.css";
 import SpecModal from "./SpecModal";
+import RentalSpecModal from "./RentalSpecModal";
 import { useCart } from "@/hooks/cartContext";
 import useFavorite from "@/hooks/useFavorite";
 
@@ -13,6 +14,8 @@ const CartItem = ({ item, type = "products" }) => {
   const [quantity, setQuantity] = useState(item.quantity);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  // 租借修改資料的 modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 根據類型獲取正確的 ID
   const getFavoriteId = () => {
@@ -38,6 +41,35 @@ const CartItem = ({ item, type = "products" }) => {
   // 處理數量更新
   const handleQuantityChange = async (newQuantity) => {
     if (newQuantity < 1 || isUpdating) return;
+
+    // 調試訊息：打印當前商品信息和數量
+    console.log("Updating quantity for item:", {
+      type,
+      itemId: item.id,
+      newQuantity,
+      stock: item.stock,
+    });
+
+    // 如果是 rental 類型
+    if (type === "rentals") {
+      // 如果 stock 為 null 或 undefined，則允許任意數量
+      if (item.stock == null) {
+        // 使用 == 檢查 null 和 undefined
+        // 允許任意數量，不做庫存檢查
+      }
+      // 如果 stock 不為 null 或 undefined，則檢查庫存
+      else if (newQuantity > item.stock) {
+        alert("商品庫存不足");
+        return;
+      }
+    }
+    // 其他類型（products 和 activities）保持原有的庫存檢查邏輯
+    else if (item.stock !== null && newQuantity > item.stock) {
+      // 使用 !== 檢查 null
+      alert("商品庫存不足");
+      return;
+    }
+
     setIsUpdating(true);
 
     try {
@@ -83,6 +115,20 @@ const CartItem = ({ item, type = "products" }) => {
     }
   };
 
+  // 新增處理 租借修改資訊的 Modal 關閉
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  // 新增處理 租借修改資訊的 Modal 更新
+  const handleModalUpdate = (updatedItem) => {
+    // 更新 UI 中的租借資訊
+    item.start_date = updatedItem.start_date;
+    item.end_date = updatedItem.end_date;
+    item.color = updatedItem.color;
+    setIsModalOpen(false);
+  };
+
   const renderQuantityControl = () => (
     <div className="quantity-control">
       <button
@@ -103,7 +149,15 @@ const CartItem = ({ item, type = "products" }) => {
       <button
         className="btn btn-outline-secondary btn-sm"
         onClick={() => handleQuantityChange(quantity + 1)}
-        disabled={isUpdating}
+        disabled={
+          isUpdating ||
+          // 如果是 rental 類型，且 stock 不為 null 或 undefined，則檢查庫存
+          (type === "rentals" &&
+            item.stock != null &&
+            quantity >= item.stock) ||
+          // 其他類型（products 和 activities）保持原有的庫存檢查邏輯
+          (type !== "rentals" && item.stock !== null && quantity >= item.stock)
+        }
       >
         +
       </button>
@@ -150,25 +204,27 @@ const CartItem = ({ item, type = "products" }) => {
         );
       case "rentals":
         return (
-          <div className="info-display">
-            <div className="info-content">
-              <div className="info-row">
-                <span className="info-label">
-                  租借期間{" "}
-                  <span className="days">： ({item.rental_days}天)</span>
-                </span>
-                <div className="info-value">
-                  <div>自 {item.start_date}</div>
-                  <div>至 {item.end_date}</div>
+          <>
+            <div
+              className="rent-display"
+              onClick={() => setIsModalOpen(true)} // 觸發 修改資訊的 Modal
+            >
+              <div className="rent-content">
+                <div className="rent-row">
+                  <span className="rent-label">
+                    租借期間{" "}
+                    <span className="days">： ({item.rental_days}天)</span>
+                  </span>
+                  <div className="rent-value">
+                    <div>自 {item.start_date}</div>
+                    <div>至 {item.end_date}</div>
+                  </div>
                 </div>
-              </div>
-              <div className="info-row">
-                <span className="info-label">顏色：</span>
-                <span className="info-value">
-                  {item.color || "無"}{" "}
-                </span>
-              </div>
-              <div className="info-row">
+                <div className="rent-row">
+                  <span className="info-label">顏色：</span>
+                  <span className="info-value">{item.color || "無"} </span>
+                </div>
+                {/* <div className="info-row">
                 <span className="info-label">每日租金：</span>
                 <span className="info-value">
                   NT$ {item.discounted_price ?? item.price}
@@ -177,9 +233,27 @@ const CartItem = ({ item, type = "products" }) => {
               <div className="info-row">
                 <span className="info-label">押金：</span>
                 <span className="info-value">NT$ {item.deposit}</span>
+              </div> */}
               </div>
+              <span
+                className="edit-mark"
+                onClick={(e) => {
+                  e.stopPropagation(); // 阻止事件冒泡
+                  setIsModalOpen(true);
+                }}
+              >
+                修改
+              </span>
             </div>
-          </div>
+            
+            {isModalOpen && (
+              <RentalSpecModal
+                item={item}
+                onClose={() => setIsModalOpen(false)}
+                onUpdate={handleModalUpdate}
+              />
+            )}
+          </>
         );
       default:
         return null;
@@ -223,10 +297,18 @@ const CartItem = ({ item, type = "products" }) => {
       <div className="col-4 col-md-1 mb-3 mb-md-0">
         <div className="text-start text-md-center">
           <span className="d-inline d-md-none">
-            {type === "rentals" ? "每日租金：" : "單價："}
+            {type === "rentals" ? "每日租金及押金：" : "單價："}
           </span>
           <span className="text-muted">
-            ${type === "rentals" ? item.price_per_day : item.price}
+            {type === "rentals" ? (
+              <>
+                ${item.price_per_day}
+                <br />
+                <span className="text-muted small">(+${item.deposit})</span>
+              </>
+            ) : (
+              `$${item.price}`
+            )}
           </span>
         </div>
       </div>
@@ -243,12 +325,12 @@ const CartItem = ({ item, type = "products" }) => {
           <div className="price">
             NT${" "}
             {type === "rentals"
-              ? Number(item.discounted_price) * quantity * item.rental_days
+              ? (Number(item.price_per_day) + Number(item.deposit)) *
+                quantity *
+                item.rental_days
               : Number(item.price) * quantity}
             {type === "rentals" && item.deposit > 0 && (
-              <div className="text-muted small">
-                (押金：NT$ {item.deposit})
-              </div>
+              <div className="text-muted small"></div>
             )}
           </div>
         </div>

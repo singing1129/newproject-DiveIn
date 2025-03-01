@@ -1,30 +1,84 @@
-.subdetails-titles {
-  gap: 10px;
+:root {
+  --primary-color: #219ebc;
+  --primary-deep-color: #023047;
+  --primary-light-color: #8ecae6;
+  --secondary-color: #ffd500;
+  --secondary-deep-color: #ffb703;
+  --secondary-light-color: #f1d691;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-20-color: #f8f9fa;
+  --gray-50-color: #e5e5e5;
+  --gray-100-color: #dedede;
+  --gray-200-color: #e5e5e5;
+  --gray-300-color: #cfcfcf;
+  --gray-400-color: #b2b2b2;
+  --gray-500-color: #a3a3a3;
+  --gray-600-color: #898989;
+  --gray-700-color: #6f6f6f;
+  --gray-800-color: #555555;
+  --gray-900-color: #3b3b3b;
 }
 
-.modal-dialog.modal-custom {
+* {
+  font-family: "Noto Sans TC", serif;
+  font-size: 16px;
+}
+
+/* Modal 的遮罩層 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明黑色背景 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* 確保 Modal 在最上層 */
+}
+
+/* Modal 內容區域 */
+.modal-content {
+  background-color: var(--white) !important;
+  padding: 20px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  width: 400px !important; /* 固定寬度 */
+  max-width: 90% !important; /* 在小螢幕上不會超出視窗 */
+}
+
+.modal-dialog {
   max-width: 60%;
 }
 
-.modal-body .subdetails-titles .modal-product-price {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+.close-btn{
+  color: var(--gray-300-color);
+}
+.close-btn:hover{
+  color: var(--black);
+}
+.close-btn.selected {
+  border: none;
+  outline: none; /* 移除點擊後的藍色邊框 */
+  box-shadow: none; /* 避免有陰影邊框 */
+}
+.close-btn:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
 }
 
-.modal-body .subdetails-titles .modal-product-price2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+.modal-body {
+  border-top: 1px solid var(--gray-300-color) !important;
+  border-bottom: 1px solid var(--gray-300-color) !important;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
 }
-.modal-body .product-amount .btn-outline-secondary {
-  border: 1px solid var(--gray-300-color);
-}
-.modal-body .product-amount .btn-outline-secondary:hover {
-  background-color: var(--primary-color);
-  border: 1px solid var(--white);
-}
-
 .modal-body .product-color {
   gap: 10px;
 }
@@ -51,8 +105,8 @@
 }
 /* 當顏色被選中時，顯示黑色邊框 */
 .modal-body .product-color .colors .color-box.selected {
-  transform: scale(1.3);
-  border: 1px solid var(--black) !important ; /* 更粗的邊框 */
+  transform: scale(1.1);
+  border: 0.5px solid var(--black) !important ; /* 更粗的邊框 */
   box-shadow: 0 0 15px rgba(200, 200, 200, 0.7); /* 更明顯的陰影 */
 }
 
@@ -66,21 +120,15 @@
   margin-bottom: 10px;
 }
 
-.modal-body .no-colors {
+/* .modal-body .no-colors {
   margin: 0;
   color: var(--gray-600-color);
-}
+} */
 
-.modal-body .amount-title {
-  margin-bottom: 10px;
-}
-.modal-body .product-stock {
-  margin: 0;
-  color: var(--gray-600-color);
-}
-.modal-body .stock-available {
-  margin: 0;
-  color: var(--gray-600-color);
+.modal-actions {
+ display: flex;
+ justify-content: end;
+ align-items: center;
 }
 
 /* 取消按鈕樣式 */
@@ -141,32 +189,38 @@
 
 /* 購物車租借modal */
 /* 資訊區塊的樣式 */
-.rent-display {
+.cart-item .rent-display {
   cursor: pointer;
   position: relative; 
-  padding: 10px;
-  border: 1px solid var(--gray-600-color); /* 初始邊框為透明 */
-  border-radius: 8px; /* 圓角 */
-  transition: border-color 0.3s ease; /* 邊框顏色過渡效果 */
+  padding: 12px 15px;
+  border-radius: 4px;
+  width: 100%;
+  border: 1px solid var(--gray-200-color);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* hover 時顯示 primary-color 的邊框 */
 .rent-display:hover {
-  border-color: var(--primary-color); /* 使用你的 primary-color */
+  border-color: var(--primary-color); 
+  box-shadow: 0 0 0 1px var(--primary-color);
 }
 
 /* 修改的小字樣 */
 .edit-mark {
-  position: absolute; /* 絕對定位 */
+  position: absolute;
+  /* right: 12px;
+  top: 50%; */
   top: 5px; /* 距離頂部 5px */
   right: 5px; /* 距離右側 5px */
-  font-size: 12px; /* 字體大小 */
-  color: var(--primary-color); /* 使用你的 primary-color */
-  opacity: 0; /* 初始透明度為 0 */
-  transition: opacity 0.3s ease; /* 透明度過渡效果 */
+  /* transform: translateY(-50%); */
+  font-size: 14px;
+  color: var(--primary-color);
+  opacity: 0;
+  transition: opacity 0.2s;
+
 }
 
 /* hover 時顯示修改的小字樣 */
 .rent-display:hover .edit-mark {
-  opacity: 1; /* 完全顯示 */
+  opacity: 1; 
 }

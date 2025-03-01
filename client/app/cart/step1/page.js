@@ -43,7 +43,7 @@ const Cart1 = () => {
       case "activities":
         return Number(item.price) * item.quantity;
       case "rentals":
-        return Number(item.discounted_price) * item.rental_days * item.quantity;
+        return Number(item.price_per_day) * item.rental_days * item.quantity;
       default:
         return 0;
     }
@@ -75,8 +75,8 @@ const Cart1 = () => {
     );
 
     // 計算租賃押金總額（）
-    const deposit = selectedRentals.reduce(
-      (sum, item) => sum + Number(item.deposit_fee || 0) * item.quantity,
+    const depositTotal = selectedRentals.reduce(
+      (sum, item) => sum + Number(item.deposit || 0) * item.rental_days * item.quantity,
       0
     );
 
@@ -84,9 +84,9 @@ const Cart1 = () => {
       products: productsTotal,
       activities: activitiesTotal,
       rentals: rentalsTotal,
-      deposit,
+      depositTotal,
       subtotal: productsTotal + activitiesTotal + rentalsTotal,
-      total: productsTotal + activitiesTotal + rentalsTotal + deposit,
+      total: productsTotal + activitiesTotal + rentalsTotal + depositTotal,
     };
   }, [cartData, selectedItems]);
 
@@ -143,6 +143,8 @@ const Cart1 = () => {
                           ...item,
                           image: "/article-5ae9687eec0d4.jpg",
                           name: item.product_name,
+                          // 新增了stock
+                          stock: item.stock == null ? null : item.stock,
                           color: item.color_name,
                           size: item.size_name,
                         }}
@@ -216,9 +218,9 @@ const Cart1 = () => {
                   <div className="card-body">
                     <div className="row align-items-center">
                       <div className="col text-end">
-                        {totals.deposit > 0 && (
+                        {totals.depositTotal > 0 && (
                           <div className="text-muted mb-2">
-                            租借押金：NT$ {totals.deposit}
+                            含 租借押金：NT$ {totals.depositTotal}
                           </div>
                         )}
                         <div className="mb-2">
