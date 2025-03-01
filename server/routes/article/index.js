@@ -86,7 +86,6 @@ router.get("/", async (req, res) => {
 
       return row;
     });
-    
     // 查詢總數
     const [[{ totalCount }]] = await pool.execute(
       `
@@ -244,5 +243,96 @@ router.get("/:id", async (req, res) => {
     });
   }
 });
+
+/** 📝 獲取某個用戶的文章列表 */
+router.get("/user/:user_id", async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    const {
+      page = 1,
+      limit = 10,
+      sort = "newest", // newest, oldest, popular
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // 排序條件
+    let orderBy = "a.publish_at DESC";
+    if (sort === "oldest") orderBy = "a.publish_at ASC";
+    else if (sort === "popular") orderBy = "a.view_count DESC";
+
+    // 篩選條件
+    let whereClause = "a.is_deleted = FALSE AND a.users_id = ?";
+    const params = [user_id];
+
+    // 查詢文章列表
+    const [rows] = await pool.execute(
+      `
+      SELECT 
+        a.id, 
+        a.title, 
+        a.publish_at, 
+        a.view_count,
+        acs.name AS category_small_name, 
+        acb.name AS category_big_name, 
+        u.name AS author_name, 
+        ai.img_url AS img_url
+      FROM article a
+      LEFT JOIN article_category_small acs ON a.article_category_small_id = acs.id
+      LEFT JOIN article_category_big acb ON acs.category_big_id = acb.id
+      LEFT JOIN users u ON a.users_id = u.id
+      LEFT JOIN article_image ai ON a.id = ai.article_id AND ai.is_main = 1
+      WHERE ${whereClause}
+      ORDER BY ${orderBy}
+      LIMIT ? OFFSET ?
+      `,
+      [...params, Number(limit), Number(offset)]
+    );
+
+    // 處理圖片 URL
+    const fullRows = rows.map((row) => {
+      if (
+        row.img_url &&
+        !row.img_url.startsWith("http") &&
+        !row.img_url.startsWith("/uploads")
+      ) {
+        row.img_url = `/uploads${row.img_url}`;
+      }
+      if (!row.img_url) {
+        row.img_url = "/uploads/article/no_is_main.png";
+      }
+      return row;
+    });
+
+    // 查詢總數
+    const [[{ totalCount }]] = await pool.execute(
+      `
+      SELECT COUNT(DISTINCT a.id) AS totalCount
+      FROM article a
+      WHERE ${whereClause}
+      `,
+      params
+    );
+
+    res.json({
+      status: "success",
+      data: fullRows,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: Number(page),
+        limit: Number(limit),
+      },
+    });
+  } catch (error) {
+    console.error("❌ 獲取用戶文章列表失敗：", error);
+    res.status(500).json({
+      status: "error",
+      message: "獲取用戶文章列表失敗",
+      error: error.message,
+    });
+  }
+});
+
 
 export default router;

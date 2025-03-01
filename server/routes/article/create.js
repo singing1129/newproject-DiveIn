@@ -209,4 +209,59 @@ router.get("/data", async (req, res) => {
 router.post("/upload-image", (req, res) => handleImageUpload(req, res, 1));
 router.post("/upload", (req, res) => handleImageUpload(req, res, 0));
 
+//圖片正確關聯文章
+router.post("/update-article-image", async (req, res) => {
+  try {
+    const { article_id, img_url } = req.body;
+    if (!article_id || !img_url) {
+      return res.status(400).json({ message: "缺少必要參數" });
+    }
+
+    await db.query(
+      "UPDATE article_image SET article_id = ? WHERE img_url = ?",
+      [article_id, img_url]
+    );
+
+    res.status(200).json({ success: true, message: "圖片關聯成功" });
+  } catch (error) {
+    console.error("❌ 圖片關聯錯誤：", error);
+    res.status(500).json({ success: false, message: "圖片關聯失敗" });
+  }
+});
+
+// 新增 CKEditor 圖片上傳路由
+router.post(
+  "/upload-ckeditor-image",
+  upload.single("articleImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "未接收到圖片文件" });
+      }
+
+      const imageUrl = `/uploads/article/${req.file.filename}`;
+
+      // 取得文章 ID，如果是新文章，可以先存 null，稍後在文章創建時更新
+      const articleId = req.body.article_id || null;
+
+      // 將圖片資訊存入 article_image 資料表，is_main 設為 0
+      const { results } = await db.query(
+        "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
+        [articleId, imageUrl, 0]
+      );
+
+      if (!results || !results.insertId) {
+        throw new Error("圖片插入資料庫失敗");
+      }
+
+      res.status(200).json({ success: true, url: imageUrl });
+    } catch (error) {
+      console.error("❌ CKEditor 圖片上傳失敗：", error);
+      res.status(500).json({ success: false, message: "圖片上傳失敗" });
+    }
+  }
+);
+
 export default router;

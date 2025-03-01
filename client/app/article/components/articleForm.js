@@ -87,50 +87,56 @@ const ArticleForm = () => {
   };
 
   // 提交表單
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!submitStatus) {
-      alert("請選擇儲存草稿或發表文章");
-      return;
-    }
-
-    // 在這裡打印 tagsList，檢查標籤數據
-    console.log("tagsList:", tagsList);
-
-    const formData = new FormData();
-    formData.append("new_title", new_title);
-    formData.append("new_content", new_content);
-    formData.append("new_categorySmall", new_categorySmall);
-    formData.append("new_tags", JSON.stringify(tagsList));
-    formData.append("status", submitStatus);
-    if (new_coverImage) formData.append("new_coverImage", new_coverImage);
-
+  const handleSubmit = async (status) => {
     try {
-      const response = await fetch("http://localhost:3005/api/article/create", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("請求失敗");
+      const formData = new FormData();
+      formData.append("new_title", new_title);
+      formData.append("new_content", new_content);
+      formData.append("new_categorySmall", new_categorySmall);
+      formData.append("new_tags", JSON.stringify(tagsList));
+      formData.append("status", status);
+      
+      if (new_coverImage) {
+        formData.append("new_coverImage", new_coverImage);
       }
 
-      const data = await response.json();
-      if (data.success) {
-        alert(submitStatus === "draft" ? "草稿儲存成功！" : "文章發表成功！");
+      const response = await axios.post(
+        "http://localhost:3005/api/article/create",
+        formData
+      );
 
-        // ✅ 確保瀏覽器環境加載後才執行 router.push
-        setTimeout(() => {
-          router.push("/article");
-        }, 500);
+      if (response.data.success) {
+        const articleId = response.data.articleId;
+        
+        // 從 CKEditor 內容中提取圖片 URL
+        const imgUrls = extractImageUrls(new_content);
+
+        // 更新 article_image，設置正確的 article_id
+        await Promise.all(
+          imgUrls.map(async (url) => {
+            await axios.post("http://localhost:3005/api/update-article-image", {
+              article_id: articleId,
+              img_url: url,
+            });
+          })
+        );
+
+        alert("文章創建成功！");
+        router.push(`/article/${articleId}`);
       } else {
-        alert("發表失敗：" + (data.message || "請稍後再試"));
+        alert("創建文章失敗");
       }
     } catch (error) {
-      console.error("❌ 發送請求錯誤：", error);
-      alert("提交錯誤，請稍後再試！");
+      console.error("❌ 文章創建錯誤：", error);
     }
+  };
+
+  // 提取 CKEditor 內的圖片 URL
+  const extractImageUrls = (content) => {
+    const div = document.createElement("div");
+    div.innerHTML = content;
+    const imgTags = div.querySelectorAll("img");
+    return Array.from(imgTags).map((img) => img.getAttribute("src"));
   };
 
   return (
@@ -152,7 +158,7 @@ const ArticleForm = () => {
         </span>
       </div>
 
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(submitStatus); }} encType="multipart/form-data">
         {/* 封面圖片 */}
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
