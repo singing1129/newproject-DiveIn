@@ -1,5 +1,6 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
+import { sendJoinGroupCancelMail } from "../../lib/mail.js";
 const router = express.Router();
 
 router.post("/myGroup", async (req, res) => {
@@ -74,6 +75,20 @@ router.put("/myGroup/:id", async (req, res) => {
     const id = req.params.id
     const sql = `UPDATE groups SET status = 2 WHERE id = ${id} `
     await pool.execute(sql)
+    const getParticipants = `
+                            SELECT DISTINCT users.email, groups_participants.user_id
+                            FROM groups_participants
+                            JOIN users ON groups_participants.user_id = users.id
+                            WHERE groups_participants.groups_id = ${id};
+                            `;
+    const [participants] = await pool.execute(getParticipants)
+    for (const participant of participants) {
+        await sendJoinGroupCancelMail(participant.email, groupName, groupDate);
+    }
+    res.status(200).json({
+        status: "success",
+        message: "成功取消揪團"
+    });
 });
 
 export default router;
