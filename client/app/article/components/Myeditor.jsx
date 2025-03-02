@@ -20,7 +20,7 @@ class MyUploadAdapter {
             .then((response) => response.json())
             .then((result) => {
               if (result.success) {
-                resolve({ default: result.url }); // CKEditor 需要的返回格式
+                resolve({ default: `http://localhost:3005${result.url}` });
               } else {
                 reject(result.message);
               }

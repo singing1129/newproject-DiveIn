@@ -54,20 +54,26 @@ const tempStorage = multer.diskStorage({
 
 const tempUpload = multer({ storage: tempStorage });
 
-// 暫存圖片上傳路由
-router.post("/upload-ckeditor-image-temp", tempUpload.single("articleImage"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "未接收到圖片文件" });
-    }
+// ckeditor編輯器暫存圖片上傳路由
+router.post(
+  "/upload-ckeditor-image-temp",
+  tempUpload.single("articleImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "未接收到圖片文件" });
+      }
 
-    const tempImageUrl = `/uploads/temp/${req.file.filename}`;
-    res.status(200).json({ success: true, url: tempImageUrl }); // 只發送一次回應
-  } catch (error) {
-    console.error("❌ 暫存圖片上傳失敗：", error);
-    res.status(500).json({ success: false, message: "暫存圖片上傳失敗" }); // 只發送一次回應
+      const tempImageUrl = `/uploads/temp/${req.file.filename}`;
+      res.status(200).json({ success: true, url: tempImageUrl }); // 只發送一次回應
+    } catch (error) {
+      console.error("❌ 暫存圖片上傳失敗：", error);
+      res.status(500).json({ success: false, message: "暫存圖片上傳失敗" }); // 只發送一次回應
+    }
   }
-});
+);
 
 // 在 handleTags 函式中添加更多錯誤檢查
 const handleTags = async (tags, articleId) => {
@@ -184,6 +190,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
 
     // 處理 CKEditor 圖片
     for (const tempImageUrl of ckeditorImages) {
+      // 確保 tempImageUrl 是相對路徑
       const tempImagePath = path.join(process.cwd(), "public", tempImageUrl);
       const finalImagePath = path.join(
         process.cwd(),

@@ -51,8 +51,8 @@ import orderRouter from "../routes/order/index.js";
 const app = express();
 
 // 獲取文章當前文件的目錄路徑
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url); 
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); 
 
 // 設定允許的跨域來源
 const whiteList = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3005"];
@@ -75,11 +75,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(logger("dev"));
 app.use(express.static(path.join(process.cwd(), "../public")));
 
-// 提供靜態文件服務
+// 提供文章圖片靜態服務
 app.use(
   "/uploads/article",
   express.static(path.join(__dirname, "..", "public", "uploads", "article"))
-);
+); //封面縮圖 圖片預覽
+
+app.use(
+  "/uploads/temp",
+  express.static(path.join(__dirname, "..", "public", "uploads", "temp"))
+); //ckeditor 圖片預覽
 
 // 測試 API
 app.get("/", (req, res) => {

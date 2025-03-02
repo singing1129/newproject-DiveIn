@@ -114,7 +114,11 @@ const ArticleForm = () => {
       }
 
       // 提取 CKEditor 中的圖片 URL
-      const imgUrls = extractImageUrls(new_content || "");
+      const imgUrls = extractImageUrls(new_content || "").map((url) => {
+        // 將完整的 URL 轉換為相對路徑
+        return url.replace("http://localhost:3005", "");
+      });
+
       formData.append("ckeditor_images", JSON.stringify(imgUrls));
 
       const response = await axios.post(
