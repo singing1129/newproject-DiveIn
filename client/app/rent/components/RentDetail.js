@@ -20,7 +20,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../../../public/globals.css";
 import { useCart } from "@/hooks/cartContext"; // 加入購物車
 import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
-// import AddToCartButton from "./AddToCartButton"; // 最後有時間回來補充加入購物車的動態效果
+import AddToCartButton from "./AddToCartButton"; // 最後有時間回來補充加入購物車的動態效果
 
 const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 
@@ -643,16 +643,11 @@ export default function RentProductDetail() {
     // 檢查會員是否已登錄
     const token = localStorage.getItem("loginWithToken");
 
-    // if (token) {
-    //   console.log("Token found:", token);
-    // } else {
-    //   console.log("Token not found in localStorage");
-    // }
-
     if (!token) {
       alert("請先登錄以加入購物車");
       redirectToLogin();
-      return;
+      // return;
+      return false; // 不觸發加入購物車動畫
     }
 
     const decoded = jwtDecode(token);
@@ -664,7 +659,8 @@ export default function RentProductDetail() {
     if (!userId) {
       alert("會員 ID 無效，請重新登錄");
       redirectToLogin();
-      return;
+      // return;
+      return false; // 不觸發加入購物車動畫
     }
 
     // 檢查 userId 是否有效，等 -1 問題解決以後打開
@@ -676,19 +672,22 @@ export default function RentProductDetail() {
 
     if (!product) {
       alert("租借訂單資料未加載完成，請稍後再試！");
-      return;
+      // return;
+      return false; // 不觸發加入購物車動畫
     }
 
     // 檢查是否選擇了日期
     if (!startDate || !endDate) {
       alert("請選擇租借日期！");
-      return;
+      // return;
+      return false; // 不觸發加入購物車動畫
     }
 
     // 確保 startDate 和 endDate 是 Date 物件
     if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
       alert("日期格式錯誤，請重新選擇！");
-      return;
+      // return;
+      return false; // 不觸發加入購物車動畫
     }
     // 傳遞給後端的格式
     const formattedStartDate = startDate.toLocaleDateString("en-CA"); // 輸出 YYYY-MM-DD
@@ -704,7 +703,8 @@ export default function RentProductDetail() {
       // 如果有顏色規格但未選擇顏色，則提示會員選擇顏色
       if (!selectedColor) {
         alert("請選擇商品顏色！");
-        return;
+        // return;
+        return false; // 不觸發加入購物車動畫
       }
       // 獲取選擇的顏色 RGB 值
       const selectedSpec = product.specifications.find(
@@ -743,8 +743,10 @@ export default function RentProductDetail() {
 
       if (response.data.success) {
         alert("成功加入購物車！");
+        return true; // 成功加入購物車，觸發動畫
       } else {
         alert(response.data.message || "加入購物車失敗");
+        return false; // 不觸發動畫
       }
     } catch (error) {
       console.error("加入購物車失敗:", error);
@@ -752,6 +754,7 @@ export default function RentProductDetail() {
         console.error("後端錯誤訊息:", error.response.data);
       }
       alert("加入購物車失敗，請稍後再試");
+      return false; // 不觸發動畫
     }
   };
 
@@ -1021,14 +1024,14 @@ export default function RentProductDetail() {
                 </div>
               </div>
               <div className="d-flex flex-row justify-content-between align-items-center product-btns">
-                <button
+                {/* <button
                   type="button"
                   className="mybtn btn-cart flex-grow-1"
                   onClick={handleAddToCart}
                 >
                   加入購物車
-                </button>
-                {/* <AddToCartButton onClick={handleAddToCart} /> */}
+                </button> */}
+                <AddToCartButton onClick={handleAddToCart} />
               </div>
             </div>
           </div>
@@ -1085,17 +1088,18 @@ export default function RentProductDetail() {
                   {product.brand_img_url && (
                     <Image
                       src={
-                        product.brand_img_url
-                          ? product.brand_img_url.startsWith("/") ||
-                            product.brand_img_url.startsWith("http")
-                            ? product.brand_img_url
-                            : `/${product.brand_img_url}`
+                        product.brand_img_url &&
+                        product.brand_img_url.startsWith("/")
+                          ? product.brand_img_url
                           : "/image/rent/no-brandimg.png"
                       }
                       alt={`${product.brand_name} Logo`}
-                      width={50} // 設置寬度
-                      height={50} // 設置高度
+                      width={50}
+                      height={50}
                       className="brand-logo"
+                      onError={(event) =>
+                        (event.target.src = "/image/rent/no-brandimg.png")
+                      } // 圖片載入錯誤時替換
                     />
                   )}
                   {/* 品牌描述 */}
@@ -1344,16 +1348,4 @@ export default function RentProductDetail() {
       </div>
     </div>
   );
-}
-
-{
-  /* <div
-                        className="icon d-flex justify-content-center align-items-center"
-                        onClick={(e) => {
-                          e.stopPropagation(); // 阻止事件冒泡
-                          handleIconClick(product, e);
-                        }}
-                      >
-                        <i className="bi bi-cart"></i>
-                      </div> */
 }
