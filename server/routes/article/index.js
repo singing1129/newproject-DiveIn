@@ -2,6 +2,7 @@ import express from "express";
 import { pool } from "../../config/mysql.js";
 import articleSidebarRouter from "./sidebar.js";
 import articleCreateRouter from "./create.js";
+import articleUpdateRouter from "./update.js"; 
 import articleReplyRouter from "./reply.js";
 import articleLikeRouter from "./like.js"; // 文章 & 留言按讚
 
@@ -9,6 +10,7 @@ const router = express.Router();
 
 router.use("/sidebar", articleSidebarRouter);
 router.use("/create", articleCreateRouter);
+router.use("/update", articleUpdateRouter); 
 router.use("/reply", articleReplyRouter);
 router.use("/like", articleLikeRouter);
 
@@ -138,15 +140,11 @@ router.get("/:id", async (req, res) => {
         a.*,
         acs.name AS category_small_name,
         acb.name AS category_big_name,
-        u.name AS author_name,
-        ai.img_url AS img_url
+        u.name AS author_name
       FROM article a
       LEFT JOIN article_category_small acs ON a.article_category_small_id = acs.id
       LEFT JOIN article_category_big acb ON acs.category_big_id = acb.id
       LEFT JOIN users u ON a.users_id = u.id
-      LEFT JOIN article_tag_big atb ON a.id = atb.article_id
-      LEFT JOIN article_tag_small ats ON atb.article_tag_small_id = ats.id
-      LEFT JOIN article_image ai ON a.id = ai.article_id AND ai.is_main = 1
       WHERE a.id = ?
       `,
       [articleId]
@@ -172,14 +170,18 @@ router.get("/:id", async (req, res) => {
     );
 
     // 如果沒有找到主圖片，則補上預設圖片
-    if (imageRows.length === 0) {
-      imageRows.push({ img_url: "/piblic/uploads/article/no_is_main.png" }); // 沒有主圖片時使用預設圖片
+    let mainImage = imageRows.find((img) => img.is_main === 1);
+    if (!mainImage) {
+      mainImage = {
+        img_url: "/public/uploads/article/no_is_main.png",
+        is_main: 1,
+      };
     }
 
     // 處理圖片 URL
     imageRows.forEach((image) => {
       if (image.img_url && !image.img_url.startsWith("http")) {
-        image.img_url = `/uploads${image.img_url}`;
+        image.img_url = `${image.img_url}`;
       }
     });
 
@@ -396,75 +398,6 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "刪除文章及相關資料失敗",
-      error: error.message,
-    });
-  } finally {
-    // 釋放連接
-    connection.release();
-  }
-});
-
-/** 更新文章 */
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { title, content, article_category_small_id, tags } = req.body;
-
-  const connection = await pool.getConnection();
-
-  try {
-    // 開始交易
-    await connection.beginTransaction();
-
-    // 更新文章基本資訊
-    await connection.execute(
-      `
-      UPDATE article 
-      SET 
-        title = ?, 
-        content = ?, 
-        article_category_small_id = ?, 
-        updated_at = NOW()
-      WHERE id = ?
-      `,
-      [title, content, article_category_small_id, id]
-    );
-
-    // 刪除舊的標籤
-    await connection.execute(
-      `DELETE FROM article_tag_big WHERE article_id = ?`,
-      [id]
-    );
-
-    // 插入新的標籤
-    if (tags && tags.length > 0) {
-      for (const tag of tags) {
-        await connection.execute(
-          `
-          INSERT INTO article_tag_big (article_id, article_tag_small_id)
-          SELECT ?, id FROM article_tag_small WHERE tag_name = ?
-          `,
-          [id, tag]
-        );
-      }
-    }
-
-    // 提交交易
-    await connection.commit();
-
-    // 回傳成功訊息
-    res.json({
-      status: "success",
-      message: "文章已成功更新",
-    });
-  } catch (error) {
-    // 回滾交易
-    await connection.rollback();
-
-    console.error("❌ 更新文章失敗：", error);
-
-    res.status(500).json({
-      status: "error",
-      message: "更新文章失敗",
       error: error.message,
     });
   } finally {

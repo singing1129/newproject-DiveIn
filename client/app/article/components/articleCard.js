@@ -12,6 +12,7 @@ export default function ArticleCard({
   onDeleteSuccess,
 }) {
   const backendURL = "http://localhost:3005";
+  const defaultImage = `${backendURL}/uploads/article/no_is_main.png`; // 定義預設圖片
   // 在 useState 內設定初始圖片網址
   const [imageUrl, setImageUrl] = useState(
     article.img_url?.startsWith("http")
@@ -51,13 +52,13 @@ export default function ArticleCard({
     setImageUrl(fullImageUrl); // 更新 imageUrl 狀態
   }, [article.img_url]);
 
- // 動態插入清理後的內容 避免 Hydration failed  
- const contentRef = useRef(null);
- useEffect(() => {
-   if (contentRef.current) {
-     contentRef.current.innerHTML = sanitizedContent;
-   }
- }, [sanitizedContent]);
+  // 動態插入清理後的內容 避免 Hydration failed
+  const contentRef = useRef(null);
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.innerHTML = sanitizedContent;
+    }
+  }, [sanitizedContent]);
 
   return (
     <div className="article-list-card">

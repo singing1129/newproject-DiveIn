@@ -35,7 +35,7 @@ export default function ArticleUpdate() {
   const handleSave = async (formData) => {
     try {
       const response = await axios.put(
-        `http://localhost:3005/api/article/${id}`,
+        `http://localhost:3005/api/article/update/${id}`, // 更新 URL
         formData
       );
       if (response.data.success) {
@@ -54,9 +54,11 @@ export default function ArticleUpdate() {
       <div className="row">
         <Sidebar />
         <div className="article-create col-9">
-          {initialData && <Edit initialData={initialData} onSave={handleSave} />}
+          {initialData && (
+            <Edit initialData={initialData} onSave={handleSave} />
+          )}
         </div>
       </div>
     </div>
   );
-}   
+}

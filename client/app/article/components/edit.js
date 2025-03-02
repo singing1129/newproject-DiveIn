@@ -97,16 +97,16 @@ const Edit = ({ initialData = {}, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    formData.append("article_category_small_id", categorySmall);
-    formData.append("tags", JSON.stringify(tagsList));
-    formData.append("status", submitStatus);
-
+    formData.append("title", title || ""); // 確保 title 不是 undefined
+    formData.append("content", content || ""); // 確保 content 不是 undefined
+    formData.append("article_category_small_id", categorySmall || null); // 確保 categorySmall 不是 undefined
+    formData.append("tags", JSON.stringify(tagsList || [])); // 確保 tagsList 不是 undefined
+    formData.append("status", submitStatus || "draft"); // 確保 submitStatus 不是 undefined
+  
     if (coverImage) {
       formData.append("coverImage", coverImage);
     }
-
+  
     onSave(formData); // 將表單數據傳遞給父組件
   };
 
