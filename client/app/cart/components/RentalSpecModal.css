@@ -53,10 +53,18 @@
   max-width: 60%;
 }
 
-.close-btn{
-  color: var(--gray-300-color);
+.modal-header {
+  border-bottom: 1px solid var(--gray-300-color) !important;
 }
-.close-btn:hover{
+.modal-header .modal-title {
+  margin-bottom: 10px;
+}
+
+.close-btn {
+  color: var(--gray-300-color);
+  margin-bottom: 10px;
+}
+.close-btn:hover {
   color: var(--black);
 }
 .close-btn.selected {
@@ -71,13 +79,15 @@
 }
 
 .modal-body {
-  border-top: 1px solid var(--gray-300-color) !important;
-  border-bottom: 1px solid var(--gray-300-color) !important;
   margin-top: 10px;
   margin-bottom: 10px;
   display: flex;
   flex-direction: column;
   justify-content: start;
+}
+
+.form-group {
+  margin-bottom: 10px;
 }
 .modal-body .product-color {
   gap: 10px;
@@ -125,14 +135,15 @@
   color: var(--gray-600-color);
 } */
 
-.modal-actions {
- display: flex;
- justify-content: end;
- align-items: center;
+.modal-footer {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  border-top: 1px solid var(--gray-300-color) !important;
 }
 
 /* 取消按鈕樣式 */
-.cancel-button {
+.modal-footer .cancel-button {
   background-color: var(--secondary-color);
   color: var(--white);
   border: none;
@@ -143,24 +154,26 @@
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease; /* 過渡效果 */
   margin-right: 10px; /* 右邊距 */
+  margin-top: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 陰影效果 */
 }
 
-.cancel-button:hover {
+.modal-footer .cancel-button:hover {
   background-color: var(--secondary-deep-color); /* 滑鼠懸停時的深紅色 */
   transform: translateY(-2px); /* 懸停時稍微上移 */
 }
 
-.cancel-button:active {
+.modal-footer .cancel-button:active {
   transform: translateY(0); /* 點擊時恢復原位 */
 }
 
 /* 確認按鈕樣式 */
-.confirm-button {
+.modal-footer .confirm-button {
   background-color: var(--primary-color);
   color: var(--white);
   border: none;
   border-radius: 8px; /* 圓角 */
+  margin-top: 10px;
   padding: 10px 20px; /* 內邊距 */
   font-size: 16px;
   font-weight: bold;
@@ -169,18 +182,18 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 陰影效果 */
 }
 
-.confirm-button:hover {
+.modal-footer .confirm-button:hover {
   background-color: var(--primary-deep-color); /* 滑鼠懸停時的深綠色 */
   transform: translateY(-2px); /* 懸停時稍微上移 */
 }
 
-.confirm-button:active {
+.modal-footer .confirm-button:active {
   transform: translateY(0); /* 點擊時恢復原位 */
 }
 
 /* 禁用狀態 */
-.confirm-button:disabled,
-.cancel-button:disabled {
+.modal-footer .confirm-button:disabled,
+.modal-footer .cancel-button:disabled {
   background-color: #cccccc; /* 灰色 */
   color: #666666; /* 深灰色文字 */
   cursor: not-allowed; /* 禁用游標 */
@@ -191,7 +204,7 @@
 /* 資訊區塊的樣式 */
 .cart-item .rent-display {
   cursor: pointer;
-  position: relative; 
+  position: relative;
   padding: 12px 15px;
   border-radius: 4px;
   width: 100%;
@@ -201,10 +214,19 @@
 
 /* hover 時顯示 primary-color 的邊框 */
 .rent-display:hover {
-  border-color: var(--primary-color); 
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 1px var(--primary-color);
 }
 
+.rent-label {
+  color: var(--gray-500-color);
+  min-width: 45px;
+}
+.rent-label .days {
+  color: var(--gray-500-color);
+  font-size: 12px;
+  min-width: 45px;
+}
 /* 修改的小字樣 */
 .edit-mark {
   position: absolute;
@@ -217,10 +239,32 @@
   color: var(--primary-color);
   opacity: 0;
   transition: opacity 0.2s;
-
 }
 
 /* hover 時顯示修改的小字樣 */
 .rent-display:hover .edit-mark {
-  opacity: 1; 
+  opacity: 1;
+}
+
+/* 手機版樣式 */
+@media (max-width: 768px) {
+  .rent-display {
+    padding: 10px 12px;
+  }
+
+  .rent-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rent-value {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .rent-value div {
+    margin: 0;
+  }
 }
