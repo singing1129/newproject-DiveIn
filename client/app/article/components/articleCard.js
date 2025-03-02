@@ -109,7 +109,7 @@ export default function ArticleCard({
           {isMyArticles && (
             <>
               {/* 只有在“我的文章”页面才显示编辑按钮 */}
-              <Link href={`/article/create?id=${article.id}`} passHref>
+              <Link href={`/article/${article.id}/update`} passHref>
                 <button className="btn btn-card btn-edit">編輯</button>
               </Link>
               <button
