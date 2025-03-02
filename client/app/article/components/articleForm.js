@@ -90,6 +90,15 @@ const ArticleForm = () => {
     reader.readAsDataURL(file);
   };
 
+  const [ckeditorImages, setCkeditorImages] = useState([]);
+  // 提取 CKEditor 內的圖片 URL
+  const extractImageUrls = (content) => {
+    const div = document.createElement("div");
+    div.innerHTML = content;
+    const imgTags = div.querySelectorAll("img");
+    return Array.from(imgTags).map((img) => img.getAttribute("src"));
+  };
+
   // 提交表單
   const handleSubmit = async (status) => {
     try {
@@ -104,43 +113,24 @@ const ArticleForm = () => {
         formData.append("new_coverImage", new_coverImage);
       }
 
+      // 提取 CKEditor 中的圖片 URL
+      const imgUrls = extractImageUrls(new_content || "");
+      formData.append("ckeditor_images", JSON.stringify(imgUrls));
+
       const response = await axios.post(
         "http://localhost:3005/api/article/create",
         formData
       );
 
       if (response.data.success) {
-        const articleId = response.data.articleId;
-
-        // 從 CKEditor 內容中提取圖片 URL
-        const imgUrls = extractImageUrls(new_content || "");
-
-        // 更新 article_image，設置正確的 article_id
-        await Promise.all(
-          imgUrls.map(async (url) => {
-            await axios.post("http://localhost:3005/api/update-article-image", {
-              article_id: articleId,
-              img_url: url,
-            });
-          })
-        );
-
         alert("文章創建成功！");
-        router.push(`/article/${articleId}`);
+        router.push(`/article/${response.data.articleId}`);
       } else {
         alert("創建文章失敗");
       }
     } catch (error) {
       console.error("❌ 文章創建錯誤：", error);
     }
-  };
-
-  // 提取 CKEditor 內的圖片 URL
-  const extractImageUrls = (content) => { 
-    const div = document.createElement("div");
-    div.innerHTML = content;
-    const imgTags = div.querySelectorAll("img");
-    return Array.from(imgTags).map((img) => img.getAttribute("src"));
   };
 
   return (

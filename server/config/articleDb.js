@@ -88,9 +88,8 @@ export const db = {
       "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
       [articleId, imgUrl, isMain]
     );
-    return results.insertId;
-  },
-
+    return results.insertId; // 返回插入的圖片 ID
+  }
   // // 更新文章
   // updateArticle: async (id, { title, content, coverImage, category_id }) => {
   //   const { results } = await query(

@@ -12,9 +12,8 @@ class MyUploadAdapter {
         new Promise((resolve, reject) => {
           const formData = new FormData();
           formData.append("articleImage", file);
-          formData.append("article_id", this.articleId); // 傳遞文章 ID
 
-          fetch("http://localhost:3005/api/article/upload-ckeditor-image", {
+          fetch("http://localhost:3005/api/article/upload-ckeditor-image-temp", {
             method: "POST",
             body: formData,
           })
