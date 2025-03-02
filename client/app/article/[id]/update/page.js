@@ -59,4 +59,4 @@ export default function ArticleUpdate() {
       </div>
     </div>
   );
-}
+}   
