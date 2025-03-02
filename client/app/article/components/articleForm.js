@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+
 import Image from "next/image";
 import axios from "axios";
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 
 const ArticleForm = () => {
+  const { id } = useParams(); // 这里 `id` 可能是文章 ID，如果页面是创建新文章，则 `id` 可能为 undefined
+  const articleId = id || null; // 如果是创建文章，articleId 为空
   const router = useRouter();
   const [new_title, setTitle] = useState("");
   const [new_content, setContent] = useState("");
@@ -95,7 +99,7 @@ const ArticleForm = () => {
       formData.append("new_categorySmall", new_categorySmall);
       formData.append("new_tags", JSON.stringify(tagsList));
       formData.append("status", status);
-      
+
       if (new_coverImage) {
         formData.append("new_coverImage", new_coverImage);
       }
@@ -107,9 +111,9 @@ const ArticleForm = () => {
 
       if (response.data.success) {
         const articleId = response.data.articleId;
-        
+
         // 從 CKEditor 內容中提取圖片 URL
-        const imgUrls = extractImageUrls(new_content);
+        const imgUrls = extractImageUrls(new_content || "");
 
         // 更新 article_image，設置正確的 article_id
         await Promise.all(
@@ -132,7 +136,7 @@ const ArticleForm = () => {
   };
 
   // 提取 CKEditor 內的圖片 URL
-  const extractImageUrls = (content) => {
+  const extractImageUrls = (content) => { 
     const div = document.createElement("div");
     div.innerHTML = content;
     const imgTags = div.querySelectorAll("img");
@@ -158,7 +162,13 @@ const ArticleForm = () => {
         </span>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(submitStatus); }} encType="multipart/form-data">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(submitStatus);
+        }}
+        encType="multipart/form-data"
+      >
         {/* 封面圖片 */}
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
@@ -234,6 +244,7 @@ const ArticleForm = () => {
           value={new_content}
           editorLoaded={true}
           onChange={(data) => setContent(data)}
+          articleId={articleId} // 这里不会再报错
         />
 
         {/* 標籤 */}

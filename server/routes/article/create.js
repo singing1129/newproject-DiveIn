@@ -28,7 +28,11 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = new Set(["image/jpeg", "image/png", "image/gif"]);
-  cb(null, allowedTypes.has(file.mimetype));
+  if (allowedTypes.has(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("❌ 不支援的圖片格式"), false);
+  }
 };
 
 const upload = multer({ storage, fileFilter });
@@ -138,10 +142,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
 
     // 插入封面圖片資料
     if (coverImagePath) {
-      await db.query(
-        "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
-        [articleId, coverImagePath, 1]
-      );
+      await db.insertImage(articleId, coverImagePath, 1);
     }
 
     // 處理標籤
@@ -206,28 +207,8 @@ router.get("/data", async (req, res) => {
 });
 
 // 圖片上傳路由
-router.post("/upload-image", (req, res) => handleImageUpload(req, res, 1));
+// router.post("/upload-image", (req, res) => handleImageUpload(req, res, 1));
 router.post("/upload", (req, res) => handleImageUpload(req, res, 0));
-
-//圖片正確關聯文章
-router.post("/update-article-image", async (req, res) => {
-  try {
-    const { article_id, img_url } = req.body;
-    if (!article_id || !img_url) {
-      return res.status(400).json({ message: "缺少必要參數" });
-    }
-
-    await db.query(
-      "UPDATE article_image SET article_id = ? WHERE img_url = ?",
-      [article_id, img_url]
-    );
-
-    res.status(200).json({ success: true, message: "圖片關聯成功" });
-  } catch (error) {
-    console.error("❌ 圖片關聯錯誤：", error);
-    res.status(500).json({ success: false, message: "圖片關聯失敗" });
-  }
-});
 
 // 新增 CKEditor 圖片上傳路由
 router.post(

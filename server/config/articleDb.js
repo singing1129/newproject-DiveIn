@@ -82,6 +82,15 @@ export const db = {
     return results;
   },
 
+  // ckeditor插入圖片
+  insertImage: async (articleId, imgUrl, isMain = 0) => {
+    const { results } = await query(
+      "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
+      [articleId, imgUrl, isMain]
+    );
+    return results.insertId;
+  },
+
   // // 更新文章
   // updateArticle: async (id, { title, content, coverImage, category_id }) => {
   //   const { results } = await query(
