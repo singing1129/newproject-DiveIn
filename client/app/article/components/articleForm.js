@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import axios from "axios";
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 
-const API_BASE_URL = "http://localhost:3005/api/article/create/data";
-
 const ArticleForm = () => {
+  const router = useRouter();
   const [new_title, setTitle] = useState("");
   const [new_content, setContent] = useState("");
   const [new_categoryBig, setCategoryBig] = useState("");
@@ -13,6 +15,12 @@ const ArticleForm = () => {
   const [tagsList, setTagsList] = useState([]);
   const [new_coverImage, setCoverImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [submitStatus, setSubmitStatus] = useState(""); // "draft" 或 "published"
+
+  // 按鈕點擊事件，跳轉不同頁面
+  const handleButtonClick = (path) => {
+    router.push(path);
+  };
 
   // 新增的狀態
   const [categoriesBig, setCategoriesBig] = useState([]); // 大分類
@@ -24,8 +32,11 @@ const ArticleForm = () => {
   useEffect(() => {
     const getCategoriesAndTags = async () => {
       try {
-        const response = await fetch(API_BASE_URL);
-        const data = await response.json();
+        const response = await axios.get(
+          "http://localhost:3005/api/article/create/data"
+        );
+        const data = response.data;
+
         if (data.success) {
           setCategoriesBig(data.category_big || []);
           setCategoriesSmall(data.category_small || []);
@@ -67,56 +78,87 @@ const ArticleForm = () => {
   // 處理封面圖片選擇
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return; // 避免沒有選擇文件的錯誤
+    if (!file) return;
 
-    setCoverImage(file); // 設置圖片文件
+    setCoverImage(file);
     const reader = new FileReader();
     reader.onloadend = () => setPreviewImage(reader.result);
     reader.readAsDataURL(file);
   };
 
   // 提交表單
-  const [submitStatus, setSubmitStatus] = useState(""); // "draft" 或 "published"
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("new_title", new_title);
-    formData.append("new_content", new_content);
-    formData.append("new_categorySmall", new_categorySmall);
-    formData.append("tags", JSON.stringify(tagsList));
-
-    // 根據 submitStatus 設定 status 和 publish_at
-    const publishAt =
-      submitStatus === "published" ? new Date().toISOString() : null;
-    formData.append("status", submitStatus);
-    formData.append("publish_at", publishAt);
-
-    if (new_coverImage) formData.append("new_coverImage", new_coverImage);
-
+  const handleSubmit = async (status) => {
     try {
-      const response = await fetch("http://localhost:3005/api/article/create", {
-        method: "POST",
-        body: formData,
-      });
+      const formData = new FormData();
+      formData.append("new_title", new_title);
+      formData.append("new_content", new_content);
+      formData.append("new_categorySmall", new_categorySmall);
+      formData.append("new_tags", JSON.stringify(tagsList));
+      formData.append("status", status);
+      
+      if (new_coverImage) {
+        formData.append("new_coverImage", new_coverImage);
+      }
 
-      const data = await response.json();
-      if (data.success) {
-        alert(submitStatus === "draft" ? "草稿儲存成功！" : "文章發表成功！");
+      const response = await axios.post(
+        "http://localhost:3005/api/article/create",
+        formData
+      );
+
+      if (response.data.success) {
+        const articleId = response.data.articleId;
+        
+        // 從 CKEditor 內容中提取圖片 URL
+        const imgUrls = extractImageUrls(new_content);
+
+        // 更新 article_image，設置正確的 article_id
+        await Promise.all(
+          imgUrls.map(async (url) => {
+            await axios.post("http://localhost:3005/api/update-article-image", {
+              article_id: articleId,
+              img_url: url,
+            });
+          })
+        );
+
+        alert("文章創建成功！");
+        router.push(`/article/${articleId}`);
       } else {
-        alert("發表失敗：" + (data.message || "請稍後再試"));
+        alert("創建文章失敗");
       }
     } catch (error) {
-      console.error("❌ 發送請求錯誤：", error);
-      alert("提交錯誤，請稍後再試！");
+      console.error("❌ 文章創建錯誤：", error);
     }
+  };
+
+  // 提取 CKEditor 內的圖片 URL
+  const extractImageUrls = (content) => {
+    const div = document.createElement("div");
+    div.innerHTML = content;
+    const imgTags = div.querySelectorAll("img");
+    return Array.from(imgTags).map((img) => img.getAttribute("src"));
   };
 
   return (
     <div className="create-form">
-      <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <div className="create-title">發表新文章</div>
+      <div className="article-controls-btn">
+        <span className="create-title">發表新文章</span>
+        <span className="btn" onClick={() => handleButtonClick("/article")}>
+          <span className="btn-icon">
+            <i className="fa-solid fa-rotate-left"></i>
+          </span>
+          返回列表
+        </span>
+        <span className="btn">
+          {/* onClick={() => handleButtonClick("/article/mine")} */}
+          <span className="btn-icon">
+            <i className="fa-solid fa-bookmark"></i>
+          </span>
+          我的文章
+        </span>
+      </div>
 
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(submitStatus); }} encType="multipart/form-data">
         {/* 封面圖片 */}
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
@@ -124,9 +166,10 @@ const ArticleForm = () => {
             {previewImage ? (
               <img src={previewImage} alt="封面預覽" className="upload-image" />
             ) : (
-              <div className="upload-square-icon"></div>
+              <span>請選擇圖片</span>
             )}
           </label>
+
           <input
             type="file"
             id="new_coverImage"
@@ -159,8 +202,11 @@ const ArticleForm = () => {
           >
             <option value="">請選擇大分類</option>
             {categoriesBig.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+              <option
+                key={category.big_category_id}
+                value={category.big_category_id}
+              >
+                {category.big_category_name}
               </option>
             ))}
           </select>
@@ -174,8 +220,8 @@ const ArticleForm = () => {
           >
             <option value="">請選擇小分類</option>
             {filteredSmallCategories.map((category, index) => (
-              <option key={index} value={category.name}>
-                {category.name}
+              <option key={index} value={category.small_category_id}>
+                {category.small_category_name}
               </option>
             ))}
           </select>
@@ -218,14 +264,14 @@ const ArticleForm = () => {
         {/* 按鈕 */}
         <div className="btnarea">
           <button
-            type="button"
+            type="submit"
             className="btn article-create-btn"
             onClick={() => setSubmitStatus("draft")}
           >
             儲存草稿
           </button>
           <button
-            type="button"
+            type="submit"
             className="btn article-create-btn"
             onClick={() => setSubmitStatus("published")}
           >

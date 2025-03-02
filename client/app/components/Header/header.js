@@ -103,7 +103,7 @@ export default function Header() {
                 <FaSearch className="text-secondary vstack text-center" />
               </button>
             </form>
-            <a href="/cart/step1" className="header-cart a">
+            <a href="/cart/step1" className="header-cart a" id="cart-icon">
               <FiShoppingCart />
             </a>
             {user ? (

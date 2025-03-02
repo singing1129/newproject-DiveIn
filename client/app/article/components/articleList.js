@@ -3,9 +3,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import "./articleList.css";
 import "./articleAside.css";
-
 import Sidebar from "./sidebar";
 import ArticleCard from "./articleCard";
+import useLocalStorage from "../../hooks/use-localstorage.js"; // 用戶登入
 
 const API_BASE_URL = "http://localhost:3005/api";
 
@@ -20,16 +20,33 @@ const ArticleListPage = () => {
 
   // 文章篩選選項
   const [sortOption, setSortOption] = useState("all"); // 初始值為 all，表示顯示所有文章
+  const [isMyArticles, setIsMyArticles] = useState(false); // 控制是否顯示「我的文章」
 
+  // 獲取用戶的 ID
+  const [userId, setUserId] = useLocalStorage("user_id", null);
+  const [loading, setLoading] = useState(true); // 新增 loading 狀態，防止渲染前頁面顯示不一致
+
+  // 當 userId 改變時才會進行更新
+  useEffect(() => {
+    if (userId !== null) {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  // 修正依賴陣列，保持一致性
   useEffect(() => {
     const fetchArticles = async () => {
       const page = parseInt(searchParams.get("page")) || 1;
       const category = searchParams.get("category");
       const tag = searchParams.get("tag");
 
+      // 根據是否為「我的文章」，決定篩選條件
       let url = `${API_BASE_URL}/article?page=${page}&sort=${sortOption}`;
       if (category) url += `&category=${encodeURIComponent(category)}`;
       if (tag) url += `&tag=${encodeURIComponent(tag)}`;
+
+      // 只有在 "我的文章" 為 true 且 userId 存在時才進行篩選
+      if (isMyArticles && userId) url += `&user_id=${userId}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -40,8 +57,11 @@ const ArticleListPage = () => {
       });
     };
 
-    fetchArticles();
-  }, [searchParams, sortOption]);
+    // 確保用戶已經登入或載入完成
+    if (!loading) {
+      fetchArticles();
+    }
+  }, [searchParams, sortOption, isMyArticles, userId, loading]);
 
   // 切換頁面
   const goToPage = (page) => {
@@ -54,6 +74,15 @@ const ArticleListPage = () => {
   // 處理篩選條件變更
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
+  };
+
+  // 處理「我的文章」按鈕點擊
+  const handleMyArticlesClick = () => {
+    if (userId) {
+      setIsMyArticles(!isMyArticles); // 只有在用戶登入的情況下，才會切換「我的文章」篩選
+    } else {
+      alert("請先登入才能查看我的文章");
+    }
   };
 
   if (!articles) {
@@ -82,14 +111,17 @@ const ArticleListPage = () => {
             </div>
             {/* 跳頁面btn */}
             <div className="article-controls-btn">
-              <button className="btn">
+              <button
+                className="btn"
+                onClick={() => handleButtonClick("/article/create")}
+              >
                 {" "}
                 <span className="btn-icon">
                   <i className="fa-solid fa-pen"></i>
                 </span>
                 新增文章
               </button>
-              <button className="btn">
+              <button className="btn" onClick={handleMyArticlesClick}>
                 <span className="btn-icon">
                   <i className="fa-solid fa-bookmark"></i>
                 </span>
@@ -97,12 +129,12 @@ const ArticleListPage = () => {
               </button>
             </div>
           </div>
-       
-            {/* 文章card */}
-            {articles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-       
+
+          {/* 文章card */}
+          {articles.map((article) => (
+            <ArticleCard key={article.id} article={article} />
+          ))}
+
           {/* 分頁 */}
           <div className="custom-pagination">
             <div className="page-item">

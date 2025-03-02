@@ -96,23 +96,27 @@
 
 /* 手機版樣式 */
 @media (max-width: 768px) {
-  .info-display {
+  .info-display,
+  .rent-display {
     padding: 10px 12px;
   }
 
-  .info-row {
+  .info-row,
+  .rent-row {
     flex-direction: row;
     align-items: center;
     gap: 8px;
   }
 
-  .info-value {
+  .info-value,
+  .rent-value {
     display: flex;
     gap: 8px;
     align-items: center;
   }
 
-  .info-value div {
+  .info-value div,
+  .rent-value div {
     margin: 0;
   }
 }
