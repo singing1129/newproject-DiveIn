@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import "./articleList.css";
 import axios from "axios";
+import DOMPurify from "dompurify"; // 用於清理 HTML 內容
 
 export default function ArticleCard({
   article,
@@ -17,6 +18,9 @@ export default function ArticleCard({
       ? article.img_url
       : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`
   );
+
+  // 清理 content
+  const sanitizedContent = DOMPurify.sanitize(article.content || "");
 
   // 刪除文章
   const handleDelete = async () => {
@@ -46,6 +50,14 @@ export default function ArticleCard({
 
     setImageUrl(fullImageUrl); // 更新 imageUrl 狀態
   }, [article.img_url]);
+
+ // 動態插入清理後的內容 避免 Hydration failed  
+ const contentRef = useRef(null);
+ useEffect(() => {
+   if (contentRef.current) {
+     contentRef.current.innerHTML = sanitizedContent;
+   }
+ }, [sanitizedContent]);
 
   return (
     <div className="article-list-card">
@@ -88,7 +100,10 @@ export default function ArticleCard({
             {article.reply_count} 則評論
           </div>
         </div>
-        <div className="article-list-card-content">{article.content}</div>
+        <div
+          className="article-list-card-content"
+          dangerouslySetInnerHTML={{ __html: sanitizedContent }} //去掉標籤
+        />
         <div className="article-list-card-btn">
           {/* 只有在“我的文章”页面才显示删除按钮 */}
           {isMyArticles && (
@@ -97,7 +112,10 @@ export default function ArticleCard({
               <Link href={`/article/create?id=${article.id}`} passHref>
                 <button className="btn btn-card btn-edit">編輯</button>
               </Link>
-              <button className="btn btn-card btn-delete" onClick={handleDelete}>
+              <button
+                className="btn btn-card btn-delete"
+                onClick={handleDelete}
+              >
                 刪除
               </button>
             </>

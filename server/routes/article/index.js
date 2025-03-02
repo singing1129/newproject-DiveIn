@@ -21,6 +21,7 @@ router.get("/", async (req, res) => {
       sort = "newest", // newest, oldest, popular
       category,
       tag,
+      status, // 新增 status 參數
     } = req.query;
 
     const offset = (page - 1) * limit;
@@ -42,6 +43,10 @@ router.get("/", async (req, res) => {
     if (tag) {
       whereClause += " AND ats.tag_name = ?";
       params.push(tag);
+    }
+    if (status) {
+      whereClause += " AND a.status = ?";
+      params.push(status);
     }
 
     // 查詢文章列表

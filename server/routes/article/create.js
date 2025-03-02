@@ -165,7 +165,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
       "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
-        new_content,
+        new_content, // 先使用原始的 content
         new_categorySmall,
         userId,
         status,
@@ -176,36 +176,47 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
         0,
       ]
     );
-
     if (!articleResult || articleResult.insertId === 0) {
       throw new Error("無法獲取文章 ID");
     }
     const articleId = articleResult.insertId;
 
+    // 更新 content 中的圖片 URL
+    let updatedContent = new_content; // 複製原始的 content
+    if (ckeditorImages.length > 0) {
+      for (const tempImageUrl of ckeditorImages) {
+        // 確保 tempImageUrl 是相對路徑
+        const tempImagePath = path.join(process.cwd(), "public", tempImageUrl);
+        const finalImagePath = path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "article",
+          path.basename(tempImageUrl)
+        );
+
+        // 將圖片從暫存目錄移動到正式目錄
+        fs.renameSync(tempImagePath, finalImagePath);
+
+        // 插入圖片資料
+        const finalImageUrl = `/uploads/article/${path.basename(tempImageUrl)}`;
+        await db.insertImage(articleId, finalImageUrl, 0);
+
+        // 更新 content 中的圖片 URL
+        updatedContent = updatedContent.replace(tempImageUrl, finalImageUrl);
+      }
+
+      // 更新文章內容中的圖片 URL
+      await db.query("UPDATE article SET content = ? WHERE id = ?", [
+        updatedContent,
+        articleId,
+      ]);
+    }
+
     // 插入封面圖片資料
     if (req.file) {
       const coverImagePath = `/uploads/article/${req.file.filename}`;
       await db.insertImage(articleId, coverImagePath, 1);
-    }
-
-    // 處理 CKEditor 圖片
-    for (const tempImageUrl of ckeditorImages) {
-      // 確保 tempImageUrl 是相對路徑
-      const tempImagePath = path.join(process.cwd(), "public", tempImageUrl);
-      const finalImagePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "article",
-        path.basename(tempImageUrl)
-      );
-
-      // 將圖片從暫存目錄移動到正式目錄
-      fs.renameSync(tempImagePath, finalImagePath);
-
-      // 插入圖片資料
-      const finalImageUrl = `/uploads/article/${path.basename(tempImageUrl)}`;
-      await db.insertImage(articleId, finalImageUrl, 0);
     }
 
     // 處理標籤

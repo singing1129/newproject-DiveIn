@@ -47,6 +47,7 @@ const ArticleListPage = () => {
   // 文章篩選選項
   const [sortOption, setSortOption] = useState("all"); // 初始值為 all，表示顯示所有文章
   const [isMyArticles, setIsMyArticles] = useState(false); // 控制是否顯示「我的文章」
+  const [statusOption, setStatusOption] = useState("all"); // 新增狀態篩選的狀態
 
   // 獲取用戶的 ID
   const [usersId, setUsersId] = useState(54); // 改為固定值 54
@@ -70,6 +71,8 @@ const ArticleListPage = () => {
       const page = parseInt(searchParams.get("page")) || 1;
       const category = searchParams.get("category");
       const tag = searchParams.get("tag");
+      const sort = searchParams.get("sort");
+      const status = searchParams.get("status"); // 新增狀態篩選
 
       let url = `${API_BASE_URL}/article`; // 基礎 URL
       const params = new URLSearchParams(); // 使用 URLSearchParams 來管理查詢參數
@@ -86,6 +89,16 @@ const ArticleListPage = () => {
       // 添加標籤參數
       if (tag) {
         params.set("tag", tag);
+      }
+
+      // 添加排序參數
+      if (sort) {
+        params.set("sort", sort);
+      }
+
+      // 添加文章發表狀態參數
+      if (status) {
+        params.set("status", status);
       }
 
       // 如果是「我的文章」，添加 users_id 參數
@@ -132,19 +145,35 @@ const ArticleListPage = () => {
 
     const params = new URLSearchParams(searchParams);
 
-    // 點所有文章時清空所有搜尋條件
+    // 更新排序條件
     if (newSort === "all") {
       params.delete("sort");
-      params.delete("category");
-      params.delete("tag");
-      params.delete("myArticles");
     } else {
       params.set("sort", newSort);
     }
 
-    router.push(`?${params.toString()}`); // 更新網址
+    // 更新網址
+    router.push(`/article?${params.toString()}`);
   };
 
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setStatusOption(newStatus);
+
+    const params = new URLSearchParams(searchParams);
+
+    // 更新狀態條件
+    if (newStatus === "all") {
+      params.delete("status");
+    } else {
+      params.set("status", newStatus);
+    }
+
+    // 更新網址
+    router.push(`/article?${params.toString()}`);
+  };
+
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
   // 我的文章 按鈕點擊
   const handleMyArticlesClick = () => {
     if (!usersId) {
@@ -153,6 +182,7 @@ const ArticleListPage = () => {
     }
 
     setIsMyArticles(!isMyArticles);
+    setShowStatusFilter(!isMyArticles); // 顯示或隱藏狀態篩選器
 
     const params = new URLSearchParams(searchParams);
 
@@ -160,6 +190,7 @@ const ArticleListPage = () => {
       params.set("myArticles", "true"); // 如果是我的文章，加入參數
     } else {
       params.delete("myArticles"); // 如果取消我的文章，移除參數
+      router.push("/article"); // 返回文章列表首頁
     }
 
     router.push(`?${params.toString()}`); // 更新網址
@@ -190,8 +221,20 @@ const ArticleListPage = () => {
               >
                 <option value="all">所有文章</option>
                 <option value="newest">最新文章</option>
+                <option value="oldest">最舊文章</option>
                 <option value="popular">熱門文章</option>
               </select>
+              {showStatusFilter && (
+                <select
+                  value={statusOption}
+                  onChange={handleStatusChange}
+                  className="form-select"
+                >
+                  <option value="all">所有文章</option>
+                  <option value="published">已發表</option>
+                  <option value="draft">草稿夾</option>
+                </select>
+              )}
             </div>
             {/* 搜尋框 */}
             <div className="article-search-box">
@@ -208,7 +251,9 @@ const ArticleListPage = () => {
                   <i className="fa-solid fa-times"></i>
                 </button>
               )}
-              <button className="search-button" onClick={handleSearch}>搜尋</button>
+              <button className="search-button" onClick={handleSearch}>
+                搜尋
+              </button>
             </div>
 
             {/* 跳頁面btn */}
@@ -227,7 +272,7 @@ const ArticleListPage = () => {
                 <span className="btn-icon">
                   <i className="fa-solid fa-bookmark"></i>
                 </span>
-                我的文章
+                {isMyArticles ? "返回列表" : "我的文章"}
               </button>
             </div>
           </div>
