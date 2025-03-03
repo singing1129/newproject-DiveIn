@@ -31,9 +31,8 @@ router.get("/", checkToken, async (req, res) => {
       [userId]
     );
 
-    // nana：補充 ri.is_like，以便前端能夠知道租借商品是否被收藏
     const [rental] = await pool.execute(
-      `SELECT f.*, ri.name, ri.description, rim.img_url as image_url, ri.price, ri.is_like
+      `SELECT f.*, ri.name, ri.description, rim.img_url as image_url, ri.price
        FROM favorites f
        JOIN rent_item ri ON f.rental_id = ri.id
        LEFT JOIN rent_image rim ON ri.id = rim.rent_item_id AND rim.is_main = 1
@@ -41,6 +40,14 @@ router.get("/", checkToken, async (req, res) => {
       [userId]
     );
 
+    // 新增bundle
+    const [bundle] = await pool.execute(
+      `SELECT f.*, pb.name, pb.description, pb.discount_price as price
+       FROM favorites f
+       JOIN product_bundle pb ON f.bundle_id = pb.id
+       WHERE f.user_id = ? AND f.bundle_id != 0`,
+      [userId]
+    );
     console.log("收藏清單結果:", { product, activity, rental });
 
     res.json({
@@ -49,6 +56,7 @@ router.get("/", checkToken, async (req, res) => {
         product,
         activity,
         rental,
+        bundle,
       },
     });
   } catch (error) {
@@ -60,57 +68,9 @@ router.get("/", checkToken, async (req, res) => {
   }
 });
 
-// 2. 租借：檢查單一租借商品的收藏狀態
-router.get("/check", checkToken, async (req, res) => {
-  try {
-    const userId = req.decoded.id; // 之後從 JWT 取得
-    const { rentalId } = req.query;
-
-    // 基本驗證
-    if (!userId || !rentalId) {
-      return res.status(400).json({
-        success: false,
-        message: "缺少必要參數：userId 或 rentalId",
-      });
-    }
-
-    console.log("正在檢查收藏狀態，userId:", userId, "rentalId:", rentalId);
-
-    // 檢查是否已經收藏
-    const [favorite] = await pool.execute(
-      `SELECT ri.is_like 
-       FROM favorites f
-       JOIN rent_item ri ON f.rental_id = ri.id
-       WHERE f.user_id = ? AND f.rental_id = ?`,
-      [userId, rentalId]
-    );
-
-    // 如果找不到對應的租借商品
-    if (favorite.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "未找到該租借商品",
-      });
-    }
-
-    // 返回收藏狀態
-    res.json({
-      success: true,
-      is_like: favorite[0].is_like, // 0: 未收藏, 1: 已收藏
-    });
-  } catch (error) {
-    console.error("檢查收藏狀態錯誤:", error);
-    res.status(500).json({
-      success: false,
-      message: "檢查收藏狀態失敗",
-    });
-  }
-});
-
-// 加入收藏
 router.post("/add", checkToken, async (req, res) => {
   try {
-    const userId = req.decoded.id; // 之後從 JWT 取得
+    const userId = req.decoded.id;
     const { type, itemIds } = req.body;
     console.log(
       "收到加入收藏的請求，userId:",
@@ -141,7 +101,7 @@ router.post("/add", checkToken, async (req, res) => {
       });
     }
 
-    // 允許的收藏類型
+    // 允許的收藏類型 - 确保包含bundle
     if (!["product", "activity", "rental", "bundle"].includes(type)) {
       return res.status(400).json({
         success: false,
@@ -157,7 +117,7 @@ router.post("/add", checkToken, async (req, res) => {
         ? "activity"
         : type === "rental"
         ? "rent_item"
-        : "product_bundle";
+        : "product_bundle"; // 添加bundle对应的表名
 
     console.log("檢查項目是否存在，tableName:", tableName, "ids:", ids);
 
@@ -170,21 +130,6 @@ router.post("/add", checkToken, async (req, res) => {
         success: false,
         message: "某些收藏的項目不存在",
       });
-    }
-
-    // 檢查每個租借商品是否有效
-    if (type === "rental") {
-      const [rentalItems] = await pool.execute(
-        `SELECT id FROM rent_item WHERE id IN (${ids.join(",")})`
-      );
-
-      // 確認所有租借商品是否存在
-      if (rentalItems.length !== ids.length) {
-        return res.status(400).json({
-          success: false,
-          message: "某些租借商品不存在",
-        });
-      }
     }
 
     // 檢查是否已經收藏
@@ -226,13 +171,6 @@ router.post("/add", checkToken, async (req, res) => {
        VALUES ${values}`
     );
 
-    // 更新 rent_item 的 is_like 狀態
-    // if (type === "rental") {
-    //   await pool.execute(
-    //     `UPDATE rent_item SET is_like = 1 WHERE id IN (${newIds.join(",")})`
-    //   );
-    // }
-
     res.json({
       success: true,
       message: "已加入收藏",
@@ -245,7 +183,6 @@ router.post("/add", checkToken, async (req, res) => {
     });
   }
 });
-
 // 移除收藏
 router.post("/remove", checkToken, async (req, res) => {
   try {
@@ -288,10 +225,7 @@ router.post("/remove", checkToken, async (req, res) => {
 
     // 更新 rent_item 的 is_like 狀態
     if (type === "rental") {
-      // 確保 ids 是陣列，即使只有一個 id
-      const idsArray = Array.isArray(ids) ? ids : [ids]; // 保證 ids 為陣列
-
-      // 使用展開運算符來解構 idsArray 並傳遞給 execute 方法
+      const idsArray = Array.isArray(ids) ? ids : [ids];
       await pool.execute(
         `UPDATE rent_item SET is_like = 0 WHERE id IN (${idsArray
           .map(() => "?")

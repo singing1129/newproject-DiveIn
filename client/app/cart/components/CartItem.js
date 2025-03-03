@@ -8,7 +8,6 @@ import RentalSpecModal from "./RentalSpecModal";
 import { useCart } from "@/hooks/cartContext";
 import useFavorite from "@/hooks/useFavorite";
 
-
 // 計算租借天數的函數
 const calculateRentalDays = (startDate, endDate) => {
   const start = new Date(startDate);
@@ -137,7 +136,6 @@ const CartItem = ({ item, type = "products" }) => {
     end_date: item.end_date,
     color: item.color,
   });
-  
 
   // 處理 Modal 更新
   const handleModalUpdate = (updatedItem) => {
@@ -225,6 +223,7 @@ const CartItem = ({ item, type = "products" }) => {
             </div>
           </div>
         );
+
       case "rentals":
         return (
           <>
@@ -234,20 +233,27 @@ const CartItem = ({ item, type = "products" }) => {
             >
               <div className="rent-content">
                 <div className="rent-row">
-                <span className="rent-label">
-                  租借期間：{" "}
-                  <span className="days">
-                    ({calculateRentalDays(rentalInfo.start_date, rentalInfo.end_date)}天)
+                  <span className="rent-label">
+                    租借期間：{" "}
+                    <span className="days">
+                      (
+                      {calculateRentalDays(
+                        rentalInfo.start_date,
+                        rentalInfo.end_date
+                      )}
+                      天)
+                    </span>
                   </span>
-                </span>
                   <div className="rent-value">
-                  <div>自 {rentalInfo.start_date}</div>
-                  <div>至 {rentalInfo.end_date}</div>
+                    <div>自 {rentalInfo.start_date}</div>
+                    <div>至 {rentalInfo.end_date}</div>
                   </div>
                 </div>
                 <div className="rent-row">
                   <span className="rent-label">顏色：</span>
-                  <span className="rent-value">{rentalInfo.color || "無"} </span>
+                  <span className="rent-value">
+                    {rentalInfo.color || "無"}{" "}
+                  </span>
                 </div>
                 {/* <div className="info-row">
                 <span className="info-label">每日租金：</span>
@@ -272,14 +278,15 @@ const CartItem = ({ item, type = "products" }) => {
             </div>
 
             {isModalOpen && (
-            <RentalSpecModal
-              item={item}
-              onClose={() => setIsModalOpen(false)}
-              onUpdate={handleModalUpdate}
-            />
-          )}
+              <RentalSpecModal
+                item={item}
+                onClose={() => setIsModalOpen(false)}
+                onUpdate={handleModalUpdate}
+              />
+            )}
           </>
         );
+
       default:
         return null;
     }

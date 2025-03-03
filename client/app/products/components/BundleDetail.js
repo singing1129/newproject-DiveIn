@@ -17,40 +17,16 @@ export default function BundleDetail({ bundle }) {
   // const bundleId = params?.id;
   console.log(bundle);
 
-  const { addToCart } = useCart();
   const { user } = useAuth();
-  const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorite(bundle?.id, "bundle");
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const { showToast } = useToast();
 
-  // 修改後的加入購物車處理函數
-  const handleAddToCart = async () => {
+  const handleOpenSelectModal = () => {
     if (!user || user === -1) {
       showToast("請先登入");
       return;
     }
-
-    try {
-      // 修改請求參數以符合API需求
-      const cartData = {
-        type: "bundle",
-        bundleId: bundle.id,  // 使用bundleId而不是variantId
-        quantity: 1,  // 套組數量預設為1
-      };
-
-      const success = await addToCart(cartData);
-      if (success) {
-        showToast("套組已加入購物車");
-      } else {
-        showToast("加入購物車失敗");
-      }
-    } catch (error) {
-      console.error("加入購物車失敗:", error);
-      showToast("加入購物車失敗");
-    }
-  };
-
-  const handleOpenSelectModal = () => {
     setIsSelectModalOpen(true);
   };
 
@@ -84,7 +60,7 @@ export default function BundleDetail({ bundle }) {
                   {bundle.brand_name || "自由潛水套組"}
                 </h3>
                 <div className="d-flex gap-2">
-                  <button className="btn p-0" >
+                  <button className="btn p-0">
                     <i className="fa-solid fa-share-from-square fs-4"></i>
                   </button>
 
@@ -156,19 +132,6 @@ export default function BundleDetail({ bundle }) {
                     選取組合商品
                   </button>
                 </div>
-              </div>
-
-              {/* 購買按鈕 */}
-              <div className="d-flex mt-4">
-                <button
-                  onClick={handleAddToCart}
-                  className="btn btn-info addCartButton flex-grow-1"
-                >
-                  加入購物車
-                </button>
-                <button className="btn btn-warning buyButton flex-grow-1">
-                  直接購買
-                </button>
               </div>
             </div>
           </div>

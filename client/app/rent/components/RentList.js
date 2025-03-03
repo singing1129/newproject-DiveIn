@@ -5,7 +5,7 @@ import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-// import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import dynamic from "next/dynamic";
 import Slider from "rc-slider";
 import flatpickr from "flatpickr";
@@ -17,8 +17,6 @@ import "rc-slider/assets/index.css";
 import RentBrand from "./RentBrand"; // 匯入，處理品牌專區
 import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
 import { debounce, set } from "lodash"; // 引入 debounce 解決刷新有參數的介面資料閃動問題
-
-import { useCart } from "@/hooks/cartContext"; // 加入購物車
 
 const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 

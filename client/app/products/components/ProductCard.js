@@ -8,11 +8,13 @@ import { useCart } from "@/hooks/cartContext";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 export default function ProductCard({ product }) {
+  const type = product.item_type === "bundle" ? "bundle" : "product";
+
   const {
     isFavorite,
     toggleFavorite,
     loading: favoriteLoading,
-  } = useFavorite(product.id, "product");
+  } = useFavorite(product.id, type);
 
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -49,6 +51,7 @@ export default function ProductCard({ product }) {
           quantity: 1,
         };
       }
+
       console.log("product", product);
 
       console.log("準備發送購物車資料:", cartData); // 添加調試日誌

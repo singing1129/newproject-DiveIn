@@ -104,7 +104,11 @@ export default function Cart1() {
       depositTotal,
       subtotal: productsTotal + activitiesTotal + rentalsTotal + bundlesTotal,
       total:
-        productsTotal + activitiesTotal + rentalsTotal + bundlesTotal + depositTotal,
+        productsTotal +
+        activitiesTotal +
+        rentalsTotal +
+        bundlesTotal +
+        depositTotal,
     };
   }, [cartData, selectedItems, calculateItemSubtotal]);
 
@@ -236,24 +240,7 @@ export default function Cart1() {
                                 </div>
                               </div>
                             </div>
-                            <div className="mt-2">
-                              <button
-                                className="btn btn-sm btn-outline-primary me-2"
-                                onClick={() =>
-                                  router.push(`/bundle/${bundle.id}`)
-                                }
-                              >
-                                查看詳情
-                              </button>
-                              <button
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() =>
-                                  removeFromCart("bundles", bundle.id)
-                                }
-                              >
-                                移除
-                              </button>
-                            </div>
+                            <div className="mt-2"></div>
                           </div>
                         </div>
                       </div>

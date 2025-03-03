@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import styles from "./bundle.module.css";
 
+
 export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
   const [selectedVariants, setSelectedVariants] = useState({});
   const [selectedColors, setSelectedColors] = useState({});
@@ -13,7 +14,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
 
   useEffect(() => {
     if (!isOpen) return;
-    // 初始化数量
+    // 初始化數量
     const initialQuantities = {};
     bundle?.items?.forEach((item) => {
       initialQuantities[item.id] = item.quantity || 1;
@@ -21,12 +22,12 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
     setQuantities(initialQuantities);
   }, [isOpen, bundle]);
 
-  // 处理滚动导航
+  // 處理滾動導航
   const scrollToSection = (index) => {
     const element = sectionsRef.current[index];
     if (element) {
-      const headerHeight = 60; // 顶部导航高度
-      const overviewHeight = 120; // 概览区域高度
+      const headerHeight = 60; // 頂部導航高度
+      const overviewHeight = 120; // 概覽區域高度
       const offset = headerHeight + overviewHeight;
 
       const modalContent = document.querySelector(`.${styles.modalContent}`);
@@ -40,7 +41,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
     setCurrentSection(index);
   };
 
-  // 处理数量变更
+  // 處理數量變更
   const handleQuantityChange = (itemId, delta) => {
     setQuantities((prev) => ({
       ...prev,
@@ -141,7 +142,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
     }
   };
 
-  // 检查是否所有必选项都已选择
+  // 检查是否都選擇了
   const isAllSelected = () => {
     return bundle?.items?.every(
       (item) => !item.variant_required || selectedVariants[item.product_id]
@@ -153,7 +154,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        {/* 顶部导航 */}
+        {/* top導航 */}
         <div className={styles.modalHeader}>
           <button className={styles.closeButton} onClick={onClose}>
             <span>×</span>
@@ -161,7 +162,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
           <h2 className={styles.modalTitle}>{bundle?.name}</h2>
         </div>
 
-        {/* 商品概览区域 */}
+        {/* 商品區域 */}
         <div className={styles.bundleOverview}>
           <div className={styles.overviewHeader}>
             <h3>套組商品一覽</h3>
@@ -207,7 +208,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
           </div>
         </div>
 
-        {/* 商品选择区域 */}
+          {/* 商品選擇區域 */}
         <div className={styles.sectionsContainer}>
           {bundle?.items?.map((item, index) => (
             <div
