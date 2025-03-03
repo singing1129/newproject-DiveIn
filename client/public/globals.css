@@ -221,6 +221,7 @@ body{
     }
     &::after{
         font-size: 16px !important;
+        color: #fff;
     }
 }
 
