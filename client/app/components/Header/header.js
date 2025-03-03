@@ -1,15 +1,14 @@
 "use client";
 import { useState } from "react";
-import { FaSearch, FaRegUser, FaBars } from "react-icons/fa";
+import { FaSearch, FaBars } from "react-icons/fa";
+import User from "./user";
 import { FiShoppingCart } from "react-icons/fi";
 import Link from "next/link";
 import HeaderPop from "./headerPop"; // 引入 HeaderPop 組件
-import { useAuth } from "@/hooks/useAuth";
 
 export default function Header() {
   const [showPop, setShowPop] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
-  const { user } = useAuth();
 
   const handleMouseEnter = (menu) => {
     setShowPop(true);
@@ -106,15 +105,7 @@ export default function Header() {
             <a href="/cart/step1" className="header-cart a" id="cart-icon">
               <FiShoppingCart />
             </a>
-            {user ? (
-              <Link href="/admin/account" className="header-cart a">
-                <FaRegUser />
-              </Link>
-            ) : (
-              <Link href="/admin/login" className="header-cart a">
-                <FaRegUser />
-              </Link>
-            )}
+            <User />
           </div>
         </div>
 

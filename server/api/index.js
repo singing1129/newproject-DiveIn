@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import createError from "http-errors";
 // 路由模組
 import productRouter from "../routes/products/index.js";
+import bundleRouter from "../routes/bundle/index.js";
 import favoritesRouter from "../routes/favorites/index.js";
 import cartRouter from "../routes/cart/index.js";
 import categoriesRouter from "../routes/categories/index.js";
@@ -54,6 +55,8 @@ import ecpayRouter from "../routes/ecpay/index.js";
 import linepayRouter from "../routes/linepay/index.js";
 // 訂單
 import orderRouter from "../routes/order/index.js";
+// 密碼重設
+import passwordResetRouter from "../routes/admin/passwordReset.js";
 
 // 建立 Express 應用程式
 const app = express();
@@ -98,6 +101,8 @@ const apiRouter = express.Router();
 app.use("/api", apiRouter);
 // 產品相關路由
 apiRouter.use("/products", productRouter);
+//bundle
+apiRouter.use("/bundle", bundleRouter);
 // 收藏相關路由
 apiRouter.use("/favorites", favoritesRouter);
 // 購物車相關路由
@@ -114,6 +119,9 @@ apiRouter.use("/ecpay", ecpayRouter);
 apiRouter.use("/linepay", linepayRouter);
 //order
 apiRouter.use("/order", orderRouter);
+// 密碼重設
+apiRouter.use("/passwordReset", passwordResetRouter);
+
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);

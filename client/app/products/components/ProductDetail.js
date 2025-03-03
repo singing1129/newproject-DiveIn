@@ -14,6 +14,9 @@ import { useCart } from "@/hooks/cartContext";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 import useToast from "@/hooks/useToast";
+import { useAuth } from "@/hooks/useAuth";
+import SizeFilter from "./SizeFilter";
+import { Modal, Box } from "@mui/material";
 //使用swiper
 import "swiper/css";
 import "swiper/css/free-mode";
@@ -43,10 +46,16 @@ export default function ProductDetail() {
   const [currentOriginalPrice, setCurrentOriginalPrice] = useState(0);
   const [allImages, setAllImages] = useState([]);
   const mainSwiperRef = useRef(null);
-
+  const { user } = useAuth();
+  //顯示SizeFilter
+  const [showSizeFilter, setShowSizeFilter] = useState(false);
+  const toggleSizeFilter = () => {
+    setShowSizeFilter(!showSizeFilter);
+  };
   //瀏覽紀錄
   useEffect(() => {
-    if (!product) return;
+    if (!product || !product.variants || !product.variants[0]) return;
+
     const storedHistory =
       JSON.parse(localStorage.getItem("browsingHistory")) || [];
     const updatedHistory = [
@@ -78,6 +87,12 @@ export default function ProductDetail() {
       (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
     );
   };
+  //分享
+  const handleShare = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    showToast("連結已複製到剪貼簿");
+  };
 
   // 處理數量變更
   const handleQuantityChange = (value) => {
@@ -99,6 +114,11 @@ export default function ProductDetail() {
 
   // 加入購物車
   const handleAddToCart = async () => {
+    if (!user || user === -1) {
+      alert("請先登入！");
+      return;
+    }
+
     if (!selectedColor || !selectedSize) {
       alert("請選擇商品尺寸和顏色");
       return;
@@ -113,7 +133,7 @@ export default function ProductDetail() {
     try {
       // 發送購物車請求
       const cartData = {
-        userId: 1,
+        userId: user.id,
         variantId: currentVariant.id,
         quantity: quantity,
         type: "product",
@@ -122,13 +142,6 @@ export default function ProductDetail() {
       const response = await axios.post(`${API_BASE_URL}/cart/add`, cartData);
 
       if (response.data.success) {
-        // alert("成功加入購物車！");
-        // showToast("商品已加入購物車", {
-        //   style: {
-        //     backgroundColor: "red",
-        //     color: "white",
-        //   },
-        // });
         showToast("商品已加入購物車");
       } else {
         alert(response.data.message || "加入購物車失敗");
@@ -355,7 +368,7 @@ export default function ProductDetail() {
                     {product.brand_name}
                   </h3>
                   <div className="d-flex gap-2">
-                    <button className="btn p-0">
+                    <button className="btn p-0" onClick={handleShare}>
                       <i className="fa-solid fa-share-from-square fs-4"></i>
                     </button>
                     <button
@@ -397,7 +410,34 @@ export default function ProductDetail() {
                 <div>{product.description}</div>
 
                 {/* 尺寸選擇 */}
-                <div className="my-2">產品尺寸</div>
+                <div className="my-2">
+                  產品尺寸
+                  <button
+                    className="btn btn-primary link ms-2"
+                    onClick={toggleSizeFilter}
+                  >
+                    選擇最適合你的尺寸
+                  </button>
+                  <Modal open={showSizeFilter} onClose={toggleSizeFilter}>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: 400, // 設定寬度
+                        maxWidth: "90vw", // 限制最大寬度
+                        bgcolor: "background.paper",
+                        boxShadow: 24,
+                        p: 4,
+                        borderRadius: 2,
+                      }}
+                    >
+                      <SizeFilter />
+                    </Box>
+                  </Modal>
+                </div>
+
                 <div className="d-flex gap-2">
                   {product.sizes?.map((size) => (
                     <div
@@ -457,7 +497,7 @@ export default function ProductDetail() {
                     onClick={() => handleQuantityChange(-1)}
                     disabled={quantity <= 1}
                   >
-                    <span>-</span>
+                    <span>—</span>
                   </button>
                   <input
                     type="text"
@@ -521,9 +561,21 @@ export default function ProductDetail() {
                 <div className="mt-3 descriptionField">
                   <div>
                     <h4>{product.name}</h4>
+                    {/* 原本的描述 */}
                     <p className="custom-border">
                       {product.detailed_description}
                     </p>
+
+                    {/* 添加從 product_detail 獲取的詳細描述 */}
+                    {product.details &&
+                      product.details.map((detail, index) => (
+                        <div
+                          key={`detail-${index}`}
+                          className="product-detail-item mb-4"
+                        >
+                          {detail.content}
+                        </div>
+                      ))}
                   </div>
                 </div>
               ) : (

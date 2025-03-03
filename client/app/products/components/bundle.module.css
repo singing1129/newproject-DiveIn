@@ -1,0 +1,657 @@
+.bundleContainer {
+  padding: 2rem 0;
+}
+
+.price-section {
+  margin: 1.5rem 0;
+}
+
+.savings-badge {
+  display: inline-block;
+  background-color: #ff4d4f;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.bundle-items-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.bundle-item-card {
+  transition: transform 0.2s ease;
+}
+
+.bundle-item-card:hover {
+  transform: translateY(-2px);
+}
+
+.bundle-details {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.bundle-details ul li {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.addCartButton {
+  background-color: #17a2b8;
+  color: white;
+  margin-right: 0.5rem;
+}
+
+.buyButton {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.addCartButton:hover,
+.buyButton:hover {
+  opacity: 0.9;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .bundle-items-list {
+    max-height: 300px;
+  }
+
+  .bundle-item-card {
+    margin-bottom: 1rem;
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-top: 40px; /* 为顶部导航留出空间 */
+}
+
+.modalContent::-webkit-scrollbar {
+  display: none;
+}
+
+.modalHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  border-bottom: 1px solid #eee;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  line-height: 1;
+  color: #666;
+}
+
+.progressNav {
+  display: flex;
+  gap: 0.5rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 1rem;
+}
+
+.navDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ddd;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.navDot.active {
+  background: #007aff;
+  transform: scale(1.2);
+}
+
+.section {
+  /* min-height: 90vh; */
+  padding: 10rem 2rem 10rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* margin-top: 2rem; */
+  /* margin-top: -15rem; */
+}
+
+.productHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.productDisplay {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.mainImage {
+  position: sticky;
+  top: 120px;
+}
+
+.selectionArea {
+  padding: 1rem;
+}
+
+.sizeSelection {
+  margin-bottom: 2rem;
+}
+
+.sizeSelection label,
+.quantityControl label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.5rem;
+}
+
+.sizeButton {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sizeButton:hover {
+  border-color: #007aff;
+}
+
+.sizeButton.selected {
+  background: #007aff;
+  color: white;
+  border-color: #007aff;
+}
+
+.quantityControl {
+  margin-top: 2rem;
+}
+
+.quantityButtons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  width: fit-content;
+}
+
+.quantityButtons button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantityButtons button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.modalFooter {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  border-top: 1px solid #eee;
+}
+
+.summary {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.priceInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.totalLabel {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.totalPrice {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #007aff;
+}
+
+.addToCartButton {
+  background: #007aff;
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.addToCartButton:hover {
+  background: #0056b3;
+}
+
+@media (max-width: 768px) {
+  .productDisplay {
+    grid-template-columns: 1fr;
+  }
+
+  .mainImage {
+    position: relative;
+    top: 0;
+  }
+
+  .section {
+    padding: 5rem 1rem 7rem;
+  }
+
+  .modalHeader {
+    padding: 1rem;
+  }
+
+  .summary {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .addToCartButton {
+    width: 100%;
+  }
+}
+
+/* 商品概览区域 */
+.bundleOverview {
+  position: sticky;
+  top: 60px;
+  background: white;
+  z-index: 5;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.overviewHeader {
+  margin-bottom: 1rem;
+}
+
+.overviewHeader h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.itemsList {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.itemsList::-webkit-scrollbar {
+  display: none;
+}
+
+.itemCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  min-width: 280px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.itemCard:hover {
+  border-color: #007aff;
+  background: #f8f9fa;
+}
+
+.itemCard.active {
+  border-color: #007aff;
+  background: #f0f7ff;
+}
+
+.itemImage {
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemInfo h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.itemInfo p {
+  margin: 0.25rem 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.itemStatus {
+  font-size: 0.8rem;
+}
+
+.itemStatus .selected {
+  color: #28a745;
+}
+
+.itemStatus .required {
+  color: #dc3545;
+}
+
+.itemStatus .noVariant {
+  color: #6c757d;
+}
+
+/* 变体选择区域 */
+.variantSelection {
+  margin-top: 2rem;
+}
+
+.variantGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.variantCard {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.variantCard:hover {
+  border-color: #007aff;
+  background: #f8f9fa;
+}
+
+.variantCard.selected {
+  border-color: #007aff;
+  background: #f0f7ff;
+}
+
+.variantInfo h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.variantPrice {
+  margin: 0.5rem 0 0;
+  color: #007aff;
+  font-weight: 500;
+}
+
+.originalPrice {
+  margin-left: 0.5rem;
+  color: #666;
+  text-decoration: line-through;
+  font-size: 0.9rem;
+}
+
+.stockWarning {
+  margin: 0.5rem 0 0;
+  color: #dc3545;
+  font-size: 0.8rem;
+}
+
+.noVariantMessage {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.originalTotal {
+  display: block;
+  color: #666;
+  text-decoration: line-through;
+  font-size: 0.9rem;
+}
+
+.addToCartButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* 顏色選擇區域 */
+.colorSection {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.colorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.colorButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.colorButton:hover {
+  border-color: #007aff;
+  background: #f0f7ff;
+  transform: translateY(-2px);
+}
+
+.colorButton.selected {
+  border-color: #007aff;
+  background: #f0f7ff;
+}
+
+.colorCircle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.colorName {
+  font-size: 0.9rem;
+  color: #333;
+  text-align: center;
+}
+
+.colorButton.selected .colorCircle {
+  border-color: #007aff;
+}
+
+.colorCircle.selected {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #007aff;
+}
+
+.colorCircle:hover {
+  transform: scale(1.1);
+}
+
+/* 尺寸選擇區域 */
+.sizeSection {
+  margin-top: 2rem;
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.8rem;
+}
+
+.sizeButton {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.sizeButton:hover:not(:disabled) {
+  border-color: #007aff;
+  background: #f0f7ff;
+}
+
+.sizeButton.selected {
+  background: #007aff;
+  color: white;
+  border-color: #007aff;
+}
+
+.sizeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;
+}
+
+/* 價格區域 */
+.priceSection {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.variantPrice {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #007aff;
+  margin: 0;
+}
+
+.originalPrice {
+  color: #666;
+  text-decoration: line-through;
+  margin-left: 1rem;
+  font-size: 1rem;
+}
+
+.stockWarning {
+  color: #dc3545;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* 調整商品展示區域的間距 */
+.selectionArea {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .colorGrid {
+    gap: 0.5rem;
+  }
+
+  .sizeGrid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+}

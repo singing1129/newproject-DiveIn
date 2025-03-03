@@ -77,6 +77,12 @@ router.get("/category/big/:bigCategoryId", async (req, res) => {
     const colorIds = req.query.color_id
       ? req.query.color_id.split(",").map(Number)
       : [];
+    const minPrice = req.query.min_price
+      ? parseFloat(req.query.min_price)
+      : undefined;
+    const maxPrice = req.query.max_price
+      ? parseFloat(req.query.max_price)
+      : undefined;
 
     // ✅ 呼叫 Helper，篩選大分類
     const { sql, queryParams, whereClause } = buildProductQuery({
@@ -84,13 +90,15 @@ router.get("/category/big/:bigCategoryId", async (req, res) => {
       categoryId: null, // 大分類查詢時不傳遞小分類
       bigCategoryId,
       colorIds,
+      minPrice,
+      maxPrice,
       sort,
       offset,
       limit,
     });
 
-    console.log("🚀 DEBUG Big Category SQL:", sql);
-    console.log("🚀 DEBUG Params:", queryParams);
+    console.log(" DEBUG Big Category SQL:", sql);
+    console.log("DEBUG Params:", queryParams);
 
     const totalCountSql = `SELECT COUNT(DISTINCT p.id) AS totalCount FROM product p ${whereClause}`;
     const [[{ totalCount }]] = await pool.execute(totalCountSql, queryParams);

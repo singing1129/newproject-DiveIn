@@ -1,12 +1,13 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
+import { checkToken } from "../../middleware/auth.js";
 
 const router = express.Router();
 
 // 1. 取得收藏清單
-router.get("/", async (req, res) => {
+router.get("/", checkToken, async (req, res) => {
   try {
-    const userId = 1; // 之後從 JWT 取得
+    const userId = req.decoded.id; // 之後從 JWT 取得
 
     console.log("正在處理取得收藏清單的請求，userId:", userId);
 
@@ -60,9 +61,10 @@ router.get("/", async (req, res) => {
 });
 
 // 2. 租借：檢查單一租借商品的收藏狀態
-router.get("/check", async (req, res) => {
+router.get("/check", checkToken, async (req, res) => {
   try {
-    const { userId, rentalId } = req.query;
+    const userId = req.decoded.id; // 之後從 JWT 取得
+    const { rentalId } = req.query;
 
     // 基本驗證
     if (!userId || !rentalId) {
@@ -106,9 +108,9 @@ router.get("/check", async (req, res) => {
 });
 
 // 加入收藏
-router.post("/add", async (req, res) => {
+router.post("/add", checkToken, async (req, res) => {
   try {
-    const userId = 1; // 之後從 JWT 取得
+    const userId = req.decoded.id; // 之後從 JWT 取得
     const { type, itemIds } = req.body;
     console.log(
       "收到加入收藏的請求，userId:",
@@ -139,8 +141,8 @@ router.post("/add", async (req, res) => {
       });
     }
 
-    // 驗證收藏類型
-    if (!["product", "activity", "rental"].includes(type)) {
+    // 允許的收藏類型
+    if (!["product", "activity", "rental", "bundle"].includes(type)) {
       return res.status(400).json({
         success: false,
         message: "無效的收藏類型",
@@ -153,13 +155,22 @@ router.post("/add", async (req, res) => {
         ? "product"
         : type === "activity"
         ? "activity"
-        : "rent_item";
+        : type === "rental"
+        ? "rent_item"
+        : "product_bundle";
 
     console.log("檢查項目是否存在，tableName:", tableName, "ids:", ids);
 
     const [existingItems] = await pool.execute(
       `SELECT id FROM ${tableName} WHERE id IN (${ids.join(",")})`
     );
+
+    if (existingItems.length !== ids.length) {
+      return res.status(400).json({
+        success: false,
+        message: "某些收藏的項目不存在",
+      });
+    }
 
     // 檢查每個租借商品是否有效
     if (type === "rental") {
@@ -202,7 +213,7 @@ router.post("/add", async (req, res) => {
       .map((id) => {
         return `(${userId}, ${type === "product" ? id : 0}, ${
           type === "activity" ? id : 0
-        }, ${type === "rental" ? id : 0})`;
+        }, ${type === "rental" ? id : 0}, ${type === "bundle" ? id : 0})`;
       })
       .join(",");
 
@@ -211,16 +222,16 @@ router.post("/add", async (req, res) => {
     // 批量插入收藏
     await pool.execute(
       `INSERT INTO favorites 
-       (user_id, product_id, activity_id, rental_id) 
+       (user_id, product_id, activity_id, rental_id, bundle_id) 
        VALUES ${values}`
     );
 
     // 更新 rent_item 的 is_like 狀態
-    if (type === "rental") {
-      await pool.execute(
-        `UPDATE rent_item SET is_like = 1 WHERE id IN (${newIds.join(",")})`
-      );
-    }
+    // if (type === "rental") {
+    //   await pool.execute(
+    //     `UPDATE rent_item SET is_like = 1 WHERE id IN (${newIds.join(",")})`
+    //   );
+    // }
 
     res.json({
       success: true,
@@ -236,9 +247,9 @@ router.post("/add", async (req, res) => {
 });
 
 // 移除收藏
-router.post("/remove", async (req, res) => {
+router.post("/remove", checkToken, async (req, res) => {
   try {
-    const userId = 1; // 之後從 JWT 取得
+    const userId = req.decoded.id; // 之後從 JWT 取得
     const { type, itemIds } = req.body;
 
     // 基本驗證
@@ -260,7 +271,7 @@ router.post("/remove", async (req, res) => {
     }
 
     // 驗證收藏類型
-    if (!["product", "activity", "rental"].includes(type)) {
+    if (!["product", "activity", "rental", "bundle"].includes(type)) {
       return res.status(400).json({
         success: false,
         message: "無效的收藏類型",

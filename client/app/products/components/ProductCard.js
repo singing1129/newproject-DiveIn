@@ -5,40 +5,59 @@ import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import styles from "./products.module.css";
 import useFavorite from "@/hooks/useFavorite";
 import { useCart } from "@/hooks/cartContext";
-import useToast from "@/hooks/useToast";
 import { useState } from "react";
-
+import { useAuth } from "@/hooks/useAuth";
 export default function ProductCard({ product }) {
   const {
     isFavorite,
     toggleFavorite,
     loading: favoriteLoading,
   } = useFavorite(product.id, "product");
+
   const { addToCart } = useCart();
-  const { showToast } = useToast();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { user } = useAuth();
 
   const handleCartClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    try {
-      // 如果沒有 variants，使用商品本身的資料建立預設變體
-      const cartData = {
-        userId: 1, // 暫時寫死
-        type: "product",
-        variantId: product.variant_id, // 直接使用商品 ID
-        quantity: 1,
-      };
-      console.log(" DEBUG: cartData =", cartData);
+    // 檢查用戶是否已登入
+    if (!user || user === -1) {
+      alert("請先登入再將商品加入購物車");
+      // router.push("/login");
+      return;
+    }
 
-      const success = await addToCart(1, cartData);
-      if (success) {
-        showToast ? showToast("商品已加入購物車") : alert("成功加入購物車！");
+    try {
+      //判斷是否為套組商品
+      const isBundle = product.item_type === "bundle";
+
+      let cartData;
+      if (isBundle) {
+        // 如果是套组商品，使用bundle类型
+        cartData = {
+          type: "bundle",
+          bundleId: product.id,
+          quantity: 1,
+        };
+      } else {
+        // 如果是普通商品，使用product类型
+        cartData = {
+          type: "product",
+          variantId: product.id,
+          quantity: 1,
+        };
       }
+      console.log("product", product);
+
+      console.log("準備發送購物車資料:", cartData); // 添加調試日誌
+
+      const success = await addToCart(cartData);
+      console.log("加入購物車結果:", success);
     } catch (error) {
       console.error("加入購物車失敗:", error);
-      alert("加入購物車失敗，請稍後再試");
+      alert(`加入購物車失敗: ${error.message || "請稍後再試"}`);
     }
   };
 
