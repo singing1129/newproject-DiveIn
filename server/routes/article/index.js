@@ -14,7 +14,7 @@ router.use("/update", articleUpdateRouter);
 router.use("/reply", articleReplyRouter);
 router.use("/like", articleLikeRouter);
 
-/** 📝 獲取文章列表 */
+/** 獲取文章列表 */
 router.get("/", async (req, res) => {
   try {
     const {
@@ -128,7 +128,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-/** 📝 獲取單篇文章 */
+/**  獲取單篇文章 */
 router.get("/:id", async (req, res) => {
   try {
     const articleId = req.params.id;
@@ -140,11 +140,13 @@ router.get("/:id", async (req, res) => {
         a.*,
         acs.name AS category_small_name,
         acb.name AS category_big_name,
-        u.name AS author_name
+        u.name AS author_name,
+        ai.img_url AS img_url
       FROM article a
       LEFT JOIN article_category_small acs ON a.article_category_small_id = acs.id
       LEFT JOIN article_category_big acb ON acs.category_big_id = acb.id
       LEFT JOIN users u ON a.users_id = u.id
+      LEFT JOIN article_image ai ON a.id = ai.article_id AND ai.is_main = 1
       WHERE a.id = ?
       `,
       [articleId]
@@ -157,33 +159,20 @@ router.get("/:id", async (req, res) => {
       });
     }
 
+    // 處理圖片 URL
     const article = articleRows[0];
-
-    // 查詢文章封面，僅返回 is_main = 1 的圖片
-    const [imageRows] = await pool.execute(
-      `
-  SELECT img_url, is_main
-  FROM article_image
-  WHERE article_id = ? AND is_main = 1
-  `,
-      [articleId]
-    );
-
-    // 如果沒有找到主圖片，則補上預設圖片
-    let mainImage = imageRows.find((img) => img.is_main === 1);
-    if (!mainImage) {
-      mainImage = {
-        img_url: "/public/uploads/article/no_is_main.png",
-        is_main: 1,
-      };
+    if (
+      article.img_url &&
+      !article.img_url.startsWith("http") &&
+      !article.img_url.startsWith("/uploads")
+    ) {
+      article.img_url = `/uploads${article.img_url}`;
     }
 
-    // 處理圖片 URL
-    imageRows.forEach((image) => {
-      if (image.img_url && !image.img_url.startsWith("http")) {
-        image.img_url = `${image.img_url}`;
-      }
-    });
+    // 如果 img_url 為 null 或空值，補充預設圖片
+    if (!article.img_url) {
+      article.img_url = "/uploads/article/no_is_main.png";
+    }
 
     // 查詢文章標籤
     const [tagRows] = await pool.execute(
@@ -232,14 +221,31 @@ router.get("/:id", async (req, res) => {
       [article.article_category_small_id]
     );
 
+    // 處理相關文章的圖片 URL
+    const fullRelatedArticles = relatedArticles.map((relatedArticle) => {
+      if (
+        relatedArticle.img_url &&
+        !relatedArticle.img_url.startsWith("http") &&
+        !relatedArticle.img_url.startsWith("/uploads")
+      ) {
+        relatedArticle.img_url = `/uploads${relatedArticle.img_url}`;
+      }
+
+      // 如果 img_url 為 null 或空值，補充預設圖片
+      if (!relatedArticle.img_url) {
+        relatedArticle.img_url = "/uploads/article/no_is_main.png";
+      }
+
+      return relatedArticle;
+    });
+
     res.json({
       status: "success",
       data: {
         ...article,
-        images: imageRows,
         tags: tagRows.map((tag) => tag.tag_name),
         replies: replyRows,
-        relatedArticles,
+        relatedArticles: fullRelatedArticles,
       },
     });
   } catch (error) {
@@ -252,7 +258,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-/** 📝 獲取某個用戶的文章列表 */
+/** 獲取某個用戶的文章列表 */
 router.get("/users/:users_id", async (req, res) => {
   try {
     const { users_id } = req.params;

@@ -34,20 +34,20 @@ export default function ArticleDetail() {
   const [relatedArticles, setRelatedArticles] = useState([]); // 相關文章
 
   const backendURL = "http://localhost:3005";
-  const defaultImage = "/uploads/article/no_is_main.png";
-  const [imageUrl, setImageUrl] = useState(defaultImage);
+  const defaultImage = `${backendURL}/uploads/article/no_is_main.png`; // 定義預設圖片
+  const [imageUrl, setImageUrl] = useState(defaultImage); // 圖片 URL 狀態
 
-  // 當 article.img_url 變化時，設置圖片 URL
-  // useEffect(() => {
-  //     if (article && article.img_url) {
-  //         const fullImageUrl = article.img_url.startsWith("http")
-  //             ? article.img_url
-  //             : `${backendURL}${article.img_url || defaultImage}`;
-  //         setImageUrl(fullImageUrl);
-  //     }
-  // }, [article]);
+  // 設置main-photo圖片 URL
+  useEffect(() => {
+      if (article && article.img_url) {
+          const fullImageUrl = article.img_url.startsWith("http")
+              ? article.img_url
+              : `${backendURL}${article.img_url || defaultImage}`;
+          setImageUrl(fullImageUrl);
+      }
+  }, [article]);
 
-  // 從 API 獲取文章數據
+  // 獲取相關文章數據
   useEffect(() => {
     const fetchArticle = async () => {
       try {
@@ -66,19 +66,6 @@ export default function ArticleDetail() {
 
         setArticle(data);
         setRelatedArticles(formattedRelatedArticles); // 更新相關文章
-
-        // 找到符合條件的封面圖片
-        if (article?.images) {
-          const mainImage = article.images.find(
-            (img) => img.is_main === 1 && img.is_deleted === 0
-          );
-
-          const fullImageUrl = mainImage
-            ? `${backendURL}${mainImage.img_url}`
-            : defaultImage;
-
-          setImageUrl(fullImageUrl);
-        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -88,7 +75,7 @@ export default function ArticleDetail() {
 
     fetchArticle();
   }, [id]);
-
+  
   // 渲染回覆
   const renderReplies = () => {
     if (!article.replies || article.replies.length === 0) {
@@ -198,7 +185,7 @@ export default function ArticleDetail() {
             fill
             style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"
-            onError={(e) => setImageUrl(defaultImage)} // 这里修正了默认图片路径
+            onError={() => setImageUrl(defaultImage)} // 若圖片加載失敗則使用預設圖片
           />
         </div>
 
