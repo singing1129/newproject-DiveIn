@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image"; 
+import Image from "next/image";
 
-import styles from "./AccountForm.module.css"; 
+import styles from "./AccountForm.module.css";
 
 export default function AccountForm() {
   const [formData, setFormData] = useState({
@@ -82,95 +82,89 @@ export default function AccountForm() {
 
   return (
     <div className={styles.container}>
-      {/* 大頭貼區塊 */}
-      <div className={styles.avatarSection}>
-        <div className={styles.avatarPreview}>
-          <Image
-            src={formData.avatar || "/image/default-memberimg.png"} 
-            alt="會員頭像"
-            width={250} 
-            height={250}
-            className={styles.avatarImage}
-          />
+      <div className={styles.contentWrapper}>
+        {/* 大頭貼區塊 */}
+        <div className={styles.avatarSection}>
+          <div className={styles.avatarPreview}>
+            <Image
+              src={formData.avatar || "/image/default-memberimg.png"}
+              alt="會員頭像"
+              width={250}
+              height={250}
+              className={styles.avatarImage}
+            />
+          </div>
+          <div className={styles.memberLevel}>Lv.{formData.level}</div>
+          <label htmlFor="avatar" className={styles.avatarUploadBtn}>
+            變更圖片
+            <input
+              type="file"
+              id="avatar"
+              name="avatar"
+              onChange={handleAvatarChange}
+              className={styles.avatarInput}
+            />
+          </label>
         </div>
-        <div className={styles.memberLevel}>Lv.{formData.level}</div> 
-        <label htmlFor="avatar" className={styles.avatarUploadBtn}>
-          變更圖片
-          <input
-            type="file"
-            id="avatar"
-            name="avatar"
-            onChange={handleAvatarChange}
-            className={styles.avatarInput}
-          />
-        </label>
+
+        {/* 個人資訊區塊 */}
+        <form className={styles.accountForm} onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label htmlFor="name">姓名</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="email">電子郵件</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="password">密碼</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="phone">電話號碼</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+          </div>
+        </form>
       </div>
 
-      {/* 個人資訊區塊 */}
-      <form className={styles.accountForm} onSubmit={handleSubmit}>
-        <div className={styles.formGroup}>
-          <label htmlFor="name">姓名</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="email">電子郵件</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="password">密碼</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="phone">電話號碼</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="address">地址</label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-          />
-        </div>
-        <div className={styles.buttonGroup}>
-          <button type="submit" className={styles.saveBtn}>
-            儲存
-          </button>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={handleCancel}
-          >
-            取消
-          </button>
-        </div>
-      </form>
+      {/* 按鈕區塊 */}
+      <div className={styles.buttonGroup}>
+        <button type="submit" className={styles.saveBtn}>
+          儲存
+        </button>
+        <button
+          type="button"
+          className={styles.cancelBtn}
+          onClick={handleCancel}
+        >
+          取消
+        </button>
+      </div>
     </div>
   );
 }
