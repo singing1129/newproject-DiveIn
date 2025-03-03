@@ -2,6 +2,7 @@ import express from "express";
 import { pool } from "../../config/mysql.js";
 import articleSidebarRouter from "./sidebar.js";
 import articleCreateRouter from "./create.js";
+import articleUpdateRouter from "./update.js"; 
 import articleReplyRouter from "./reply.js";
 import articleLikeRouter from "./like.js"; // 文章 & 留言按讚
 
@@ -9,6 +10,7 @@ const router = express.Router();
 
 router.use("/sidebar", articleSidebarRouter);
 router.use("/create", articleCreateRouter);
+router.use("/update", articleUpdateRouter); 
 router.use("/reply", articleReplyRouter);
 router.use("/like", articleLikeRouter);
 
@@ -21,14 +23,16 @@ router.get("/", async (req, res) => {
       sort = "newest", // newest, oldest, popular
       category,
       tag,
+      status, // 新增 status 參數
     } = req.query;
 
     const offset = (page - 1) * limit;
 
     // 排序條件
-    let orderBy = "a.publish_at DESC";
+    let orderBy = "a.publish_at DESC"; // 預設最新
     if (sort === "oldest") orderBy = "a.publish_at ASC";
     else if (sort === "popular") orderBy = "a.view_count DESC";
+    else if (sort === "all") orderBy = "a.id DESC"; // 顯示所有文章（不依照熱門或最新）
 
     // 篩選條件
     let whereClause = "a.is_deleted = FALSE";
@@ -41,6 +45,10 @@ router.get("/", async (req, res) => {
     if (tag) {
       whereClause += " AND ats.tag_name = ?";
       params.push(tag);
+    }
+    if (status) {
+      whereClause += " AND a.status = ?";
+      params.push(status);
     }
 
     // 查詢文章列表
@@ -132,15 +140,11 @@ router.get("/:id", async (req, res) => {
         a.*,
         acs.name AS category_small_name,
         acb.name AS category_big_name,
-        u.name AS author_name,
-        ai.img_url AS img_url
+        u.name AS author_name
       FROM article a
       LEFT JOIN article_category_small acs ON a.article_category_small_id = acs.id
       LEFT JOIN article_category_big acb ON acs.category_big_id = acb.id
       LEFT JOIN users u ON a.users_id = u.id
-      LEFT JOIN article_tag_big atb ON a.id = atb.article_id
-      LEFT JOIN article_tag_small ats ON atb.article_tag_small_id = ats.id
-      LEFT JOIN article_image ai ON a.id = ai.article_id AND ai.is_main = 1
       WHERE a.id = ?
       `,
       [articleId]
@@ -166,14 +170,18 @@ router.get("/:id", async (req, res) => {
     );
 
     // 如果沒有找到主圖片，則補上預設圖片
-    if (imageRows.length === 0) {
-      imageRows.push({ img_url: "/piblic/uploads/article/no_is_main.png" }); // 沒有主圖片時使用預設圖片
+    let mainImage = imageRows.find((img) => img.is_main === 1);
+    if (!mainImage) {
+      mainImage = {
+        img_url: "/public/uploads/article/no_is_main.png",
+        is_main: 1,
+      };
     }
 
     // 處理圖片 URL
     imageRows.forEach((image) => {
       if (image.img_url && !image.img_url.startsWith("http")) {
-        image.img_url = `/uploads${image.img_url}`;
+        image.img_url = `${image.img_url}`;
       }
     });
 
@@ -245,9 +253,9 @@ router.get("/:id", async (req, res) => {
 });
 
 /** 📝 獲取某個用戶的文章列表 */
-router.get("/user/:user_id", async (req, res) => {
+router.get("/users/:users_id", async (req, res) => {
   try {
-    const { user_id } = req.params;
+    const { users_id } = req.params;
     const {
       page = 1,
       limit = 10,
@@ -263,7 +271,7 @@ router.get("/user/:user_id", async (req, res) => {
 
     // 篩選條件
     let whereClause = "a.is_deleted = FALSE AND a.users_id = ?";
-    const params = [user_id];
+    const params = [users_id];
 
     // 查詢文章列表
     const [rows] = await pool.execute(
@@ -334,5 +342,68 @@ router.get("/user/:user_id", async (req, res) => {
   }
 });
 
+// 刪除文章路由
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const connection = await pool.getConnection();
+
+  try {
+    // 開始交易
+    await connection.beginTransaction();
+
+    // 1. 更新 article 表中的 is_deleted 為 1
+    await connection.execute(`UPDATE article SET is_deleted = 1 WHERE id = ?`, [
+      id,
+    ]);
+
+    // 2. 更新 article_image 表中的 is_deleted 為 1
+    await connection.execute(
+      `UPDATE article_image SET is_deleted = 1 WHERE article_id = ?`,
+      [id]
+    );
+
+    // 3. 刪除 article_likes_dislikes 表中的資料
+    await connection.execute(
+      `DELETE FROM article_likes_dislikes WHERE article_id = ?`,
+      [id]
+    );
+
+    // 4. 更新 article_reply 表中的 is_deleted 為 1
+    await connection.execute(
+      `UPDATE article_reply SET is_deleted = 1 WHERE article_id = ?`,
+      [id]
+    );
+
+    // 5. 刪除 article_tag_big 表中的資料
+    await connection.execute(
+      `DELETE FROM article_tag_big WHERE article_id = ?`,
+      [id]
+    );
+
+    // 提交交易
+    await connection.commit();
+
+    // 回傳成功訊息
+    res.json({
+      status: "success",
+      message: "文章及相關資料已成功刪除",
+    });
+  } catch (error) {
+    // 回滾交易
+    await connection.rollback();
+
+    console.error("❌ 刪除文章及相關資料失敗：", error);
+
+    res.status(500).json({
+      status: "error",
+      message: "刪除文章及相關資料失敗",
+      error: error.message,
+    });
+  } finally {
+    // 釋放連接
+    connection.release();
+  }
+});
 
 export default router;
