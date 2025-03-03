@@ -5,7 +5,7 @@ import useFavorite from "@/hooks/useFavorite"; // 引入 useFavorite
 
 const FavoriteButton = ({
   rentalId,
-  userId = 1, // 預設值改為可從 props 傳入
+  userId = null,
   className = "", // 允許傳入自訂 class
   isCircle = false, // 是否為圓形背景樣式
   onFavoriteChange, // 收藏狀態改變的回調
@@ -24,10 +24,11 @@ const FavoriteButton = ({
   const containerClass = `
     ${baseClass}
     ${className}
-    ${isFavorite ? "filled" : ""}
+    ${isFavorite && userId ? "filled" : ""}
     ${isCircle ? "circle-style" : ""}
   `;
 
+  // ${isFavorite ? "filled" : ""}
   // // 初始化的時候先檢查收藏狀態（是否已經收藏）
   // useEffect(() => {
   //   // console.log("Checking favorite status for:", rentalId);
@@ -61,12 +62,19 @@ const FavoriteButton = ({
       e.stopPropagation();
     }
 
-    console.log("handleClick 被觸發");
-    console.log("rentalId:", rentalId);
-    console.log("當前 isFavorite 狀態:", isFavorite);
-    // console.log("userId:", userId);
-    // console.log("type:", "rental");
-    // console.log("itemId:", rentalId);
+    // console.log("handleClick 被觸發");
+    // console.log("rentalId:", rentalId);
+    // console.log("當前 isFavorite 狀態:", isFavorite);
+    console.log("userId:", userId);
+    console.log("type:", "rental");
+    console.log("itemId:", rentalId);
+
+    // 檢查是否已登錄
+    if (!userId) {
+      setModalMessage("請先登錄以收藏商品！");
+      setShowModal(true);
+      return; // 未登錄則停止執行
+    }
 
     if (isLoading) return; // 如果正在加載，則不執行
 
@@ -114,7 +122,7 @@ const FavoriteButton = ({
       console.log("準備發送請求...");
 
       const success = await toggleFavorite(); // 使用 useFavorite 的 toggleFavorite
-      
+
       console.log("toggleFavorite 返回值:", success);
 
       if (success) {
@@ -140,14 +148,18 @@ const FavoriteButton = ({
       <div
         className={`${containerClass.trim()} ${
           isCircle ? "circle-button" : ""
-        } ${isFavorite ? "favorited" : ""}`}
+        } ${isFavorite && userId ? "favorited" : ""}`} // 只有登錄時才顯示收藏狀態
         onClick={handleClick}
         style={{
           cursor: isLoading ? "not-allowed" : "pointer",
           pointerEvents: isLoading ? "none" : "auto",
         }}
       >
-        <i className={`bi ${isFavorite ? "bi-heart-fill" : "bi-heart"}`}></i>
+        <i
+          className={`bi ${
+            isFavorite && userId ? "bi-heart-fill" : "bi-heart"
+          }`} // 只有登錄時才顯示填充愛心
+        ></i>
         {isLoading && <span className="loading-dot"></span>}
       </div>
 
