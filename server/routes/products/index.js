@@ -5,7 +5,6 @@ import byBrandRouter from "./byBrand.js";
 import byCategoryRouter from "./byCategory.js";
 import productDetailRouter from "./productDetail.js";
 import productListRouter from "./productsList.js";
-
 const router = express.Router();
 
 // 當路徑為 /api/products（無其他路徑），則回傳全部商品

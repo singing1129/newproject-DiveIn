@@ -10,6 +10,9 @@ import {
   setupRecaptcha,
 } from "../../config/firebase";
 
+// 添加 publicAdminPaths
+const publicAdminPaths = ["/admin/login", "/admin/register"];
+
 const appKey = "loginWithToken";
 const AuthContext = createContext(null);
 AuthContext.displayName = "AuthContext";
@@ -43,12 +46,29 @@ export function AuthProvider({ children }) {
     console.log("=====================");
   };
 
-  // 2. 整合 token 驗證和用戶狀態設置
+  // 1 整合 token 驗證和用戶狀態設置
   useEffect(() => {
     // 初始化
     debugAuthState();
     const checkTokenAndSetUser = () => {
       const token = localStorage.getItem(appKey);
+      console.log("token:", token);
+      if (token) {
+        const decoded = jwt.decode(token);
+
+        // 詳細記錄
+        console.log("解析的 token 内容:", decoded);
+        console.log("token 中的用户 ID:", decoded?.id);
+        console.log("token 是否有效:", !!decoded && !!decoded.id);
+
+        // 檢查 token 是否過期
+        if (decoded.exp) {
+          const currentTime = Math.floor(Date.now() / 1000);
+          console.log("當前時間:", currentTime);
+          console.log("token 過期時間:", decoded.exp);
+          console.log("token 是否過期:", decoded.exp < currentTime);
+        }
+      }
 
       if (!token) {
         if (user !== -1) {
@@ -61,6 +81,7 @@ export function AuthProvider({ children }) {
       try {
         // 解析 token
         const decoded = jwt.decode(token);
+        console.log("解析 JWT Token:", decoded);
 
         // 確保 token 含有必要信息
         if (!decoded || (!decoded.id && !decoded.uid)) {
@@ -81,11 +102,12 @@ export function AuthProvider({ children }) {
 
         // 標準化用戶對象
         const standardUser = {
-          id: decoded.id || decoded.uid,
+          id: decoded.id,
           email: decoded.email,
           name: decoded.name || decoded.displayName,
           providers: decoded.providers || ["unknown"],
         };
+        console.log("設置用戶狀態:", standardUser);
 
         // 設置用戶狀態
         setUser(standardUser);
@@ -99,17 +121,27 @@ export function AuthProvider({ children }) {
     // 初始檢查
     checkTokenAndSetUser();
 
-    // 設置定時檢查
-    const intervalId = setInterval(checkTokenAndSetUser, 3000);
+    // 使用事件監聽而不是定時器
+    const handleStorageChange = (event) => {
+      if (event.key === appKey) {
+        checkTokenAndSetUser();
+      }
+    };
 
-    return () => clearInterval(intervalId);
+    // 監聽 localStorage 變化
+    window.addEventListener("storage", handleStorageChange);
+
+    // 清理函數
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
-  // NextAuth
+  // 2 NextAuth
   useEffect(() => {
     const handleSessionChange = async () => {
       const session = await getSession();
-      console.log("會話檢查:", session);
+      console.log("檢查session:", session);
 
       // 如果有活躍的會話但沒有本地 token，則嘗試社交登入流程
       if (session?.user && !localStorage.getItem(appKey)) {
@@ -171,6 +203,7 @@ export function AuthProvider({ children }) {
             localStorage.setItem(appKey, token);
             const newUser = jwt.decode(token);
             setUser(newUser);
+            router.replace("/");
           } else {
             console.error("登入處理失敗:", result.message);
           }
@@ -180,16 +213,35 @@ export function AuthProvider({ children }) {
       }
     };
 
+    // 定義 handleStorageChange 函數 - 這是缺少的部分
+    const handleStorageChange = (event) => {
+      if (event.key === appKey) {
+        handleSessionChange();
+      }
+    };
+
+    // 監聽會話變化事件
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        handleSessionChange();
+      }
+    };
+
     // 立即執行一次
     handleSessionChange();
 
-    // 設置一個間隔定時器，定期檢查會話變化
-    const intervalId = setInterval(handleSessionChange, 3000);
+    // 添加事件監聽器
+    window.addEventListener("storage", handleStorageChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     // 清理函數
-    return () => clearInterval(intervalId);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
+  // 3 為了google和line
   useEffect(() => {
     if (session?.user) {
       // 不要直接設置 session.user，而是提取必要信息
@@ -201,13 +253,74 @@ export function AuthProvider({ children }) {
         providers: ["social"], // 或更具體的提供者
       };
       setUser(standardUser);
-    } else if (session === null && user !== -1) {
-      // 只有當不是初始載入狀態時才設置為 null
-      setUser(null);
+      // }
+      // else if (session === null && user !== -1) {
+      //   // 只有當不是初始載入狀態時才設置為 null
+      //   setUser(null);
     }
   }, [session]);
 
-  // 3. 修改 loginWithPhone 函數，使其與其他登入方式保持一致
+  // 4 頁面保護與重定向
+  useEffect(() => {
+    // 等待用户状态初始化完成
+    if (user === -1) return;
+
+    //
+    if (
+      !user &&
+      protectedRoutes.some((route) => pathname.startsWith(route)) &&
+      !publicAdminPaths.includes(pathname)
+    ) {
+      // 未登入用戶嘗試需要登录的页面，重定向到登录页
+      router.replace("/admin/login");
+    }
+    // 已登錄訪問登入/註冊頁面
+    else if (user && publicAdminPaths.includes(pathname)) {
+      // 已登錄訪問登入/註冊頁面，重定向到首頁
+      console.log("已登入，禁止進入登入頁，跳轉到首頁");
+      router.replace("/");
+    }
+  }, [user, pathname, router]);
+
+  // 5 檢查用戶狀態 status
+  useEffect(() => {
+    // 只有當用戶已經設置（不是-1且不是null）時才檢查狀態
+    if (!user || user === -1) return;
+
+    const checkUserStatus = async () => {
+      try {
+        console.log("調用 status API 檢查用戶狀態");
+
+        const response = await fetch("http://localhost:3005/api/admin/status", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem(appKey)}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log("狀態檢查響應:", result);
+
+          if (result.status === "success" && result.data.token) {
+            // 更新本地存储中的token
+            localStorage.setItem(appKey, result.data.token);
+            console.log("Token 已更新");
+          }
+        } else {
+          console.warn("狀態檢查失敗，可能需要重新登入");
+        }
+      } catch (error) {
+        console.error("檢查用戶狀態時出錯:", error);
+      }
+    };
+
+    // 頁面加載後檢查一次
+    checkUserStatus();
+  }, [user]); // 當用戶狀態改變時執行
+
+  //  手機登入
   const loginWithPhone = async (phoneNumber) => {
     try {
       console.log("📲 執行 `loginWithPhone`，手機號碼:", phoneNumber);
@@ -317,7 +430,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  //  社交登入
+  //  google和line登入
   const handleSocialLogin = async (provider) => {
     try {
       console.log(`嘗試 ${provider} 登入`);
@@ -438,40 +551,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // 4. 修改路由保護邏輯，確保用戶狀態正確時才執行路由檢查
- // 在 AuthProvider 组件中
-// 明确定义可公开访问的管理路径
-// const publicAdminPaths = [
-//   "/admin/login", 
-//   "/admin/register", 
-//   "/admin/forgot", 
-//   "/admin/reset"
-// ];
-
-// // 在 useEffect 中
-// useEffect(() => {
-//   // 等待用户状态初始化完成
-//   if (user === -1) return;
-
-//   // 未登入用户访问受保护页面（排除公共路径）
-//   if (
-//     !user && 
-//     protectedRoutes.some(route => pathname.startsWith(route)) && 
-//     !publicAdminPaths.includes(pathname)
-//   ) {
-//     // 未登录用户试图访问需要登录的页面，重定向到登录页
-//     router.replace("/admin/login");
-//   }
-//   // 已登入用户访问登入/注册页面
-//   else if (user && publicAdminPaths.includes(pathname)) {
-//     // 已登录用户试图访问登录/注册页面，重定向到首页
-//     console.log("已登入，禁止进入登入页，跳转到首页");
-//     router.replace("/");
-//   }
-// }, [user, pathname, router]);
-
   //   登出 (手動帳號 & Google)
-  // 5. 修改 logout 函數，確保完全清除所有登入狀態
   const logout = async () => {
     console.log("執行登出操作");
 

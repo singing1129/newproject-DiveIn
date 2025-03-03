@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import createError from "http-errors";
 // 路由模組
 import productRouter from "../routes/products/index.js";
+import bundleRouter from "../routes/bundle/index.js";
 import favoritesRouter from "../routes/favorites/index.js";
 import cartRouter from "../routes/cart/index.js";
 import categoriesRouter from "../routes/categories/index.js";
@@ -93,6 +94,8 @@ const apiRouter = express.Router();
 app.use("/api", apiRouter);
 // 產品相關路由
 apiRouter.use("/products", productRouter);
+//bundle
+apiRouter.use("/bundle", bundleRouter);
 // 收藏相關路由
 apiRouter.use("/favorites", favoritesRouter);
 // 購物車相關路由

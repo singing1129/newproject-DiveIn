@@ -2,12 +2,14 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import useToast from "@/hooks/useToast";
+import { useAuth } from "@/hooks/useAuth";
 
-// 用於存儲全局收藏狀態
+// 用於儲存全局收藏狀態
 const favoriteStore = {
   products: new Set(),
   activities: new Set(),
   rentals: new Set(),
+  bundles: new Set(),
   listeners: new Set(),
 
   // 通知所有監聽器
@@ -60,17 +62,13 @@ const favoriteStore = {
   },
 };
 
-// type 可以是 'product'/'products', 'activity'/'activities', 或 'rental'/'rentals'
-// rental有另外的modal所以多設了一個參數
-export default function useFavorite(
-  itemId,
-  type = "products",
-  disableToast = false
-) {
+// type 可以是 'product'/'products', 'activity'/'activities', 或 'rental'/'rentals' 或 'bundle'/'bundles'
+export default function useFavorite(itemId, type = "products") {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { showToast } = useToast();
+  const { token } = useAuth();
 
   const API_BASE_URL = "http://localhost:3005/api/favorites";
 
@@ -85,14 +83,20 @@ export default function useFavorite(
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const response = await axios.get(API_BASE_URL);
-        if (response.data.success) {
-          // 更新全局收藏狀態
-          Object.keys(response.data.data).forEach((key) => {
-            const items = response.data.data[key];
-            const ids = items.map((item) => item[`${key}_id`]);
-            favoriteStore.setInitialFavorites(key, ids);
+        if (token) {
+          const response = await axios.get(API_BASE_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           });
+          if (response.data.success) {
+            // 更新全局收藏狀態
+            Object.keys(response.data.data).forEach((key) => {
+              const items = response.data.data[key];
+              const ids = items.map((item) => item[`${key}_id`]);
+              favoriteStore.setInitialFavorites(key, ids);
+            });
+          }
         }
       } catch (err) {
         console.error("獲取收藏狀態失敗:", err);
@@ -119,10 +123,18 @@ export default function useFavorite(
       // 轉換為後端需要的格式
       const backendType = favoriteStore.getBackendType(type);
 
-      const response = await axios.post(`${API_BASE_URL}/${endpoint}`, {
-        type: backendType, // 使用轉換後的類型
-        itemIds: [itemId],
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/${endpoint}`,
+        {
+          type: backendType, // 使用轉換後的類型
+          itemIds: [itemId],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.data.success) {
         // 更新全局狀態（使用原始類型）

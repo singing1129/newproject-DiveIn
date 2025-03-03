@@ -17,11 +17,12 @@ export default function User() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  console.log("當前用戶狀態:", user);
 
   return (
     // FIXME: 修正下拉選單位置
     <div className="position-relative">
-      {user ? (
+      {user && user !== -1 ? (
         <IconButton onClick={handleClick}>
           <FaRegUser />
         </IconButton>

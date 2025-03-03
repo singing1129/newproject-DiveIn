@@ -11,6 +11,7 @@ router.post("/add", checkToken, async (req, res) => {
     variantId,
     projectId,
     rentalId,
+    bundleId, // 新增bundle ID參數
     quantity,
     startDate,
     endDate,
@@ -23,7 +24,8 @@ router.post("/add", checkToken, async (req, res) => {
 
   try {
     // 1. 基本驗證
-    if (!["product", "activity", "rental"].includes(type)) {
+    if (!["product", "activity", "rental", "bundle"].includes(type)) {
+      // 添加bundle類型
       return res
         .status(400)
         .json({ success: false, message: "無效的商品類型" });
@@ -116,6 +118,74 @@ router.post("/add", checkToken, async (req, res) => {
         break;
       }
 
+      case "bundle": {
+        // 檢查bundle是否存在
+        const [bundle] = await pool.execute(
+          "SELECT * FROM product_bundle WHERE id = ?",
+          [bundleId]
+        );
+
+        if (bundle.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "找不到指定套組",
+          });
+        }
+
+        // 獲取套組中的所有商品
+        const [bundleItems] = await pool.execute(
+          "SELECT * FROM product_bundle_items WHERE bundle_id = ?",
+          [bundleId]
+        );
+
+        if (bundleItems.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "該套組不包含任何商品",
+          });
+        }
+
+        // 對於每個套組商品，添加到購物車
+        for (const bundleItem of bundleItems) {
+          // 檢查該商品的默認變體
+          const [defaultVariant] = await pool.execute(
+            `SELECT pv.id 
+             FROM product_variant pv 
+             WHERE pv.product_id = ? AND pv.isDeleted = 0
+             LIMIT 1`,
+            [bundleItem.product_id]
+          );
+
+          if (defaultVariant.length === 0) {
+            continue; // 如果沒有有效變體，則跳過此產品
+          }
+
+          const variantId = defaultVariant[0].id;
+          const itemQuantity = bundleItem.quantity * quantity;
+
+          // 檢查是否已在購物車中
+          const [existingItem] = await pool.execute(
+            "SELECT id, quantity FROM cart_items WHERE cart_id = ? AND variant_id = ? AND bundle_id = ?",
+            [cartId, variantId, bundleId]
+          );
+
+          if (existingItem.length > 0) {
+            // 更新現有項目
+            await pool.execute(
+              "UPDATE cart_items SET quantity = ? WHERE id = ?",
+              [itemQuantity, existingItem[0].id]
+            );
+          } else {
+            // 新增項目，包含bundle_id
+            await pool.execute(
+              "INSERT INTO cart_items (cart_id, variant_id, quantity, bundle_id) VALUES (?, ?, ?, ?)",
+              [cartId, variantId, itemQuantity, bundleId]
+            );
+          }
+        }
+        break;
+      }
+
       case "activity": {
         if (!date || !time) {
           return res.status(400).json({
@@ -169,28 +239,6 @@ router.post("/add", checkToken, async (req, res) => {
            AND cai.time = ?`,
           [cartId, projectId, date, time]
         );
-
-        //TODO -  檢查該時段所有預訂數量（不包含當前項目）該改成order_activity_items
-        // const [bookings] = await pool.execute(
-        //   `SELECT COALESCE(SUM(cai.quantity), 0) as booked_quantity
-        //    FROM cart_activity_items cai
-        //    JOIN carts c ON cai.cart_id = c.id
-        //    WHERE cai.activity_project_id = ?
-        //    AND cai.date = ?
-        //    AND cai.time = ?
-        //    AND cai.id != ?
-        //    AND c.status = 'active'`,
-        //   [
-        //     projectId,
-        //     date,
-        //     time,
-        //     existingItem.length > 0 ? existingItem[0].id : 0,
-        //   ]
-        // );
-
-        // // 總預訂數量等於當前預訂量加上新數量
-        // const totalBookings =
-        //   parseInt(bookings[0].booked_quantity) + parseInt(quantity);
 
         if (existingItem.length > 0) {
           // 更新數量
@@ -374,9 +422,9 @@ router.post("/add", checkToken, async (req, res) => {
           // 新增項目
           await pool.execute(
             `INSERT INTO cart_rental_items 
-             (cart_id, rental_id, start_date, end_date, quantity, color, rentalBrand) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [cartId, rentalId, startDate, endDate, quantity, color, rentalBrand]
+             (cart_id, rental_id, start_date, end_date, quantity, color) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [cartId, rentalId, startDate, endDate, quantity, color || null]
           );
 
           console.log("插入的顏色:", color); // 確認插入的顏色
@@ -389,16 +437,21 @@ router.post("/add", checkToken, async (req, res) => {
         break;
       }
     }
+
+    return res.status(200).json({
+      success: true,
+      message: "商品已加入購物車",
+    });
   } catch (error) {
     console.error("加入購物車失敗:", error);
     res.status(500).json({ success: false, message: "加入購物車失敗" });
   }
 });
 
-//查詢特定用戶的購物車內容 購物車專用api
+// 查詢特定用戶的購物車內容 購物車專用api
 router.get("/:userId", async (req, res) => {
   const { userId } = req.params;
-  // const userId = 1;
+
   try {
     // 1. 檢查用戶是否有活動購物車
     const [cart] = await pool.execute(
@@ -413,6 +466,7 @@ router.get("/:userId", async (req, res) => {
           products: [],
           activities: [],
           rentals: [],
+          bundles: [], // 新增空的bundles陣列
           total: {
             products: 0,
             activities: 0,
@@ -420,6 +474,7 @@ router.get("/:userId", async (req, res) => {
               rental_fee: 0,
               deposit: 0,
             },
+            bundles: 0, // 新增bundles總金額
             final: 0,
           },
         },
@@ -428,7 +483,7 @@ router.get("/:userId", async (req, res) => {
 
     const cartId = cart[0].id;
 
-    // 2. 獲取一般商品
+    // 2. 獲取一般商品 (非套組的產品)
     const [products] = await pool.execute(
       `SELECT 
         ci.id,
@@ -447,7 +502,7 @@ router.get("/:userId", async (req, res) => {
       JOIN color c ON pv.color_id = c.id
       JOIN size s ON pv.size_id = s.id
       LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
-      WHERE ci.cart_id = ?`,
+      WHERE ci.cart_id = ? AND ci.bundle_id IS NULL`,
       [cartId]
     );
 
@@ -474,7 +529,6 @@ router.get("/:userId", async (req, res) => {
     );
 
     // 4. 獲取租借項目並計算租期
-    //
     const [rentals] = await pool.execute(
       `SELECT 
         cri.id,
@@ -533,12 +587,13 @@ router.get("/:userId", async (req, res) => {
       };
     });
 
-    // 5. 計算各類總價
-    //@TODO - coupon所在
-    //商品、活動性質雷同
-
+    // 7. 計算各類總價
     const calculateProductTotal = (items) => {
-      return items.reduce((acc, curr) => acc + curr.price * curr.quantity, 0); //initialValue=0
+      return items.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
+    };
+
+    const calculateBundleTotal = (items) => {
+      return items.reduce((acc, curr) => acc + curr.discount_price, 0);
     };
 
     const calculateRentalTotals = (items) => {
@@ -547,15 +602,16 @@ router.get("/:userId", async (req, res) => {
           rental_fee: acc.rental_fee + curr.rental_fee,
           deposit: acc.deposit + curr.deposit_fee,
         }),
-        { rental_fee: 0, deposit: 0 } //initialValue 會回傳出去
+        { rental_fee: 0, deposit: 0 }
       );
     };
 
     const productTotal = calculateProductTotal(products);
     const activityTotal = calculateProductTotal(activities);
+    const bundleTotal = calculateBundleTotal(bundles);
     const rentalTotals = calculateRentalTotals(processedRentals);
 
-    //全部組裝起來
+    // 全部組裝起來
     const data = {
       products: products.map((item) => ({
         ...item,
@@ -566,12 +622,15 @@ router.get("/:userId", async (req, res) => {
         subtotal: item.price * item.quantity,
       })),
       rentals: processedRentals,
+      bundles: bundles, // 新增bundles數組
       total: {
         products: productTotal,
         activities: activityTotal,
+        bundles: bundleTotal, // 新增bundle總金額
         rentals: rentalTotals,
-        // 最終總金額（包含租借費用但不包含押金）
-        final: productTotal + activityTotal + rentalTotals.rental_fee,
+        // 最終總金額（包含套組價格和租借費用但不包含押金）
+        final:
+          productTotal + activityTotal + bundleTotal + rentalTotals.rental_fee,
       },
     };
 
@@ -588,8 +647,91 @@ router.get("/:userId", async (req, res) => {
   }
 });
 
-// 更新購物車內容
+// 在刪除的路由中也需要處理bundle類型
+router.delete("/remove", async (req, res) => {
+  const { userId, type, itemIds } = req.body;
 
+  try {
+    // 1. 基本驗證
+    if (
+      !userId ||
+      !type ||
+      !itemIds ||
+      !Array.isArray(itemIds) ||
+      itemIds.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "無效的請求參數",
+      });
+    }
+
+    // 2. 檢查購物車是否存在
+    const [cart] = await pool.execute(
+      "SELECT id FROM carts WHERE user_id = ? AND status = 'active'",
+      [userId]
+    );
+
+    if (cart.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "找不到購物車",
+      });
+    }
+
+    const cartId = cart[0].id;
+
+    // 3. 根據類型刪除不同表格中的項目
+    let tableName;
+    switch (type) {
+      case "product":
+        tableName = "cart_items";
+        break;
+      case "activity":
+        tableName = "cart_activity_items";
+        break;
+      case "rental":
+        tableName = "cart_rental_items";
+        break;
+      case "bundle":
+        // 對於bundle，我們需要刪除所有相關的cart_items
+        for (const bundleId of itemIds) {
+          await pool.execute(
+            "DELETE FROM cart_items WHERE cart_id = ? AND bundle_id = ?",
+            [cartId, bundleId]
+          );
+        }
+        return res.json({
+          success: true,
+          message: "套組已從購物車中移除",
+        });
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "無效的商品類型",
+        });
+    }
+
+    // 4. 刪除選中的項目
+    const placeholders = itemIds.map(() => "?").join(",");
+    const query = `DELETE FROM ${tableName} WHERE cart_id = ? AND id IN (${placeholders})`;
+
+    await pool.execute(query, [cartId, ...itemIds]);
+
+    res.json({
+      success: true,
+      message: "商品已從購物車中移除",
+    });
+  } catch (error) {
+    console.error("刪除購物車項目失敗:", error);
+    res.status(500).json({
+      success: false,
+      message: "刪除購物車項目失敗",
+    });
+  }
+});
+
+// 更新購物車內容也需要處理bundle
 router.put("/update", async (req, res) => {
   const {
     userId,
@@ -612,7 +754,7 @@ router.put("/update", async (req, res) => {
       });
     }
 
-    if (!["product", "activity", "rental"].includes(type)) {
+    if (!["product", "activity", "rental", "bundle"].includes(type)) {
       return res.status(400).json({
         success: false,
         message: "無效的商品類型",
@@ -643,6 +785,30 @@ router.put("/update", async (req, res) => {
 
     // 3. 根據類型更新不同表格
     switch (type) {
+      case "bundle": {
+        // 获取套组中的所有项目
+        const [bundleItems] = await pool.execute(
+          "SELECT id FROM cart_items WHERE cart_id = ? AND bundle_id = ?",
+          [cartId, itemId]
+        );
+
+        if (bundleItems.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: "找不到套組",
+          });
+        }
+
+        // 对套组中的每一项更新数量
+        for (const item of bundleItems) {
+          await pool.execute(
+            "UPDATE cart_items SET quantity = quantity * ? / old_quantity WHERE id = ?",
+            [quantity, item.id]
+          );
+        }
+        break;
+      }
+
       case "product": {
         // 檢查商品是否存在於該用戶的購物車
         const [existingItem] = await pool.execute(
@@ -693,7 +859,6 @@ router.put("/update", async (req, res) => {
               message: "商品庫存不足",
             });
           }
-          ㄨ;
 
           // 更新變體和數量
           await pool.execute(
@@ -935,80 +1100,6 @@ router.put("/update", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "更新購物車失敗",
-    });
-  }
-});
-
-//remove邏輯
-// 在 index.js 中添加以下程式碼
-
-router.delete("/remove", async (req, res) => {
-  const { userId, type, itemIds } = req.body;
-
-  try {
-    // 1. 基本驗證
-    if (
-      !userId ||
-      !type ||
-      !itemIds ||
-      !Array.isArray(itemIds) ||
-      itemIds.length === 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "無效的請求參數",
-      });
-    }
-
-    // 2. 檢查購物車是否存在
-    const [cart] = await pool.execute(
-      "SELECT id FROM carts WHERE user_id = ? AND status = 'active'",
-      [userId]
-    );
-
-    if (cart.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "找不到購物車",
-      });
-    }
-
-    const cartId = cart[0].id;
-
-    // 3. 根據類型刪除不同表格中的項目
-    let tableName;
-    switch (type) {
-      case "product":
-        tableName = "cart_items";
-        break;
-      case "activity":
-        tableName = "cart_activity_items";
-        break;
-      case "rental":
-        tableName = "cart_rental_items";
-        break;
-      default:
-        return res.status(400).json({
-          success: false,
-          message: "無效的商品類型",
-        });
-    }
-
-    // 4. 刪除選中的項目
-    const placeholders = itemIds.map(() => "?").join(",");
-    const query = `DELETE FROM ${tableName} WHERE cart_id = ? AND id IN (${placeholders})`;
-
-    await pool.execute(query, [cartId, ...itemIds]);
-
-    res.json({
-      success: true,
-      message: "商品已從購物車中移除",
-    });
-  } catch (error) {
-    console.error("刪除購物車項目失敗:", error);
-    res.status(500).json({
-      success: false,
-      message: "刪除購物車項目失敗",
     });
   }
 });

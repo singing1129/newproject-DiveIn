@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google"; //引入google
 import LineProvider from "next-auth/providers/line"; // 引入 LINE 提供者
+import axios from "axios";
 
 // 在 route.js 中
 export const authOptions = {
@@ -15,46 +16,53 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, user, profile }) {
-      console.log("JWT Callback 详细数据:", {
-        token,
-        account,
-        user,
-        profile,
-      });
-
-      if (account && user) {
-        // 保存关键账号信息到token
-        token.accessToken = account.access_token;
-        token.id = user.id;
-        token.provider = account.provider; // 明确保存提供者类型
-        token.provider_id = account.providerAccountId; // 保存提供者特定ID
-
-        // 记录一些调试信息
-        console.log(
-          `JWT: 用户通过 ${account.provider} 登录，提供者ID: ${account.providerAccountId}`
-        );
+    async jwt({ token, account, user }) {
+      if (user) {
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.image || user.picture;
       }
+
+      if (account) {
+        token.provider = account.provider;
+        token.provider_id = token.sub; // Google ID
+      }
+
+      // **確保 `token.id` 設為 `users.id`**
+      if (!token.id) {
+        try {
+          const response = await axios.post(
+            "http://localhost:3005/api/admin/get-user-id",
+            {
+              provider: token.provider,
+              provider_id: token.provider_id,
+            }
+          );
+
+          if (response.data.status === "success") {
+            token.id = response.data.data.user_id; // ✅ `users.id`
+            console.log(`JWT 回呼設定 token.id = ${token.id}`);
+          } else {
+            console.warn("❌ 後端查詢 user_id 失敗", response.data);
+          }
+        } catch (error) {
+          console.error("❌ 查詢 user_id 發生錯誤", error);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
-      console.log("Session Callback:", {
-        sessionExists: !!session,
-        tokenExists: !!token,
-      });
+      console.log(" 檢查 NextAuth session:", session);
+      console.log(" Token 內容:", token);
 
       if (token && session.user) {
-        // 确保会话中包含所有必要的用户和提供者信息
-        session.user.id = token.id;
+        session.user.id = token.id || null; //  確保 `session.user.id` 來自 `users.id`
         session.accessToken = token.accessToken;
-
-        // 从token传递提供者信息到会话
         session.provider = token.provider;
         session.provider_id = token.provider_id;
 
-        console.log(
-          `Session: 为用户设置 provider=${session.provider}, provider_id=${session.provider_id}`
-        );
+        console.log(` 設定 session.user.id = ${session.user.id}`);
       }
       return session;
     },
@@ -63,7 +71,7 @@ export const authOptions = {
   pages: {
     signIn: "/login",
   },
-  // 增加调试选项以便观察更多信息
+  // 開發模式下啟用調試
   debug: process.env.NODE_ENV === "development",
 };
 const handler = NextAuth(authOptions);
