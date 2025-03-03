@@ -12,31 +12,31 @@ export default function Sidebar() {
 
       <ul className={`list-unstyled ${styles.sidebarList}`}>
         <li>
-          <Link href="/member/account" className="active">
+          <Link href="/admin/account" className="active">
             <i className={`bi bi-person ${styles.iconSpacing}`}></i>
             我的帳戶
           </Link>
         </li>
         <li>
-          <Link href="/member/orders">
+          <Link href="/admin/orders">
             <i className={`bi bi-cart ${styles.iconSpacing}`}></i>
             我的訂單
           </Link>
         </li>
         <li>
-          <Link href="/member/groups">
+          <Link href="/admin/groups">
             <i className={`bi bi-people ${styles.iconSpacing}`}></i>
             我的鳩團
           </Link>
         </li>
         <li>
-          <Link href="/member/favorites">
+          <Link href="/admin/favorites">
             <i className={`bi bi-heart ${styles.iconSpacing}`}></i>
             我的收藏
           </Link>
         </li>
         <li>
-          <Link href="/member/coupons">
+          <Link href="/admin/coupons">
             <i className={`bi bi-ticket-perforated ${styles.iconSpacing}`}></i>
             我的優惠券
           </Link>
