@@ -65,7 +65,7 @@ export const CartProvider = ({ children }) => {
   };
 
   // 更新購物車數量
-  const updateQuantity = async (type, itemId, newQuantity, rentalInfo = {}) => {
+  const updateQuantity = async (type, itemId, newQuantity) => {
     if (!user || user === -1) {
       setError("請先登入");
       return false;
@@ -81,37 +81,12 @@ export const CartProvider = ({ children }) => {
           ? "rental"
           : "bundle"; // 新增 bundle 類型
 
-      // 如果是 rental 類型，傳遞租借資訊（startDate, endDate, color）
-      const requestData =
-        type === "rentals"
-          ? {
-              userId: 1, // 暫時寫死
-              type: updateType,
-              itemId,
-              quantity: newQuantity,
-              startDate: rentalInfo.startDate,
-              endDate: rentalInfo.endDate,
-              color: rentalInfo.color,
-            }
-          : {
-              userId: 1,
-              type: updateType,
-              itemId,
-              quantity: newQuantity,
-            };
-
-      const response = await axios.put(
-        `${API_BASE_URL}/cart/update`,
-        requestData
-      );
-
-      // 這邊有修改，如果其他人不能更新資訊再打開這個註解QAQ
-      // const response = await axios.put(`${API_BASE_URL}/cart/update`, {
-      //   userId: 1,
-      //   type: updateType, // 使用轉換後的 type
-      //   itemId,
-      //   quantity: newQuantity,
-      // });
+      const response = await axios.put(`${API_BASE_URL}/cart/update`, {
+        userId: user.id,
+        type: updateType, // 使用轉換後的 type
+        itemId,
+        quantity: newQuantity,
+      });
 
       if (response.data.success) {
         // 更新成功後重新獲取購物車數據
@@ -315,7 +290,6 @@ export const CartProvider = ({ children }) => {
         proceedToCheckout,
         submitActivityTravelers,
         completeCheckout,
-        user,
       }}
     >
       {children}
