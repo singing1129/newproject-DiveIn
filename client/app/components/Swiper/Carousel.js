@@ -12,15 +12,13 @@ const Carousel = () => {
   return (
     <Swiper
       modules={[Navigation, Pagination, Autoplay]}
-      spaceBetween={50}
+      spaceBetween={0}
       slidesPerView={1}
-      navigation={{
-        nextEl: '.swiper-button-prev',
-        prevEl: '.swiper-button-next'
-      }}
+      navigation
       pagination={{ clickable: true }}
       autoplay={{ delay: 3000, disableOnInteraction: false }}
       loop={true}
+      className="swiper"
     >
       <SwiperSlide>
       <div className={`${styles.kv}`}>
@@ -44,10 +42,46 @@ const Carousel = () => {
         </div>
       </SwiperSlide>
       <SwiperSlide>
-        <img src="/images/slide2.jpg" alt="Slide 2" className="w-full h-auto" />
+      <div className={`${styles.kv}`}>
+          <div
+            className={`w-100 d-flex justify-content-between align-items-center`}
+          >
+            <div className="text-center w-100">
+              <div
+                className={`text-center d-flex flex-column ${styles.kvText}`}
+              >
+                <h1 className={styles.h1}>探索無重力的寧靜與神秘</h1>
+                <p className={`${styles.p} d-none d-sm-block`}>
+                  "It's not just diving; it's a new way of life."
+                </p>
+              </div>
+              <Link href="/products">
+                <button className={styles.scondaryBtn}>馬上逛逛</button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </SwiperSlide>
       <SwiperSlide>
-        <img src="/images/slide3.jpg" alt="Slide 3" className="w-full h-auto" />
+      <div className={`${styles.kv}`}>
+          <div
+            className={`w-100 d-flex justify-content-between align-items-center`}
+          >
+            <div className="text-center w-100">
+              <div
+                className={`text-center d-flex flex-column ${styles.kvText}`}
+              >
+                <h1 className={styles.h1}>探索無重力的寧靜與神秘</h1>
+                <p className={`${styles.p} d-none d-sm-block`}>
+                  "It's not just diving; it's a new way of life."
+                </p>
+              </div>  
+              <Link href="/products">
+                <button className={styles.scondaryBtn}>馬上逛逛</button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </SwiperSlide>
     </Swiper>
   );
