@@ -39,6 +39,7 @@
   color: #fff; /* 文字顏色為白色 */
 }
 
+
 /* card */
 .article-list {
   grid-template-columns: repeat(2, 1fr); /* 设定两列布局，每列占 1fr */

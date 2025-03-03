@@ -61,7 +61,12 @@ const favoriteStore = {
 };
 
 // type 可以是 'product'/'products', 'activity'/'activities', 或 'rental'/'rentals'
-export default function useFavorite(itemId, type = "products") {
+// rental有另外的modal所以多設了一個參數
+export default function useFavorite(
+  itemId,
+  type = "products",
+  disableToast = false
+) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -123,16 +128,24 @@ export default function useFavorite(itemId, type = "products") {
         // 更新全局狀態（使用原始類型）
         favoriteStore.updateFavorites(type, [itemId], endpoint);
         setIsFavorite(!isFavorite);
-        showToast(
-          isFavorite ? "已從收藏移除" : "已加入收藏",
-          isFavorite ? { style: { backgroundColor: "red" } } : {}
-        );
+
+        if (!disableToast) {
+          showToast(
+            isFavorite ? "已從收藏移除" : "已加入收藏",
+            isFavorite ? { style: { backgroundColor: "red" } } : {}
+          );
+        }
+
         return true;
       }
       return false;
     } catch (err) {
       console.error("收藏操作失敗:", err);
-      showToast(err.response?.data?.message || "操作失敗，請稍後再試", "error");
+
+      if (!disableToast) {
+        showToast(err.response?.data?.message || "操作失敗，請稍後再試", "error");
+      }
+      
       return false;
     } finally {
       setLoading(false);
