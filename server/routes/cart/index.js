@@ -1,17 +1,16 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
-import { checkToken } from "../../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/add", checkToken, async (req, res) => {
+router.post("/add", async (req, res) => {
   const {
-    // userId,
+    userId,
     type,
     variantId,
     projectId,
     rentalId,
-    bundleId, // 新增bundle ID參數
+    bundleId,  // 新增bundle ID參數
     quantity,
     startDate,
     endDate,
@@ -19,13 +18,9 @@ router.post("/add", checkToken, async (req, res) => {
     time,
   } = req.body;
 
-  // 從 req.decoded 中獲取會員 ID
-  const userId = req.decoded.id;
-
   try {
     // 1. 基本驗證
-    if (!["product", "activity", "rental", "bundle"].includes(type)) {
-      // 添加bundle類型
+    if (!["product", "activity", "rental", "bundle"].includes(type)) {  // 添加bundle類型
       return res
         .status(400)
         .json({ success: false, message: "無效的商品類型" });
@@ -34,30 +29,6 @@ router.post("/add", checkToken, async (req, res) => {
     if (!quantity || quantity < 1) {
       return res.status(400).json({ success: false, message: "數量必須大於0" });
     }
-
-    // // 03.02:測試針對租借功能進行會員驗證
-    // if (type === "rental") {
-    //   // 檢查是否有 Token
-    //   const token = req.get("Authorization");
-    //   if (!token || !token.startsWith("Bearer ")) {
-    //     return res.status(401).json({
-    //       status: "error",
-    //       message: "無驗證資料，請重新登入",
-    //     });
-    //   }
-
-    //   // 驗證 Token
-    //   const decoded = jwt.verify(token.slice(7), process.env.JWT_SECRET_KEY);
-    //   if (!decoded || !decoded.id) {
-    //     return res.status(401).json({
-    //       status: "error",
-    //       message: "驗證資料已失效，請重新登入",
-    //     });
-    //   }
-
-    //   // 將會員 ID 附加到 req.decoded
-    //   req.decoded = decoded;
-    // }
 
     // 2. 檢查購物車是否存在
     let [cart] = await pool.execute(
@@ -260,16 +231,9 @@ router.post("/add", checkToken, async (req, res) => {
 
       case "rental": {
         // 從請求中獲取顏色和品牌名稱
-        const { color, rentalBrand, colorRGB } = req.body;
+        const { color } = req.body;
 
-        // 檢查品牌名稱是否存在
-        if (!rentalBrand) {
-          return res.status(400).json({
-            success: false,
-            message: "品牌名稱不可為空",
-          });
-        }
-
+      
         if (!startDate || !endDate) {
           return res.status(400).json({
             success: false,
@@ -324,23 +288,6 @@ router.post("/add", checkToken, async (req, res) => {
           return res.status(400).json({
             success: false,
             message: "找不到指定租借商品",
-          });
-        }
-
-        // 檢查商品是否有顏色規格
-        const [specifications] = await pool.execute(
-          "SELECT * FROM rent_specification WHERE rent_item_id = ?",
-          [rentalId]
-        );
-
-        const hasColorSpecifications =
-          specifications && specifications.some((spec) => spec.color); // 檢查 specifications 中的 color 欄位是否有值
-
-        // 如果有顏色規格但未提供顏色，則返回錯誤
-        if (hasColorSpecifications && !color) {
-          return res.status(400).json({
-            success: false,
-            message: "請選擇商品顏色！",
           });
         }
 
@@ -426,14 +373,7 @@ router.post("/add", checkToken, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?)`,
             [cartId, rentalId, startDate, endDate, quantity, color || null]
           );
-
-          console.log("插入的顏色:", color); // 確認插入的顏色
         }
-
-        res.status(200).json({
-          success: true,
-          message: "商品已加入購物車",
-        });
         break;
       }
     }
@@ -442,6 +382,7 @@ router.post("/add", checkToken, async (req, res) => {
       success: true,
       message: "商品已加入購物車",
     });
+
   } catch (error) {
     console.error("加入購物車失敗:", error);
     res.status(500).json({ success: false, message: "加入購物車失敗" });
@@ -542,23 +483,75 @@ router.get("/:userId", async (req, res) => {
         ri.price2 AS discounted_price,
         ri.deposit,
         rim.img_url AS image_url,
-      DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
-      cri.color,
-      rc.rgb AS colorRGB
-      FROM cart_rental_items cri
-      JOIN rent_item ri ON cri.rental_id = ri.id
-      JOIN rent_specification rs ON ri.id = rs.rent_item_id
-      JOIN rent_brand rb ON rs.brand_id = rb.id
-      LEFT JOIN rent_image rim ON ri.id = rim.rent_item_id AND rim.is_main = 1
-      LEFT JOIN rent_color rc ON rs.color_id = rc.id
-      WHERE cri.cart_id = ?
-      GROUP BY cri.id`,
+        DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
+        cri.color
+        FROM cart_rental_items cri
+        JOIN rent_item ri ON cri.rental_id = ri.id
+        JOIN rent_specification rs ON ri.id = rs.rent_item_id
+        JOIN rent_brand rb ON rs.brand_id = rb.id
+        LEFT JOIN rent_image rim ON ri.id = rim.rent_item_id AND rim.is_main = 1
+        WHERE cri.cart_id = ?
+        GROUP BY cri.id`,
       [cartId]
     );
 
-    console.log("返回的租借商品數據:", rentals); // 確認返回的數據
+    // 5. 新增: 獲取套組商品
+    const [bundleGroups] = await pool.execute(
+      `SELECT DISTINCT 
+        ci.bundle_id,
+        pb.name AS bundle_name,
+        pb.description AS bundle_description,
+        pb.discount_price
+      FROM cart_items ci
+      JOIN product_bundle pb ON ci.bundle_id = pb.id
+      WHERE ci.cart_id = ? AND ci.bundle_id IS NOT NULL
+      GROUP BY ci.bundle_id`,
+      [cartId]
+    );
 
-    // 開始結構
+    // 6. 獲取每個套組中的所有商品
+    const bundles = [];
+    for (const bundle of bundleGroups) {
+      const [bundleItems] = await pool.execute(
+        `SELECT 
+          ci.id,
+          ci.quantity,
+          pv.id AS variant_id,
+          pv.price,
+          pv.original_price,
+          p.name AS product_name,
+          p.id AS product_id,
+          c.name AS color_name,
+          s.name AS size_name,
+          pi.image_url
+        FROM cart_items ci
+        JOIN product_variant pv ON ci.variant_id = pv.id
+        JOIN product p ON pv.product_id = p.id
+        JOIN color c ON pv.color_id = c.id
+        JOIN size s ON pv.size_id = s.id
+        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
+        WHERE ci.cart_id = ? AND ci.bundle_id = ?`,
+        [cartId, bundle.bundle_id]
+      );
+
+      // 計算套組總價
+      const originalTotal = bundleItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+
+      bundles.push({
+        id: bundle.bundle_id,
+        name: bundle.bundle_name,
+        description: bundle.bundle_description,
+        items: bundleItems,
+        original_total: originalTotal,
+        discount_price: bundle.discount_price,
+        quantity: 1 // 套組數量默認為1，因為每個套組商品已經是套組數量的倍數
+      });
+    }
+
+    // 開始結構處理租借商品
     const processedRentals = rentals.map((item) => {
       // 特價允許null
       // 使用特價價格，如果沒有特價就用原價
@@ -572,9 +565,6 @@ router.get("/:userId", async (req, res) => {
       // nana新增：押金總費用 = 押金 * 數量 * 總天數
       const depositFee = deposit * item.quantity * item.rental_days;
 
-      // nana: 檢查是否有顏色資料
-      const hasColor = item.color && item.colorRGB;
-
       return {
         ...item,
         price_per_day: pricePerDay,
@@ -582,8 +572,6 @@ router.get("/:userId", async (req, res) => {
         deposit_fee: depositFee, // 直接使用資料庫的押金（先簡單計算，再看要不要根據天數變化去計算）
         subtotal: rentalFee + depositFee, //總押金＋租借費用=總費用
         brand_name: item.brand_name,
-        colors: hasColor ? [item.color] : [], // 如果有顏色，返回顏色陣列，否則返回空陣列
-        colorRGBs: hasColor ? [item.colorRGB] : [], // 如果有顏色 RGB，返回 RGB 陣列，否則返回空陣列
       };
     });
 
@@ -629,8 +617,7 @@ router.get("/:userId", async (req, res) => {
         bundles: bundleTotal, // 新增bundle總金額
         rentals: rentalTotals,
         // 最終總金額（包含套組價格和租借費用但不包含押金）
-        final:
-          productTotal + activityTotal + bundleTotal + rentalTotals.rental_fee,
+        final: productTotal + activityTotal + bundleTotal + rentalTotals.rental_fee,
       },
     };
 
@@ -791,14 +778,14 @@ router.put("/update", async (req, res) => {
           "SELECT id FROM cart_items WHERE cart_id = ? AND bundle_id = ?",
           [cartId, itemId]
         );
-
+        
         if (bundleItems.length === 0) {
           return res.status(404).json({
             success: false,
             message: "找不到套組",
           });
         }
-
+        
         // 对套组中的每一项更新数量
         for (const item of bundleItems) {
           await pool.execute(
@@ -928,8 +915,6 @@ router.put("/update", async (req, res) => {
       }
 
       case "rental": {
-        const { color, startDate, endDate, quantity } = req.body; // 購物車顏色&租借日期修改功能新增的
-
         // 檢查租借項目是否存在於該用戶的購物車
         const [existingItem] = await pool.execute(
           `SELECT cri.*, ri.stock
@@ -947,39 +932,19 @@ router.put("/update", async (req, res) => {
         }
 
         // 檢查基本庫存
-        // if (quantity > existingItem[0].stock) {
-        //   return res.status(400).json({
-        //     success: false,
-        //     message: "商品庫存不足",
-        //   });
-        // }
-        // 處理 stock 為 null 或 undefined 的情況
-
-        const stock =
-          existingItem[0].stock === null || existingItem[0].stock === undefined
-            ? null
-            : existingItem[0].stock;
-
-        // 如果 stock 不為 null，則檢查庫存
-        if (stock !== null && quantity > stock) {
+        if (quantity > existingItem[0].stock) {
           return res.status(400).json({
             success: false,
             message: "商品庫存不足",
           });
         }
 
-        // 如果要更換租期 或是顏色
+        // 如果要更換租期
         if (startDate && endDate) {
           const start = new Date(startDate);
           const end = new Date(endDate);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-
-          // if (startDate && endDate && color) {
-          //   const start = new Date(startDate);
-          //   const end = new Date(endDate);
-          //   const today = new Date();
-          //   today.setHours(0, 0, 0, 0);
 
           if (isNaN(start.getTime()) || isNaN(end.getTime())) {
             return res.status(400).json({
@@ -1037,54 +1002,18 @@ router.put("/update", async (req, res) => {
             });
           }
 
-          // 更新租期和顏色
-          //       await pool.execute(
-          //         "UPDATE cart_rental_items SET quantity = ?, start_date = ?, end_date = ? WHERE id = ?",
-          //         [quantity, startDate, endDate, itemId]
-          //       );
-          //     } else {
-          //       // 只更新數量
-          //       await pool.execute(
-          //         "UPDATE cart_rental_items SET quantity = ? WHERE id = ?",
-          //         [quantity, itemId]
-          //       );
-          //     }
-          //     break;
-          //   }
-          // }
-          // 更新租期和顏色
           await pool.execute(
-            "UPDATE cart_rental_items SET quantity = ?, start_date = ?, end_date = ?, color = COALESCE(?, color) WHERE id = ?",
-            [quantity, startDate, endDate, color ?? null, itemId]
+            "UPDATE cart_rental_items SET quantity = ?, start_date = ?, end_date = ? WHERE id = ?",
+            [quantity, startDate, endDate, itemId]
           );
-
-          // 回傳更新後的完整資料
-          const [updatedItem] = await pool.execute(
-            `SELECT cri.*, ri.name AS rental_name, ri.price, ri.price2 AS discounted_price, ri.deposit
-              FROM cart_rental_items cri
-              JOIN rent_item ri ON cri.rental_id = ri.id
-              WHERE cri.id = ?`,
-            [itemId]
-          );
-
-          return res.status(200).json({
-            success: true,
-            message: "租借日期和顏色已更新",
-            data: updatedItem[0], // 回傳完整的更新後資料
-          });
         } else {
-          // 只更新數量，回傳原本的租借日期和顏色
+          // 只更新數量
           await pool.execute(
             "UPDATE cart_rental_items SET quantity = ? WHERE id = ?",
             [quantity, itemId]
           );
-
-          return res.status(200).json({
-            success: true,
-            message: "數量已更新",
-            data: existingItem[0], // 回傳原本的租借日期和顏色
-          });
         }
+        break;
       }
     }
 
