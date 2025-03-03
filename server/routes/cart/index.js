@@ -10,17 +10,20 @@ router.post("/add", async (req, res) => {
     variantId,
     projectId,
     rentalId,
-    bundleId,  // 新增bundle ID參數
+    bundleId, // 新增bundle ID參數
     quantity,
     startDate,
     endDate,
     date,
     time,
+    color,
+    rentalBrand,
   } = req.body;
 
   try {
     // 1. 基本驗證
-    if (!["product", "activity", "rental", "bundle"].includes(type)) {  // 添加bundle類型
+    if (!["product", "activity", "rental", "bundle"].includes(type)) {
+      // 添加bundle類型
       return res
         .status(400)
         .json({ success: false, message: "無效的商品類型" });
@@ -231,9 +234,6 @@ router.post("/add", async (req, res) => {
 
       case "rental": {
         // 從請求中獲取顏色和品牌名稱
-        const { color } = req.body;
-
-      
         if (!startDate || !endDate) {
           return res.status(400).json({
             success: false,
@@ -269,7 +269,6 @@ router.post("/add", async (req, res) => {
         }
 
         // 數量驗證
-        // console.log(quantity + 1);
         const quantity = parseInt(req.body.quantity, 10);
         if (isNaN(quantity) || quantity < 1) {
           return res.status(400).json({
@@ -291,6 +290,7 @@ router.post("/add", async (req, res) => {
           });
         }
 
+        // 簡化的庫存檢查 - 只檢查基本庫存
         const stock =
           rental[0].stock === null ? Infinity : parseInt(rental[0].stock, 10);
         if (isNaN(stock)) {
@@ -305,45 +305,6 @@ router.post("/add", async (req, res) => {
           return res.status(400).json({
             success: false,
             message: "商品庫存不足",
-          });
-        }
-
-        // 修改SQL查詢使用CAST確保數字類型
-        const [rentals] = await pool.execute(
-          `WITH RECURSIVE dates AS (
-            SELECT ? AS date
-            UNION ALL
-            SELECT DATE_ADD(date, INTERVAL 1 DAY)
-            FROM dates
-            WHERE date < ?
-          )
-          SELECT 
-            DATE(d.date) as check_date, 
-            CAST(COALESCE(SUM(ori.quantity), 0) AS UNSIGNED) as rented_quantity
-          FROM dates d
-          LEFT JOIN order_rental_items ori 
-            ON d.date BETWEEN ori.start_date AND ori.end_date
-          LEFT JOIN orders o 
-            ON ori.order_id = o.id
-          WHERE o.status IN ('paid', 'confirmed')
-            AND ori.rental_id = ?
-          GROUP BY DATE(d.date);`,
-          [startDate, endDate, rentalId]
-        );
-
-        // 預測可租
-        const isAvailable = rentals.every((row) => {
-          const rented = parseInt(row.rented_quantity, 10) || 0;
-          console.log(
-            `日期 ${row.check_date}: 已租 ${rented} + 新增 ${quantity} <= 庫存 ${stock}`
-          );
-          return rented + quantity <= stock;
-        });
-
-        if (!isAvailable) {
-          return res.status(400).json({
-            success: false,
-            message: "所選時段的商品庫存不足",
           });
         }
 
@@ -382,7 +343,6 @@ router.post("/add", async (req, res) => {
       success: true,
       message: "商品已加入購物車",
     });
-
   } catch (error) {
     console.error("加入購物車失敗:", error);
     res.status(500).json({ success: false, message: "加入購物車失敗" });
@@ -546,8 +506,8 @@ router.get("/:userId", async (req, res) => {
         description: bundle.bundle_description,
         items: bundleItems,
         original_total: originalTotal,
-        discount_price: bundle.discount_price,
-        quantity: 1 // 套組數量默認為1，因為每個套組商品已經是套組數量的倍數
+        discount_price: Number(bundle.discount_price),
+        quantity: 1, // 套組數量默認為1，因為每個套組商品已經是套組數量的倍數
       });
     }
 
@@ -614,10 +574,11 @@ router.get("/:userId", async (req, res) => {
       total: {
         products: productTotal,
         activities: activityTotal,
-        bundles: bundleTotal, // 新增bundle總金額
+        bundles: Number(bundleTotal), // 確保是數字
         rentals: rentalTotals,
         // 最終總金額（包含套組價格和租借費用但不包含押金）
-        final: productTotal + activityTotal + bundleTotal + rentalTotals.rental_fee,
+        final:
+        Number(productTotal) + Number(activityTotal) + Number(bundleTotal) + Number(rentalTotals.rental_fee),
       },
     };
 
@@ -778,14 +739,14 @@ router.put("/update", async (req, res) => {
           "SELECT id FROM cart_items WHERE cart_id = ? AND bundle_id = ?",
           [cartId, itemId]
         );
-        
+
         if (bundleItems.length === 0) {
           return res.status(404).json({
             success: false,
             message: "找不到套組",
           });
         }
-        
+
         // 对套组中的每一项更新数量
         for (const item of bundleItems) {
           await pool.execute(
@@ -931,8 +892,12 @@ router.put("/update", async (req, res) => {
           });
         }
 
-        // 檢查基本庫存
-        if (quantity > existingItem[0].stock) {
+        // 檢查基本庫存 - 簡化版
+        const stock =
+          existingItem[0].stock === null
+            ? Infinity
+            : parseInt(existingItem[0].stock, 10);
+        if (quantity > stock) {
           return res.status(400).json({
             success: false,
             message: "商品庫存不足",
@@ -967,45 +932,20 @@ router.put("/update", async (req, res) => {
             });
           }
 
-          // 檢查期間內的可用庫存
-          const [rentals] = await pool.execute(
-            `WITH RECURSIVE dates AS (
-              SELECT ? AS date
-              UNION ALL
-              SELECT DATE_ADD(date, INTERVAL 1 DAY)
-              FROM dates
-              WHERE date < ?
-            )
-            SELECT 
-              DATE(d.date) as check_date, 
-              CAST(COALESCE(SUM(ori.quantity), 0) AS UNSIGNED) as rented_quantity
-            FROM dates d
-            LEFT JOIN order_rental_items ori 
-              ON d.date BETWEEN ori.start_date AND ori.end_date
-            LEFT JOIN orders o 
-              ON ori.order_id = o.id
-            WHERE o.status IN ('paid', 'confirmed')
-              AND ori.rental_id = ?
-            GROUP BY DATE(d.date)`,
-            [startDate, endDate, existingItem[0].rental_id]
-          );
-
-          const isAvailable = rentals.every((row) => {
-            const rented = parseInt(row.rented_quantity, 10) || 0;
-            return rented + quantity <= existingItem[0].stock;
-          });
-
-          if (!isAvailable) {
-            return res.status(400).json({
-              success: false,
-              message: "所選時段的商品庫存不足",
-            });
+          // 更新租期和數量
+          if (req.body.color) {
+            // 如果同時更新顏色
+            await pool.execute(
+              "UPDATE cart_rental_items SET quantity = ?, start_date = ?, end_date = ?, color = ? WHERE id = ?",
+              [quantity, startDate, endDate, req.body.color, itemId]
+            );
+          } else {
+            // 只更新租期和數量
+            await pool.execute(
+              "UPDATE cart_rental_items SET quantity = ?, start_date = ?, end_date = ? WHERE id = ?",
+              [quantity, startDate, endDate, itemId]
+            );
           }
-
-          await pool.execute(
-            "UPDATE cart_rental_items SET quantity = ?, start_date = ?, end_date = ? WHERE id = ?",
-            [quantity, startDate, endDate, itemId]
-          );
         } else {
           // 只更新數量
           await pool.execute(
