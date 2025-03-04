@@ -19,8 +19,8 @@ export default function MemberGroupPage() {
 
   // modal要用的資料
   const [modalGroup, setModalGroup] = useState(null)
-  const [endDate,setEndDate] = useState(null)
-  const [endTime,setEndTime] = useState(null)
+  const [endDate, setEndDate] = useState(null)
+  const [endTime, setEndTime] = useState(null)
 
   // 獲取會員
   const { user } = useAuth()
@@ -87,7 +87,7 @@ export default function MemberGroupPage() {
   }, [user])
 
   useEffect(() => {
-    if(modalGroup){
+    if (modalGroup) {
       setEndDate((modalGroup.sign_end_date).split(" ")[0])
       setEndTime((modalGroup.sign_end_date).split(" ")[1])
     }
@@ -102,7 +102,7 @@ export default function MemberGroupPage() {
       await axios
         .post((api + "/admin/myGroup"), condition)
         .then((res) => {
-          console.log(res.data.data);
+          // console.log(res.data.data);
           setOriginMyGroups(res.data.data)
           setMyGroups(res.data.data.filter(item => item.user_id != user.id))
         })
@@ -114,8 +114,23 @@ export default function MemberGroupPage() {
   }, [condition]);
 
   // 處理修改資料
-  const doUpdate = async()=>{
-    
+  const doUpdate = async (e) => {
+    // try {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    formData.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+    });
+    //   const res = await axios.put(api + "/group/update", formData);
+    //   if (res.data.status == "success") {
+    //     alert("成功創立揪團");
+    //     window.location = `/group/list/${res.data.groupId}`;
+    //   } else {
+    //     alert(res.data.message || "創建失敗");
+    //   }
+    // } catch (error) {
+    //   console.log(error);
+    // }
   }
 
 
@@ -173,7 +188,7 @@ export default function MemberGroupPage() {
   }
 
   // 每次切換分類都先關閉現有的collapse
-  const closeCollapse = ()=>{
+  const closeCollapse = () => {
     const collapseElement = document.getElementById("myCollapse");
     const collapseInstance = bootstrap.Collapse.getOrCreateInstance(collapseElement);
     collapseInstance.hide(); // 關閉 Collapse
@@ -306,7 +321,7 @@ export default function MemberGroupPage() {
                 <h5 className="modal-title" id="exampleModalLabel">揪團詳情</h5>
                 <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <form className="group-create d-flex flex-column w-100" onSubmit={(e)=>doUpdate(e)}>
+              <form className="group-create d-flex flex-column w-100" onSubmit={(e) => doUpdate(e)}>
                 <div className="modal-body">
                   {modalGroup ? (
                     <>
@@ -317,7 +332,7 @@ export default function MemberGroupPage() {
                       <div className={styles.imgContainer}>
                         <img className={styles.img} src={`/image/group/${modalGroup.group_img}`} alt="" />
                       </div>
-                      <input type="file" name="file" required />
+                      <input type="file" name="file" />
                       <div>
                         <div className="fs-22px mb-15px">
                           揪團標題
@@ -416,13 +431,13 @@ export default function MemberGroupPage() {
                           <div className="fs-22px">
                             揪團截止日期
                           </div>
-                          <input className="form-control" type="date" name="signEndDate" value={endDate || ""} onChange={(e)=>{setEndDate(e.target.value)}}/>
+                          <input className="form-control" type="date" name="signEndDate" value={endDate || ""} onChange={(e) => { setEndDate(e.target.value) }} />
                         </div>
                         <div className="col-12 col-sm-6 d-flex flex-column gap-3">
                           <div className="fs-22px">
                             揪團截止時間
                           </div>
-                          <input className="form-control" type="time" name="signEndTime" value={endTime || ""} onChange={(e)=>{setEndTime(e.target.value)}} />
+                          <input className="form-control" type="time" name="signEndTime" value={endTime || ""} onChange={(e) => { setEndTime(e.target.value) }} />
                         </div>
                       </div>
                       <div>
@@ -440,8 +455,8 @@ export default function MemberGroupPage() {
 
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button type="button" className="btn btn-primary">Save changes</button>
+                  <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">取消修改</button>
+                  <button type="submit" className="btn btn-primary">儲存修改</button>
                 </div>
               </form>
             </div>
