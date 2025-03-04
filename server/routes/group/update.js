@@ -115,7 +115,7 @@ router.put("/update", upload.single("file"), async (req, res) => {
     // 如果有新上傳的圖片，更新 groups_image 表
     if (req.file) {
       const imgName = req.file.filename;
-      const imgUrl = `/image/group/${imgName}`;
+      const imgUrl = `${imgName}`;
 
       // 檢查是否已有圖片記錄
       const [existingImg] = await pool.execute(
@@ -132,7 +132,7 @@ router.put("/update", upload.single("file"), async (req, res) => {
             img_url = ? 
           WHERE groups_id = ?
         `;
-        await pool.execute(sqlImgUpdate, [name, imgUrl, groupId]);
+        await pool.execute(sqlImgUpdate, [title, imgUrl, groupId]);
       } else {
         // 如果沒有圖片記錄，插入新記錄
         const sqlImgInsert = `

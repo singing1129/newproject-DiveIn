@@ -52,7 +52,7 @@ export default function Home() {
   const [meetingPoint, setMeetingPoint] = useState("");
 
   // 人數記數器
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(1);
 
   // 獲取活動資料
   const [activities, setActivities] = useState([]); //該id活動
@@ -625,7 +625,7 @@ export default function Home() {
                                     e.target.innerHTML = "取消選擇";
                                     e.target.classList.add(`${styles.active}`);
                                   }
-                                  setCount(0);
+                                  setCount(1);
                                 }}
                               >
                                 選擇
@@ -729,9 +729,9 @@ export default function Home() {
                                           type="button"
                                           className={`${styles.iconBtn} d-flex align-items-center justify-content-center`}
                                           onClick={() => {
-                                            count > 0
+                                            count > 1
                                               ? setCount(count - 1)
-                                              : setCount(0);
+                                              : setCount(1);
                                           }}
                                         >
                                           <BsDashCircle />

@@ -36,6 +36,16 @@ export default function MemberGroupPage() {
   const [city, setCity] = useState("");
   const [citySelect, setCitySelect] = useState(selectOption[countrySelect]);
 
+  // 設定預覽圖片
+  const [uploadImg, setUploadImg] = useState(null)
+  const doImagePreview = (e) => {
+    const selectedFile = e.target.files[0];
+    console.log(selectedFile)
+    if (selectedFile) {
+      setUploadImg(URL.createObjectURL(selectedFile)); // 產生預覽圖片
+    }
+  };
+
   useEffect(() => {
     setCitySelect(selectOption[countrySelect]);
   }, [countrySelect]);
@@ -94,7 +104,7 @@ export default function MemberGroupPage() {
       // e.preventDefault();
       const formData = new FormData(e.target);
       formData.forEach((value, key) => {
-          console.log(`${key}: ${value}`);
+        console.log(`${key}: ${value}`);
       });
       const res = await axios.put(api + "/group/update", formData);
       console.log(res.data.status);
@@ -345,13 +355,17 @@ export default function MemberGroupPage() {
                       />
                       <div className="fs-22px">揪團首圖</div>
                       <div className={styles.imgContainer}>
-                        <img
-                          className={styles.img}
-                          src={`/image/group/${modalGroup.group_img}`}
-                          alt=""
-                        />
+                        {uploadImg ? (
+                          <img className={styles.img} src={uploadImg} alt="" />
+                        ) : (
+                          <img className={styles.img}
+                            src={`/image/group/${modalGroup.group_img}`}
+                            alt=""
+                          />
+                        )}
+
                       </div>
-                      <input type="file" name="file" />
+                      <input type="file" name="file" onChange={(e)=>{doImagePreview(e)}} />
                       <div>
                         <div className="fs-22px mb-15px">揪團標題</div>
                         <input

@@ -12,7 +12,7 @@ import "./Calendar.css";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function GroupDetailPage() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(1);
   if (useParams()) { }
   const { id } = useParams();
   console.log(useParams());
@@ -22,6 +22,39 @@ export default function GroupDetailPage() {
   // 設定揪團資料
   const [group, setGroup] = useState([]);
   const [description, setDescription] = useState([]);
+
+  const [endDate, setEndDate] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+
+  // 設定地點選項
+  const selectOption = {
+    0: [],
+    1: ["屏東", "台東", "澎湖", "綠島", "蘭嶼", "小琉球", "其他"],
+    2: ["沖繩", "石垣島", "其他"],
+    3: ["長灘島", "宿霧", "薄荷島", "其他"],
+    4: ["其他"],
+  };
+
+  // 設定預覽圖片
+  const [uploadImg, setUploadImg] = useState(null)
+  const doImagePreview = (e) => {
+    const selectedFile = e.target.files[0];
+    console.log(selectedFile)
+    if (selectedFile) {
+      setUploadImg(URL.createObjectURL(selectedFile)); // 產生預覽圖片
+    }
+  };
+  const [countrySelect, setCountrySelect] = useState(0);
+  const [city, setCity] = useState("");
+  const [citySelect, setCitySelect] = useState(selectOption[countrySelect] || 0);
+
+
+
+  const doCountrySelect = (e) => {
+    const newCountry = Number(e.target.value);
+    setCountrySelect(newCountry);
+    setCity("");
+  };
 
   // 連接後端獲取揪團資料
   useEffect(() => {
@@ -583,7 +616,7 @@ export default function GroupDetailPage() {
                     type="button"
                     id="button-addon1"
                     onClick={() => {
-                      if (count > 0) setCount(count - 1);
+                      if (count > 1) setCount(count - 1);
                     }}
                   >
                     -
@@ -635,6 +668,233 @@ export default function GroupDetailPage() {
                 })
                 : "載入中"}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 修改揪團資料的 Modal */}
+      <div
+        className="modal fade"
+        id="groupModal"
+        tabIndex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="exampleModalLabel">
+                揪團詳情
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            {group ? (<form
+              className="group-create d-flex flex-column w-100"
+              onSubmit={(e) => doUpload(e)}
+            >
+              <div className="modal-body">
+                <input
+                  type="hidden"
+                  name="groupId"
+                  id=""
+                  value={group.id}
+                />
+                <input
+                  type="hidden"
+                  name="userId"
+                  id=""
+                  value={user.id}
+                />
+                <div className="fs-22px">揪團首圖</div>
+                <div className={styles.imgContainer}>
+                  {uploadImg ? (
+                    <img className={styles.img} src={uploadImg} alt="" />
+                  ) : (
+                    <img className={styles.img}
+                      src={`/image/group/${group.group_img}`}
+                      alt=""
+                    />
+                  )}
+
+                </div>
+                <input type="file" name="file" onChange={(e) => { doImagePreview(e) }} />
+                <div>
+                  <div className="fs-22px mb-15px">揪團標題</div>
+                  <input
+                    defaultValue={group.name}
+                    className="form-control"
+                    type="text"
+                    name="title"
+                    id=""
+                  />
+                </div>
+                <div>
+                  <div className="fs-22px mb-15px">揪團性別</div>
+                  <select
+                    className="form-select"
+                    name="gender"
+                    id=""
+                    defaultValue={group.gender}
+                  >
+                    <option value="default" disabled>
+                      請選擇揪團性別
+                    </option>
+                    <option value={1}>不限性別</option>
+                    <option value={2}>限男性</option>
+                    <option value={3}>限女性</option>
+                  </select>
+                </div>
+                <div>
+                  <div className="fs-22px mb-15px">揪團人數</div>
+                  <input
+                    className="form-control"
+                    type="number"
+                    name="maxNumber"
+                    defaultValue={group.max_number}
+                    id=""
+                  />
+                </div>
+                <div>
+                  <div className="fs-22px mb-15px">揪團分類</div>
+                  <select
+                    className="form-select"
+                    name="type"
+                    id=""
+                    defaultValue={group.type}
+                  >
+                    <option value="default" disabled>
+                      請選擇揪團分類
+                    </option>
+                    <option value={1}>浮潛</option>
+                    <option value={2}>自由潛水</option>
+                    <option value={3}>水肺潛水</option>
+                    <option value={4}>其他</option>
+                  </select>
+                </div>
+                <div>
+                  <div className="fs-22px mb-15px">證照資格</div>
+                  <select
+                    className="form-select"
+                    name="certificates"
+                    id=""
+                    defaultValue={group.certificates}
+                  >
+                    <option value="default" disabled>
+                      請選擇是否需要證照
+                    </option>
+                    <option value="1">無須證照</option>
+                    <option value="2">需OWD證照</option>
+                    <option value="3">需AOWD證照</option>
+                  </select>
+                </div>
+                <div className="d-flex flex-column gap-2">
+                  <div className="fs-22px mb-15px">揪團地點</div>
+                  <select
+                    name="country"
+                    className="form-select mb-15px"
+                    id=""
+                    defaultValue={group.country_id}
+                    onChange={doCountrySelect}
+                  >
+                    <option value="default" disabled>
+                      請選擇揪團國家
+                    </option>
+                    <option value={1}>台灣</option>
+                    <option value={2}>日本</option>
+                    <option value={3}>菲律賓</option>
+                    <option value={4}>其他</option>
+                  </select>
+                  <select
+                    className="form-select"
+                    name="city"
+                    id=""
+                    defaultValue={group.city_name}
+                  >
+                    {citySelect.length > 0 ? (
+                      citySelect.map((v, i) => (
+                        <option key={`${v}-${i}`} value={v}>
+                          {v}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        請先選擇國家
+                      </option>
+                    )}
+                  </select>
+                </div>
+                <div className="row">
+                  <div className="col-12 col-sm-6 d-flex flex-column gap-3 row-first">
+                    <div className="fs-22px">活動日期</div>
+                    <input
+                      className="form-control"
+                      type="date"
+                      name="date"
+                      defaultValue={group.date}
+                    />
+                  </div>
+                  <div className="col-12 col-sm-6 d-flex flex-column gap-3">
+                    <div className="fs-22px">活動時間</div>
+                    <input
+                      className="form-control"
+                      type="time"
+                      name="time"
+                      defaultValue={group.time}
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-12 col-sm-6 d-flex flex-column gap-3 row-first">
+                    <div className="fs-22px">揪團截止日期</div>
+                    <input
+                      className="form-control"
+                      type="date"
+                      name="signEndDate"
+                      value={endDate || ""}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-12 col-sm-6 d-flex flex-column gap-3">
+                    <div className="fs-22px">揪團截止時間</div>
+                    <input
+                      className="form-control"
+                      type="time"
+                      name="signEndTime"
+                      value={endTime || ""}
+                      onChange={(e) => setEndTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="fs-22px mb-15px">揪團資訊</div>
+                  <textarea
+                    className="form-control"
+                    name="description"
+                    id=""
+                    rows={5}
+                    defaultValue={group.description}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  取消修改
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  儲存修改
+                </button>
+              </div>
+            </form>):(<div>載入中</div>)}
+            
           </div>
         </div>
       </div>
