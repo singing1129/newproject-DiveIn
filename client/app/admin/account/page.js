@@ -1,7 +1,15 @@
+"use client";
 import styles from "./account.module.css";
 import Link from "next/link";
-
+import { useAuth } from "@/hooks/useAuth";
+import { redirect } from "next/navigation";
 export default function Account() {
+  // 記得在auth裡面寫保護路由
+  // const { user } = useAuth();
+  // if (user == null || user == -1) {
+  //   redirect("/admin/login");
+  // }
+
   return (
     <>
       <div className={styles.content}>
@@ -22,7 +30,9 @@ export default function Account() {
                 <h6>我的訂單</h6>
               </div>
               <div className={styles.ASother}>
-                <h6><Link href="/admin/group">我的揪團</Link></h6>
+                <h6>
+                  <Link href="/admin/group">我的揪團</Link>
+                </h6>
               </div>
               <div className={styles.ASother}>
                 <h6>我的最愛</h6>
@@ -95,9 +105,9 @@ export default function Account() {
                 </div>
               </div>
               <div className={`${styles.IBbtn}`}>
-                  <div className={`${styles.hvbtn}`}>變更</div>
-                  <div className={`${styles.dfbtn}`}>取消</div>
-                </div>
+                <div className={`${styles.hvbtn}`}>變更</div>
+                <div className={`${styles.dfbtn}`}>取消</div>
+              </div>
             </div>
             <div className={styles.line2}></div>
 
