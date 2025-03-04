@@ -259,7 +259,6 @@ const Cart2 = () => {
     ...cartData.bundles.map(
       (item) =>
         `${item.name} x ${item.quantity} ${item.items.map(
-      
           (i) => i.product_name + " x " + i.quantity
         )}`
     ),
@@ -370,12 +369,12 @@ const Cart2 = () => {
         );
 
         const result = await response.json();
-        console.log("🟢 LINE Pay 確認結果:", result);
+        console.log(" LINE Pay 確認結果:", result);
 
         if (result.success) {
-          console.log("✅ 付款成功，重新獲取訂單資訊...");
+          console.log(" 付款成功，重新獲取訂單資訊...");
 
-          // 1️⃣ **重新請求最新訂單資訊**
+          //  **重新請求最新訂單資訊**
           const lastOrderId = localStorage.getItem("lastOrderId");
           if (!lastOrderId) {
             console.error("❌ 找不到 lastOrderId，無法更新訂單狀態！");
@@ -387,16 +386,16 @@ const Cart2 = () => {
           );
 
           const updatedOrder = orderResponse.data.data;
-          console.log("🟢 更新後的訂單資訊:", updatedOrder);
+          console.log(" 更新後的訂單資訊:", updatedOrder);
 
-          // 2️⃣ **更新狀態**
+          //  **更新狀態**
           if (updatedOrder.orderInfo.orderStatus === "paid") {
             alert("付款成功，訂單狀態已更新！");
           } else {
             alert("付款成功，但訂單狀態未更新，請聯絡客服！");
           }
 
-          // 3️⃣ **確保 `orderStatus` 不會卡在 `pending`**
+          //**確保 `orderStatus` 不會卡在 `pending`**
           router.push("/order/success");
         } else {
           alert("付款失敗");

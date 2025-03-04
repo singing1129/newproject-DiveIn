@@ -50,7 +50,7 @@ export default function User() {
                 </Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link className="text-decoration-none" href="/admin/coupons">
+                <Link className="text-decoration-none" href="/coupon">
                   優惠券
                 </Link>
               </MenuItem>

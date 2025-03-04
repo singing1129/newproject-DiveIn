@@ -24,9 +24,9 @@ export default function Sidebar() {
           </Link>
         </li>
         <li>
-          <Link href="/admin/groups">
+          <Link href="/admin/group">
             <i className={`bi bi-people ${styles.iconSpacing}`}></i>
-            我的鳩團
+            我的揪團
           </Link>
         </li>
         <li>
@@ -36,7 +36,8 @@ export default function Sidebar() {
           </Link>
         </li>
         <li>
-          <Link href="/admin/coupons">
+          {/* 到時候請進入admin路由：） */}
+          <Link href="/coupon">
             <i className={`bi bi-ticket-perforated ${styles.iconSpacing}`}></i>
             我的優惠券
           </Link>
