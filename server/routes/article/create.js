@@ -28,10 +28,52 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = new Set(["image/jpeg", "image/png", "image/gif"]);
-  cb(null, allowedTypes.has(file.mimetype));
+  if (allowedTypes.has(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("❌ 不支援的圖片格式"), false);
+  }
 };
 
 const upload = multer({ storage, fileFilter });
+
+//ckeditor編輯器 圖片暫存用
+const tempStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const tempDir = path.join(process.cwd(), "public", "uploads", "temp");
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    cb(null, tempDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const tempUpload = multer({ storage: tempStorage });
+
+// ckeditor編輯器暫存圖片上傳路由
+router.post(
+  "/upload-ckeditor-image-temp",
+  tempUpload.single("articleImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "未接收到圖片文件" });
+      }
+
+      const tempImageUrl = `/uploads/temp/${req.file.filename}`;
+      res.status(200).json({ success: true, url: tempImageUrl }); // 只發送一次回應
+    } catch (error) {
+      console.error("❌ 暫存圖片上傳失敗：", error);
+      res.status(500).json({ success: false, message: "暫存圖片上傳失敗" }); // 只發送一次回應
+    }
+  }
+);
 
 // 在 handleTags 函式中添加更多錯誤檢查
 const handleTags = async (tags, articleId) => {
@@ -86,7 +128,11 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
     new_categorySmall,
     new_tags,
     status = "draft",
+    ckeditor_images,
   } = req.body;
+
+  // 解析 CKEditor 圖片 URL
+  const ckeditorImages = JSON.parse(ckeditor_images || "[]");
 
   // 確保 new_tags 是陣列
   try {
@@ -119,29 +165,58 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
       "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
-        new_content,
+        new_content, // 先使用原始的 content
         new_categorySmall,
         userId,
         status,
-        currentDate,
-        publishAt,
+        new Date(),
+        status === "published" ? new Date() : null,
         0,
         0,
         0,
       ]
     );
-
     if (!articleResult || articleResult.insertId === 0) {
       throw new Error("無法獲取文章 ID");
     }
     const articleId = articleResult.insertId;
 
+    // 更新 content 中的圖片 URL
+    let updatedContent = new_content; // 複製原始的 content
+    if (ckeditorImages.length > 0) {
+      for (const tempImageUrl of ckeditorImages) {
+        // 確保 tempImageUrl 是相對路徑
+        const tempImagePath = path.join(process.cwd(), "public", tempImageUrl);
+        const finalImagePath = path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "article",
+          path.basename(tempImageUrl)
+        );
+
+        // 將圖片從暫存目錄移動到正式目錄
+        fs.renameSync(tempImagePath, finalImagePath);
+
+        // 插入圖片資料
+        const finalImageUrl = `/uploads/article/${path.basename(tempImageUrl)}`;
+        await db.insertImage(articleId, finalImageUrl, 0);
+
+        // 更新 content 中的圖片 URL
+        updatedContent = updatedContent.replace(tempImageUrl, finalImageUrl);
+      }
+
+      // 更新文章內容中的圖片 URL
+      await db.query("UPDATE article SET content = ? WHERE id = ?", [
+        updatedContent,
+        articleId,
+      ]);
+    }
+
     // 插入封面圖片資料
-    if (coverImagePath) {
-      await db.query(
-        "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
-        [articleId, coverImagePath, 1]
-      );
+    if (req.file) {
+      const coverImagePath = `/uploads/article/${req.file.filename}`;
+      await db.insertImage(articleId, coverImagePath, 1);
     }
 
     // 處理標籤
@@ -206,33 +281,13 @@ router.get("/data", async (req, res) => {
 });
 
 // 圖片上傳路由
-router.post("/upload-image", (req, res) => handleImageUpload(req, res, 1));
+// router.post("/upload-image", (req, res) => handleImageUpload(req, res, 1));
 router.post("/upload", (req, res) => handleImageUpload(req, res, 0));
-
-//圖片正確關聯文章
-router.post("/update-article-image", async (req, res) => {
-  try {
-    const { article_id, img_url } = req.body;
-    if (!article_id || !img_url) {
-      return res.status(400).json({ message: "缺少必要參數" });
-    }
-
-    await db.query(
-      "UPDATE article_image SET article_id = ? WHERE img_url = ?",
-      [article_id, img_url]
-    );
-
-    res.status(200).json({ success: true, message: "圖片關聯成功" });
-  } catch (error) {
-    console.error("❌ 圖片關聯錯誤：", error);
-    res.status(500).json({ success: false, message: "圖片關聯失敗" });
-  }
-});
 
 // 新增 CKEditor 圖片上傳路由
 router.post(
   "/upload-ckeditor-image",
-  upload.single("articleImage"),
+  upload.single("articleImage"), // 使用 multer 處理圖片上傳
   async (req, res) => {
     try {
       if (!req.file) {
@@ -241,21 +296,21 @@ router.post(
           .json({ success: false, message: "未接收到圖片文件" });
       }
 
-      const imageUrl = `/uploads/article/${req.file.filename}`;
+      // 取得圖片路徑
+      const imageUrl = `/uploads/article/${req.file.filename}`; // 確保路徑正確
+      res.status(200).json({ success: true, url: imageUrl });
 
-      // 取得文章 ID，如果是新文章，可以先存 null，稍後在文章創建時更新
+      // 取得文章 ID（如果有的話）
       const articleId = req.body.article_id || null;
 
       // 將圖片資訊存入 article_image 資料表，is_main 設為 0
-      const { results } = await db.query(
-        "INSERT INTO article_image (article_id, img_url, is_main) VALUES (?, ?, ?)",
-        [articleId, imageUrl, 0]
-      );
+      const insertId = await db.insertImage(articleId, imageUrl, 0);
 
-      if (!results || !results.insertId) {
+      if (!insertId) {
         throw new Error("圖片插入資料庫失敗");
       }
 
+      // 返回成功訊息和圖片 URL
       res.status(200).json({ success: true, url: imageUrl });
     } catch (error) {
       console.error("❌ CKEditor 圖片上傳失敗：", error);

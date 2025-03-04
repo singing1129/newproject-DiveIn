@@ -1,11 +1,12 @@
 "use client";
 import "./styles.css";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import useToast from "@/hooks/useToast";
+import { sign } from "jsonwebtoken";
 
 export default function GroupDetailPage() {
   const api = "http://localhost:3005/api";
@@ -18,7 +19,7 @@ export default function GroupDetailPage() {
     if (!user) {
       showToast("請先登入！", { autoClose: 2000 });
       setTimeout(() => {
-        window.location = "/admin/login";
+        window.location = "/member/login";
       }, 2000);
     }
   }, []);
@@ -46,6 +47,18 @@ export default function GroupDetailPage() {
 
   // 今天日期，限制活動時間用
   const now = new Date().toISOString().split("T")[0]
+  // 限定截止日期必須在活動日期前
+  const [endDate,setEndDate] = useState(null)
+  // 設定預覽圖片
+  const [uploadImg,setUploadImg] = useState(null)
+  const doImagePreview = (e) => {
+    const selectedFile = e.target.files[0];
+    console.log(selectedFile)
+    if (selectedFile) {
+      setUploadImg(URL.createObjectURL(selectedFile)); // 產生預覽圖片
+    }
+  };
+
 
   const doUpload = async (e) => {
     try {
@@ -81,9 +94,13 @@ export default function GroupDetailPage() {
               上傳首圖 <span className="color-secondary">*</span>
             </div>
             <div className="img-container">
+            {uploadImg?(
+              <img src={uploadImg} alt="" />
+            ):(
               <img src="#" alt="" />
+            )}
             </div>
-            <input type="file" name="file" required />
+            <input type="file" name="file" onChange={(e)=>{doImagePreview(e)}} required />
             {/* <div className="text-secondary">檔案上傳限制：3MB</div> */}
           </div>
           {/* <div className="col-12 col-sm-6 d-flex flex-column gap-3">
@@ -221,7 +238,14 @@ export default function GroupDetailPage() {
             <div className="fs-22px">
               活動日期 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="date" name="date" min={now} />
+            <input className="form-control" type="date" name="date" min={now} onChange={(e)=>{
+              const selectedDate = new Date(e.target.value)
+              selectedDate.setDate(selectedDate.getDate() - 1);
+              const lastDay = selectedDate.toISOString().split("T")[0]
+              const signEndDate = document.querySelector("#signEndDate")
+              setEndDate(lastDay)
+              signEndDate.removeAttribute("disabled")
+            }}/>
           </div>
           <div className="col-12 col-sm-6 d-flex flex-column gap-3">
             <div className="fs-22px">
@@ -235,13 +259,13 @@ export default function GroupDetailPage() {
             <div className="fs-22px">
               揪團截止日期 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="date" name="signEndDate" />
+            <input className="form-control" type="date" name="signEndDate" id="signEndDate" min={now} max={endDate} disabled />
           </div>
           <div className="col-12 col-sm-6 d-flex flex-column gap-3">
             <div className="fs-22px">
               揪團截止時間 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="time" name="signEndTime" />
+            <input className="form-control" type="time" name="signEndTime"/>
           </div>
         </div>
         <div>
