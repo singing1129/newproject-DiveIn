@@ -75,7 +75,7 @@ export default function Home() {
               <FaAngleRight />
             </button>
           </div>
-        </div>
+        </div> 
 
         {/* section start */}
         <div className={`container ${styles.sectionStart}`}>
