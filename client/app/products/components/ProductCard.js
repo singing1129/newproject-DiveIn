@@ -7,9 +7,10 @@ import useFavorite from "@/hooks/useFavorite";
 import { useCart } from "@/hooks/cartContext";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import axios from "axios";
 export default function ProductCard({ product }) {
+  const API_BASE_URL = "http://localhost:3005/api";
   const type = product.item_type === "bundle" ? "bundle" : "product";
-
   const {
     isFavorite,
     toggleFavorite,
@@ -27,37 +28,41 @@ export default function ProductCard({ product }) {
     // 檢查用戶是否已登入
     if (!user || user === -1) {
       alert("請先登入再將商品加入購物車");
-      // router.push("/login");
       return;
     }
 
     try {
-      //判斷是否為套組商品
+      // 判斷是否為套組商品
       const isBundle = product.item_type === "bundle";
+
+      // 獲取正確的變體ID (這是關鍵修正)
 
       let cartData;
       if (isBundle) {
-        // 如果是套组商品，使用bundle类型
         cartData = {
           type: "bundle",
           bundleId: product.id,
           quantity: 1,
         };
       } else {
-        // 如果是普通商品，使用product类型
+        const response = await axios.get(
+          `${API_BASE_URL}/products/${product.id}`
+        );
+
+        const correctVariantId = response.data.data.variants[0].id;
+        console.log("correctVariantId", correctVariantId);
         cartData = {
           type: "product",
-          variantId: product.id,
+          variantId: correctVariantId, // 使用正確的變體ID
           quantity: 1,
         };
+        console.log("cartData", cartData);
       }
 
-      console.log("product", product);
-
-      console.log("準備發送購物車資料:", cartData); // 添加調試日誌
-
       const success = await addToCart(cartData);
-      console.log("加入購物車結果:", success);
+      if (!success) {
+        alert("加入購物車失敗，請稍後再試");
+      }
     } catch (error) {
       console.error("加入購物車失敗:", error);
       alert(`加入購物車失敗: ${error.message || "請稍後再試"}`);

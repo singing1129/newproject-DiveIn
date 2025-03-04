@@ -73,11 +73,9 @@ router.post("/add", async (req, res) => {
           [cartId, variantId]
         );
 
-        //existingItem = [{ id:1,quantity:1}]
-
         //代表購物車有這個variant_id
         if (existingItem.length > 0) {
-          // 直接更新為新數量
+          // 直接設置為新數量，而不是累加
           await pool.execute(
             "UPDATE cart_items SET quantity = ? WHERE id = ?",
             [quantity, existingItem[0].id]

@@ -111,27 +111,17 @@ export default function ProductDetail() {
     }
 
     try {
-      // 發送購物車請求
+      // 使用購物車上下文的 addToCart 函數
       const cartData = {
-        userId: 1,
+        type: "product",
         variantId: currentVariant.id,
         quantity: quantity,
-        type: "product",
       };
 
-      const response = await axios.post(`${API_BASE_URL}/cart/add`, cartData);
+      const success = await addToCart(cartData);
 
-      if (response.data.success) {
-        // alert("成功加入購物車！");
-        // showToast("商品已加入購物車", {
-        //   style: {
-        //     backgroundColor: "red",
-        //     color: "white",
-        //   },
-        // });
-        showToast("商品已加入購物車");
-      } else {
-        alert(response.data.message || "加入購物車失敗");
+      if (!success) {
+        alert("加入購物車失敗，請稍後再試");
       }
     } catch (error) {
       console.error("加入購物車失敗:", error);

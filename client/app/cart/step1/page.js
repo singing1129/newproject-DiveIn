@@ -17,7 +17,7 @@ export default function Cart1() {
   const { cartData, fetchCart, selectedItems, proceedToCheckout } = useCart();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState(null);
-
+  console.log("cartData", cartData);
   // 計算商品小計
   const calculateSubtotal = () => {
     return cartData.total?.final || 0;
