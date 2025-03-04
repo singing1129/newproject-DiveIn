@@ -1,0 +1,120 @@
+:global(:root) {
+    --primary-color: #219ebc;
+    --primary-deep-color: #023047;
+    --primary-light-color: #8ecae6;
+    --secondary-color: #ffd500;
+    --secondary-deep-color: #ffb703;
+    --secondary-light-color: #f1d691;
+    --white: #ffffff;
+    --black: #000000;
+    --gray-20-color: #f8f9fa;
+    --gray-50-color: #e5e5e5;
+    --gray-100-color: #dedede;
+    --gray-200-color: #e5e5e5;
+    --gray-300-color: #cfcfcf;
+    --gray-400-color: #b2b2b2;
+    --gray-500-color: #a3a3a3;
+    --gray-600-color: #898989;
+    --gray-700-color: #6f6f6f;
+    --gray-800-color: #555555;
+    --gray-900-color: #3b3b3b;
+  }
+  
+  :global(*) {
+    font-family: "Noto Sans TC", serif;
+    font-size: 16px;
+  }
+
+ /* RecommendationSection.module.css */
+.section {
+  padding-bottom: 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 27px;
+}
+
+.h3 {
+  text-align: center;
+  font-size: 36px;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.btns {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 18px 0;
+}
+
+.chooseBtn {
+  font-size: 14px;
+  color: #898989;
+  background-color: transparent;
+  border: none;
+  padding: 10px 35px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.chooseBtn.active {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.chooseBtn:hover {
+  color: var(--primary-color);
+}
+
+.cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 15px 30px 15px;
+}
+
+.scondaryBtn {
+  background-color: var(--secondary-color);
+  border: none;
+  border-radius: 50px;
+  width: 127px;
+  height: 40px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.scondaryBtn:hover {
+  background-color: var(--secondary-deep-color);
+}
+
+/* 響應式設計 */
+@media (max-width: 576px) {
+  .h3 {
+      font-size: 23px;
+  }
+
+  .btns {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 0;
+  }
+
+  .chooseBtn {
+      padding: 5px 15px;
+      font-size: 12px;
+  }
+
+  .cards {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 10px 20px 10px;
+  }
+
+  .scondaryBtn {
+      width: 100px;
+      height: 35px;
+      font-size: 12px;
+  }
+}
