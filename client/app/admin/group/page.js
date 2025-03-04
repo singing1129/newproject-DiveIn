@@ -3,7 +3,7 @@ import styles from "./group.module.css";
 import GroupCard from "@/group/_components/GroupCard";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 
@@ -123,7 +123,7 @@ export default function MemberGroupPage() {
   async function doCancel(myGroupId) {
     alert("是否確認要取消此揪團？此操作無法復原！")
     try {
-      await axios.put(api + "/member/myGroup/" + myGroupId).then((res) => {
+      await axios.put(api + "/admin/myGroup/" + myGroupId).then((res) => {
         if (res.status == "success") {
           alert("已取消此項揪團！")
         }

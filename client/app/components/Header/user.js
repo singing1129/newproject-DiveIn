@@ -45,16 +45,16 @@ export default function User() {
           {user ? (
             <>
               <MenuItem onClick={handleClose}>
-                <Link href="/admin/favorites">我的收藏</Link>
+                <Link className="text-decoration-none" href="/admin/favorites">我的收藏</Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link href="/admin/coupons">優惠券</Link>
+                <Link className="text-decoration-none" href="/admin/coupons">優惠券</Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link href="/admin/group">我的團購</Link>
+                <Link className="text-decoration-none" href="/admin/group">我的揪團</Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link href="/admin/account">帳戶設定</Link>
+                <Link className="text-decoration-none" href="/admin/account">帳戶設定</Link>
               </MenuItem>
               <MenuItem
                 onClick={() => {
