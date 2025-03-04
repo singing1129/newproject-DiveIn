@@ -55,7 +55,8 @@ export default function Breadcrumb() {
       account: "個人資料",
       login: "用戶登入",
       coupon: "我的優惠券",
-    },
+      "coupon-claim":"領取專屬優惠"
+    }
   };
 
   // 租借用：在商品詳情頁獲取商品名稱

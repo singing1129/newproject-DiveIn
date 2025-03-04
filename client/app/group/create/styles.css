@@ -24,7 +24,7 @@ aside {
         height: 120px;
         object-fit: cover;
         overflow: hidden;
-        background-color: #5b5b5b;
+        background-color: #91919137;
         display: flex;
         justify-content: center;
         .img{

@@ -44,9 +44,10 @@ export default function GroupDetailPage() {
       setUploadImg(URL.createObjectURL(selectedFile)); // 產生預覽圖片
     }
   };
+
   const [countrySelect, setCountrySelect] = useState(0);
   const [city, setCity] = useState("");
-  const [citySelect, setCitySelect] = useState(selectOption[countrySelect] || 0);
+  const [citySelect, setCitySelect] = useState([selectOption[countrySelect] || 0]);
 
 
 
@@ -55,7 +56,9 @@ export default function GroupDetailPage() {
     setCountrySelect(newCountry);
     setCity("");
   };
-
+  useEffect(() => {
+    setCitySelect(selectOption[countrySelect]);
+  }, [countrySelect]);
   // 連接後端獲取揪團資料
   useEffect(() => {
     const getList = async () => {
@@ -65,6 +68,11 @@ export default function GroupDetailPage() {
           console.log(res.data.data[0]);
           setGroup(res.data.data[0]);
           setDescription(res.data.data[0].description.split("\n"));
+          setCountrySelect(Number(res.data.data[0].country_id));
+          setCity(res.data.data[0].city_name || "");
+          setCitySelect(selectOption[Number(res.data.data[0].country_id)]);
+          setEndDate(res.data.data[0].sign_end_date.split(" ")[0]);
+          setEndTime(res.data.data[0].sign_end_date.split(" ")[1]);
         })
         .catch((error) => {
           console.log(error);
@@ -73,11 +81,31 @@ export default function GroupDetailPage() {
     getList();
   }, [id]);
 
-  useEffect(() => {
-    if (group.length > 0) {
-      console.log(group);
+  // useEffect(() => {
+  //   if (group.length > 0) {
+  //     console.log(group);
+  //   }
+  // }, [group]);
+
+  // 修改揪團
+  const doUpload = async (e) => {
+    try {
+      // e.preventDefault();
+      const formData = new FormData(e.target);
+      formData.forEach((value, key) => {
+        console.log(`${key}: ${value}`);
+      });
+      const res = await axios.put(api + "/group/update", formData);
+      console.log(res.data.status);
+      if (res.data.status == "success") {
+        alert("成功修改揪團");
+      } else {
+        alert(res.data.message || "修改失敗");
+      }
+    } catch (error) {
+      console.log(error);
     }
-  }, [group]);
+  };
 
   // 加入揪團
   const { user } = useAuth();
@@ -645,7 +673,7 @@ export default function GroupDetailPage() {
                     <button className="btn join-btn fs-20px" onClick={doJoin}>
                       加入跟團
                     </button>
-                  ) : (<button className="btn edit-btn fs-20px">
+                  ) : (<button className="btn edit-btn fs-20px" data-bs-toggle="modal" data-bs-target="#groupModal">
                     修改揪團
                   </button>
                   )
@@ -693,7 +721,7 @@ export default function GroupDetailPage() {
                 aria-label="Close"
               ></button>
             </div>
-            {group ? (<form
+            {group && Object.keys(group).length > 0 ? (<form
               className="group-create d-flex flex-column w-100"
               onSubmit={(e) => doUpload(e)}
             >
@@ -711,11 +739,11 @@ export default function GroupDetailPage() {
                   value={user.id}
                 />
                 <div className="fs-22px">揪團首圖</div>
-                <div className={styles.imgContainer}>
+                <div className="img-container">
                   {uploadImg ? (
-                    <img className={styles.img} src={uploadImg} alt="" />
+                    <img className="img" src={uploadImg} alt="" />
                   ) : (
-                    <img className={styles.img}
+                    <img className="img"
                       src={`/image/group/${group.group_img}`}
                       alt=""
                     />
@@ -893,8 +921,8 @@ export default function GroupDetailPage() {
                   儲存修改
                 </button>
               </div>
-            </form>):(<div>載入中</div>)}
-            
+            </form>) : (<div>載入中</div>)}
+
           </div>
         </div>
       </div>
