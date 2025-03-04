@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import useToast from "@/hooks/useToast";
+import { sign } from "jsonwebtoken";
 
 export default function GroupDetailPage() {
   const api = "http://localhost:3005/api";
@@ -46,6 +47,8 @@ export default function GroupDetailPage() {
 
   // 今天日期，限制活動時間用
   const now = new Date().toISOString().split("T")[0]
+  // 限定截止日期必須在活動日期前
+  const [endDate,setEndDate] = useState(null)
 
   const doUpload = async (e) => {
     try {
@@ -221,7 +224,14 @@ export default function GroupDetailPage() {
             <div className="fs-22px">
               活動日期 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="date" name="date" min={now} />
+            <input className="form-control" type="date" name="date" min={now} onChange={(e)=>{
+              const selectedDate = new Date(e.target.value)
+              selectedDate.setDate(selectedDate.getDate() - 1);
+              const lastDay = selectedDate.toISOString().split("T")[0]
+              const signEndDate = document.querySelector("#signEndDate")
+              setEndDate(lastDay)
+              signEndDate.removeAttribute("disabled")
+            }}/>
           </div>
           <div className="col-12 col-sm-6 d-flex flex-column gap-3">
             <div className="fs-22px">
@@ -235,13 +245,13 @@ export default function GroupDetailPage() {
             <div className="fs-22px">
               揪團截止日期 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="date" name="signEndDate" />
+            <input className="form-control" type="date" name="signEndDate" id="signEndDate" min={now} max={endDate} disabled />
           </div>
           <div className="col-12 col-sm-6 d-flex flex-column gap-3">
             <div className="fs-22px">
               揪團截止時間 <span className="color-secondary">*</span>
             </div>
-            <input className="form-control" type="time" name="signEndTime" />
+            <input className="form-control" type="time" name="signEndTime"/>
           </div>
         </div>
         <div>

@@ -8,17 +8,22 @@ import { fileURLToPath } from "url";
 import createError from "http-errors";
 // 路由模組
 import productRouter from "../routes/products/index.js";
+import bundleRouter from "../routes/bundle/index.js";
 import favoritesRouter from "../routes/favorites/index.js";
 import cartRouter from "../routes/cart/index.js";
 import categoriesRouter from "../routes/categories/index.js";
 import brandRouter from "../routes/brands/index.js";
+// 活動相關路由
 import activityRouter from "../routes/activity/index.js";
 import activityDetailRouter from "../routes/activity/detail.js";
+// 揪團相關路由
 import groupRouter from "../routes/group/index.js";
 import groupListRouter from "../routes/group/list.js";
 import groupDetailRouter from "../routes/group/detail.js";
 import groupCreate from "../routes/group/create.js";
 import groupJoin from "../routes/group/join.js";
+import "../cron.js" //    排程自動檢查並更新揪團狀態
+// 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
 import rentBrandCategoryRouter from "../routes/rent/brandcategories.js";
@@ -30,13 +35,16 @@ import rentSearchRouter from "../routes/rent/search.js";
 import rentDetailRouter from "../routes/rent/detail.js";
 import rentRecommendedRouter from "../routes/rent/recommended.js";
 import rentIdColorRouter from "../routes/rent/idcolors.js";
+// 論壇相關路由
 import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態文章頁
 import articleCreateRouter from "../routes/article/create.js"; // 取得新建文章所需的分類/標籤 & 新增文章
 // import articleSidebarRouter from "../routes/article/sidebar.js"; // 側邊欄篩選數據
 // import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
 // import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
+// 優惠券相關路由
 import couponRouter from "../routes/coupon/index.js";
 import couponClaimRouter from "../routes/coupon/claim.js";
+// 會員相關路由
 import memberRouter from "../routes/admin/index.js";
 import memberMyGroupRouter from "../routes/admin/mygroup.js";
 // import shipmentRouter from "../routes/ship/index.js"; // 運送相關路由
@@ -47,6 +55,8 @@ import ecpayRouter from "../routes/ecpay/index.js";
 import linepayRouter from "../routes/linepay/index.js";
 // 訂單
 import orderRouter from "../routes/order/index.js";
+// 密碼重設
+import passwordResetRouter from "../routes/admin/passwordReset.js";
 
 // 建立 Express 應用程式
 const app = express();
@@ -96,6 +106,8 @@ const apiRouter = express.Router();
 app.use("/api", apiRouter);
 // 產品相關路由
 apiRouter.use("/products", productRouter);
+//bundle
+apiRouter.use("/bundle", bundleRouter);
 // 收藏相關路由
 apiRouter.use("/favorites", favoritesRouter);
 // 購物車相關路由
@@ -112,6 +124,9 @@ apiRouter.use("/ecpay", ecpayRouter);
 apiRouter.use("/linepay", linepayRouter);
 //order
 apiRouter.use("/order", orderRouter);
+// 密碼重設
+apiRouter.use("/passwordReset", passwordResetRouter);
+
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);

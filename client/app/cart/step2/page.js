@@ -7,7 +7,7 @@ import ActivityForm from "./components/ActivityForm";
 import ActivitySummary from "./components/ActivitySummary";
 import "./step2.css";
 import axios from "axios";
-
+import { useAuth } from "@/hooks/useAuth";
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function Cart3() {
@@ -15,6 +15,8 @@ export default function Cart3() {
   const { cartData, submitActivityTravelers } = useCart();
   const [currentActivity, setCurrentActivity] = useState(0);
   const [activities, setActivities] = useState([]);
+  const { user } = useAuth();
+  const userId = user.id;
 
   useEffect(() => {
     if (cartData.activities && cartData.activities.length > 0) {

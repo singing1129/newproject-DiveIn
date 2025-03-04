@@ -1,7 +1,9 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./useAuth";
+import useToast from "@/hooks/useToast";
 
 // 創建 Context
 const CartContext = createContext();
@@ -9,21 +11,34 @@ const API_BASE_URL = "http://localhost:3005/api";
 
 // cart Provider
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  const { user } = useAuth();
+  //使用吐司
+  const { showToast } = useToast();
+  // const [cart, setCart] = useState([]);
   const [cartData, setCartData] = useState({
     products: [],
     activities: [],
     rentals: [],
+    bundles: [], // 新增 bundles 陣列
   });
-  const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState(null);
   // 添加選中項目的狀態
   const [selectedItems, setSelectedItems] = useState({
     products: [],
     activities: [],
     rentals: [],
+    bundles: [], // 新增 bundles 選中狀態
   });
   const router = useRouter();
+
+  // 當用戶登入狀態改變時自動獲取購物車
+  // 用戶A登出後，用戶B登入可以即時獲取購物車，優化使用者體驗
+  useEffect(() => {
+    if (user && user !== -1) {
+      fetchCart();
+    }
+  }, [user]);
 
   // 處理全選
   const handleSelectAll = (type, items, isSelected) => {
@@ -50,7 +65,11 @@ export const CartProvider = ({ children }) => {
   };
 
   // 更新購物車數量
-  const updateQuantity = async (type, itemId, newQuantity, rentalInfo = {}) => {
+  const updateQuantity = async (type, itemId, newQuantity) => {
+    if (!user || user === -1) {
+      setError("請先登入");
+      return false;
+    }
     try {
       // 轉換 type 格式
       const updateType =
@@ -58,40 +77,21 @@ export const CartProvider = ({ children }) => {
           ? "product"
           : type === "activities"
           ? "activity"
-          : "rental";
+          : type === "rentals"
+          ? "rental"
+          : "bundle"; // 新增 bundle 類型
 
-      // 如果是 rental 類型，傳遞租借資訊（startDate, endDate, color）
-      const requestData =
-        type === "rentals"
-          ? {
-              userId: 1, // 暫時寫死
-              type: updateType,
-              itemId,
-              quantity: newQuantity,
-              startDate: rentalInfo.startDate,
-              endDate: rentalInfo.endDate,
-              color: rentalInfo.color,
-            }
-          : {
-              userId: 1,
-              type: updateType,
-              itemId,
-              quantity: newQuantity,
-            };
-
-            const response = await axios.put(`${API_BASE_URL}/cart/update`, requestData);
-
-      // 這邊有修改，如果其他人不能更新資訊再打開這個註解QAQ
-      // const response = await axios.put(`${API_BASE_URL}/cart/update`, {
-      //   userId: 1,
-      //   type: updateType, // 使用轉換後的 type
-      //   itemId,
-      //   quantity: newQuantity,
-      // });
+      const response = await axios.put(`${API_BASE_URL}/cart/update`, {
+        userId: user.id,
+        type: updateType, // 使用轉換後的 type
+        itemId,
+        quantity: newQuantity,
+      });
 
       if (response.data.success) {
         // 更新成功後重新獲取購物車數據
-        await fetchCart(1);
+        await fetchCart(user.id);
+        return true;
       } else {
         throw new Error(response.data.message || "更新失敗");
       }
@@ -101,16 +101,22 @@ export const CartProvider = ({ children }) => {
   };
 
   // 加入商品到購物車
-  const addToCart = async (userId, cartItem) => {
+  const addToCart = async (cartItem) => {
+    if (!user || user === -1) {
+      setError("請先登入");
+      return false;
+    }
+
     try {
       const response = await axios.post(`${API_BASE_URL}/cart/add`, {
-        userId,
+        userId: user.id,
         ...cartItem,
       });
 
       if (response.data.success) {
         // 重新獲取購物車資料
-        await fetchCart(userId);
+        await fetchCart();
+        showToast("商品已加入購物車");
         return true;
       }
     } catch (error) {
@@ -122,12 +128,16 @@ export const CartProvider = ({ children }) => {
 
   // 移除商品
   const removeFromCart = async (type, itemIds) => {
+    if (!user || user === -1) {
+      setError("請先登入");
+      return false;
+    }
     try {
       const response = await axios.delete(
         "http://localhost:3005/api/cart/remove",
         {
           data: {
-            userId: 1, // 暫時寫死
+            userId: user.id,
             type:
               type === "products"
                 ? "product"
@@ -135,6 +145,8 @@ export const CartProvider = ({ children }) => {
                 ? "activity"
                 : type === "rentals"
                 ? "rental"
+                : type === "bundles"
+                ? "bundle" // 新增 bundle 類型處理
                 : type,
             itemIds: Array.isArray(itemIds) ? itemIds : [itemIds],
           },
@@ -143,7 +155,7 @@ export const CartProvider = ({ children }) => {
 
       if (response.data.success) {
         // 刪除成功後重新獲取購物車數據
-        await fetchCart(1);
+        await fetchCart();
         return true;
       }
       return false;
@@ -154,35 +166,40 @@ export const CartProvider = ({ children }) => {
   };
 
   // 從後端獲取購物車資料
-  const fetchCart = async (userId) => {
+  const fetchCart = async () => {
+    if (!user || user === -1) {
+      return;
+    }
     try {
-      setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/cart/${userId}`);
+      const response = await axios.get(`${API_BASE_URL}/cart/${user.id}`);
       if (response.data.success) {
         const data = response.data.data;
         setCartData(data);
 
-        // 設置預設全選
+        // 設置預設全選，包含套組
         setSelectedItems({
           products: data.products?.map((item) => item.id) || [],
           activities: data.activities?.map((item) => item.id) || [],
           rentals: data.rentals?.map((item) => item.id) || [],
+          bundles: data.bundles?.map((item) => item.id) || [],
         });
       }
     } catch (error) {
       console.error("獲取購物車失敗:", error);
       setError(error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
   // 修改 proceedToCheckout 函數
   const proceedToCheckout = async () => {
+    if (!user || user === -1) {
+      setError("請先登入");
+      return false;
+    }
     try {
       // 使用後端的 initialize endpoint 來初始化結帳流程
       const response = await axios.post(`${API_BASE_URL}/checkout/initialize`, {
-        userId: 1, // 這裡應該使用實際的 userId
+        userId: user.id, // 這裡應該使用實際的 userId
       });
 
       if (response.data.success) {
@@ -199,12 +216,14 @@ export const CartProvider = ({ children }) => {
           // 處理錯誤情況
           setError("購物車內容有誤，請重新確認");
         }
+        return true;
       }
     } catch (error) {
       console.error("初始化結帳流程失敗:", error);
       setError(
         error.response?.data?.message || "初始化結帳流程失敗，請稍後再試"
       );
+      return false;
     }
   };
 
@@ -240,7 +259,7 @@ export const CartProvider = ({ children }) => {
   const completeCheckout = async (checkoutData) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/checkout/complete`, {
-        userId: 1, // 這裡應該使用實際的 userId
+        userId: user.id, // 這裡應該使用實際的 userId
         ...checkoutData,
       });
 
@@ -257,9 +276,8 @@ export const CartProvider = ({ children }) => {
   return (
     <CartContext.Provider
       value={{
-        cart,
+        // cart,
         cartData,
-        loading,
         error,
         selectedItems,
         handleSelectAll,

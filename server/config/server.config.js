@@ -22,10 +22,10 @@ export const serverConfig = {
   // },
   // gmail
   smtp: {
-    provider: 'gmail',
-    host: 'smtp.gmail.com',
-    user: 'wc5894@gmail.com',
-    pass: 'qzfsmfunhkqivqvs',
+    provider: "gmail",
+    host: "smtp.gmail.com",
+    user: "diveinmfee60@gmail.com",
+    pass: "kksy hfzp olwm csvd",
   },
   jwt: {
     secret: "access_token_secret",

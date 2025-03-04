@@ -19,7 +19,7 @@ router.get("/brand/:brandId", async (req, res) => {
       ? req.query.color_id.split(",").map(Number)
       : [];
 
-      const minPrice = req.query.min_price
+    const minPrice = req.query.min_price
       ? parseFloat(req.query.min_price)
       : undefined;
     const maxPrice = req.query.max_price

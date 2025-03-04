@@ -1,34 +1,46 @@
 "use client";
 import { useAuth } from "@/hooks/useAuth";
 import styles from "../Login.module.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Stack, Input, LinearProgress, Typography } from "@mui/joy";
+import "@mui/joy/styles";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Register() {
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  // 辨別權證
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { user, register } = useAuth() || {};
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const { register } = useAuth();
   const router = useRouter();
 
+  const minLength = 12;
+
+  // 注册处理函数
   const handleRegister = async () => {
     if (!email.trim()) {
-      alert("請輸入使用者email");
+      alert("請輸入使用者 email");
       return;
     }
     if (!password.trim()) {
       alert("請輸入密碼");
       return;
     }
+    if (password !== confirmPassword) {
+      alert("密碼不相符");
+      return;
+    }
 
     try {
-      await register(email, password);
-      alert("註冊成功！"); // 註冊成功提示
-      router.push("/admin/login"); // 導向登入頁面
+      const result = await register(email, password);
+      if (result && result.status === "success") {
+        alert("註冊成功！");
+        router.push("/admin/login");
+      }
     } catch (error) {
       console.error("註冊錯誤:", error);
-      // 錯誤訊息已經在 useAuth 的 register 函數中處理
     }
   };
 
@@ -48,20 +60,51 @@ export default function Register() {
             name="email"
             className={styles.wordbox}
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-            }}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
           />
-          <input
-            type="password"
-            name="password"
+          <Stack
+            spacing={2}
+            sx={{ "--hue": Math.min(password.length * 10, 120) }}
+          >
+            <Input
+              className={styles.wordbox}
+              type="password"
+              placeholder="請輸入密碼"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <div className={styles.LinearProgress}>
+              <LinearProgress
+                style={{ width: "100%" }}
+                determinate
+                size="sm"
+                value={Math.min((password.length * 100) / minLength, 100)}
+                sx={{
+                  bgcolor: "background.level3",
+                  color: "hsl(var(--hue) 80% 40%)",
+                }}
+              />
+            </div>
+            <Typography
+              level="body-xs"
+              sx={{ alignSelf: "flex-end", color: "hsl(var(--hue) 80% 30%)" }}
+            >
+              {password.length < 3 && "Very weak"}
+              {password.length >= 3 && password.length < 6 && "Weak"}
+              {password.length >= 6 && password.length < 10 && "Strong"}
+              {password.length >= 10 && "Very strong"}
+            </Typography>
+          </Stack>
+
+          {/* 確認密碼欄位（MUI Joy UI） */}
+          <Input
             className={styles.wordbox}
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
-            placeholder="密碼"
+            sx={{ width: "100%" }}
+            type="password"
+            placeholder="確認密碼"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
 
           <div className={styles.loginWays}>
@@ -86,7 +129,7 @@ export default function Register() {
               </div>
             </div>
             <div className={styles.fcBox}>
-              <Link href="/login" className={styles.ftext}>
+              <Link href="/admin/login" className={styles.ftext}>
                 我有帳號！
               </Link>
             </div>

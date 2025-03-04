@@ -7,10 +7,12 @@ import CartHeader from "../components/CartHeader";
 import BatchActions from "../components/BatchActions";
 import CartItem from "../components/CartItem";
 import { useCart } from "@/hooks/cartContext";
+import { useAuth } from "@/hooks/useAuth";
 
-const Cart1 = () => {
+export default function Cart1() {
   const router = useRouter();
-  const userId = 1;
+  const { user } = useAuth();
+  const userId = user.id;
   const { cartData, fetchCart, selectedItems, proceedToCheckout } = useCart();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -44,6 +46,8 @@ const Cart1 = () => {
         return Number(item.price) * item.quantity;
       case "rentals":
         return Number(item.price_per_day) * item.rental_days * item.quantity;
+      case "bundles":
+        return Number(item.discount_price);
       default:
         return 0;
     }
@@ -51,15 +55,22 @@ const Cart1 = () => {
 
   // 使用 useMemo 計算所有金額
   const totals = useMemo(() => {
-    const selectedProducts = cartData.products.filter((item) =>
-      selectedItems.products.includes(item.id)
-    );
-    const selectedActivities = cartData.activities.filter((item) =>
-      selectedItems.activities.includes(item.id)
-    );
-    const selectedRentals = cartData.rentals.filter((item) =>
-      selectedItems.rentals.includes(item.id)
-    );
+    const selectedProducts =
+      cartData.products?.filter((item) =>
+        selectedItems.products?.includes(item.id)
+      ) || [];
+    const selectedActivities =
+      cartData.activities?.filter((item) =>
+        selectedItems.activities?.includes(item.id)
+      ) || [];
+    const selectedRentals =
+      cartData.rentals?.filter((item) =>
+        selectedItems.rentals?.includes(item.id)
+      ) || [];
+    const selectedBundles =
+      cartData.bundles?.filter((item) =>
+        selectedItems.bundles?.includes(item.id)
+      ) || [];
 
     const productsTotal = selectedProducts.reduce(
       (sum, item) => sum + calculateItemSubtotal(item, "products"),
@@ -73,10 +84,15 @@ const Cart1 = () => {
       (sum, item) => sum + calculateItemSubtotal(item, "rentals"),
       0
     );
+    const bundlesTotal = selectedBundles.reduce(
+      (sum, item) => sum + calculateItemSubtotal(item, "bundles"),
+      0
+    );
 
     // 計算租賃押金總額（）
     const depositTotal = selectedRentals.reduce(
-      (sum, item) => sum + Number(item.deposit || 0) * item.rental_days * item.quantity,
+      (sum, item) =>
+        sum + Number(item.deposit || 0) * item.rental_days * item.quantity,
       0
     );
 
@@ -84,11 +100,13 @@ const Cart1 = () => {
       products: productsTotal,
       activities: activitiesTotal,
       rentals: rentalsTotal,
+      bundles: bundlesTotal,
       depositTotal,
-      subtotal: productsTotal + activitiesTotal + rentalsTotal,
-      total: productsTotal + activitiesTotal + rentalsTotal + depositTotal,
+      subtotal: productsTotal + activitiesTotal + rentalsTotal + bundlesTotal,
+      total:
+        productsTotal + activitiesTotal + rentalsTotal + bundlesTotal + depositTotal,
     };
-  }, [cartData, selectedItems]);
+  }, [cartData, selectedItems, calculateItemSubtotal]);
 
   useEffect(() => {
     // 簡化 useEffect，只負責獲取購物車數據
@@ -106,7 +124,15 @@ const Cart1 = () => {
   const isEmpty =
     !cartData.products?.length &&
     !cartData.activities?.length &&
-    !cartData.rentals?.length;
+    !cartData.rentals?.length &&
+    !cartData.bundles?.length;
+
+  // 檢查是否只有活動商品
+  const hasOnlyActivities =
+    cartData.activities?.length > 0 &&
+    !cartData.products?.length &&
+    !cartData.rentals?.length &&
+    !cartData.bundles?.length;
 
   return (
     <div className="cartCss">
@@ -150,6 +176,87 @@ const Cart1 = () => {
                         }}
                         type="products"
                       />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 套組商品區塊 - 新增 */}
+              {cartData.bundles?.length > 0 && (
+                <div className="card mb-3">
+                  <CartHeader
+                    title="套組商品"
+                    totalItems={cartData.bundles.length}
+                  />
+                  <div className="card-body">
+                    <BatchActions type="bundles" />
+                    {cartData.bundles.map((bundle) => (
+                      <div
+                        key={bundle.id}
+                        className="cart-bundle-item mb-3 border-bottom pb-3"
+                      >
+                        <div className="d-flex align-items-center">
+                          <div className="form-check me-2">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={selectedItems.bundles.includes(
+                                bundle.id
+                              )}
+                              onChange={(e) =>
+                                handleSelectItem(
+                                  "bundles",
+                                  bundle.id,
+                                  e.target.checked
+                                )
+                              }
+                              id={`bundle-${bundle.id}`}
+                            />
+                          </div>
+                          <div className="flex-grow-1">
+                            <h5>{bundle.name}</h5>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="mb-1">{bundle.description}</p>
+                                <div className="text-muted">
+                                  共 {bundle.items.length} 件商品
+                                </div>
+                              </div>
+                              <div className="bundle-price text-end">
+                                <div className="text-decoration-line-through text-muted">
+                                  NT$ {bundle.original_total}
+                                </div>
+                                <div className="text-danger h5 mb-0">
+                                  NT$ {bundle.discount_price}
+                                </div>
+                                <div className="text-success">
+                                  省下 NT$
+                                  {bundle.original_total -
+                                    bundle.discount_price}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2">
+                              <button
+                                className="btn btn-sm btn-outline-primary me-2"
+                                onClick={() =>
+                                  router.push(`/bundle/${bundle.id}`)
+                                }
+                              >
+                                查看詳情
+                              </button>
+                              <button
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() =>
+                                  removeFromCart("bundles", bundle.id)
+                                }
+                              >
+                                移除
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -251,6 +358,4 @@ const Cart1 = () => {
       </div>
     </div>
   );
-};
-
-export default Cart1;
+}
