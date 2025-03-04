@@ -9,7 +9,7 @@ import styles from "../products.module.css";
 import { FaRegCalendar } from "react-icons/fa";
 import Calendar from "react-calendar";
 import "./Calendar.css";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function GroupDetailPage() {
   const [count, setCount] = useState(0);
@@ -71,7 +71,7 @@ export default function GroupDetailPage() {
       const res = await axios.post(api + "/group/join", joinInformation);
       if (res.data.status == "success") {
         alert("成功跟團");
-        window.location = `/admin/group`;
+        window.location = `/member/group`;
       } else {
         alert(res.data.message || "跟團失敗！請稍後再試");
       }
@@ -82,7 +82,7 @@ export default function GroupDetailPage() {
   return (
     <main className="main container d-flex groupDetailPage">
       {/* 左側邊欄 */}
-      <div className="col-lg-3 col-md-4">
+      <div className="col-lg-3 col-md-4 d-none d-sm-block">
         <div className="d-grid ">
           {/* 活動地點分類 */}
           <div
@@ -457,7 +457,7 @@ export default function GroupDetailPage() {
                         </div> */}
         </div>
       </div>
-      <div className="row m-0 ">
+      <div className="row m-0 w-100 ">
         <div className="col-sm-8 col-12 d-flex flex-column middle-section">
           <div className="img-container">
             <img

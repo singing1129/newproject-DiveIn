@@ -156,9 +156,9 @@ export default function Header() {
         <div className="mobile-offcanvas-body offcanvas-body p-0">
           <ul className="m-0 list-unstyled border-bottom">
             <li className="px-3 pt-4 pb-2">
-              <a className="a text-reset" href="#">
+              <Link className="a text-reset" href="/">
                 首頁
-              </a>
+              </Link>
             </li>
             <li className="px-3 py-2">
               <button
@@ -215,6 +215,128 @@ export default function Header() {
               </div>
             </li>
             <li className="px-3 py-2">
+              <button
+                className="btn dropdown-toggle p-0 text-reset"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#activity-menu"
+              >
+                活動
+              </button>
+              <div className="mobile-collapse collapse mt-3" id="activity-menu">
+                <ul className="list-group">
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      自由潛水活動
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      水肺潛水活動
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      浮潛活動
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li className="px-3 py-2">
+              <button
+                className="btn dropdown-toggle p-0 text-reset"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#rent-menu"
+              >
+                租借
+              </button>
+              <div className="mobile-collapse collapse mt-3" id="rent-menu">
+                <ul className="list-group">
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      基礎裝備租借
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      專業裝備租借
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      水下攝影設備
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li className="px-3 py-2">
+              <button
+                className="btn dropdown-toggle p-0 text-reset"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#group-menu"
+              >
+                揪團
+              </button>
+              <div className="mobile-collapse collapse mt-3" id="group-menu">
+                <ul className="list-group">
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      建立揪團
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      參加揪團
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      我的揪團
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li className="px-3 py-2">
+              <button
+                className="btn dropdown-toggle p-0 text-reset"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#forum-menu"
+              >
+                論壇
+              </button>
+              <div className="mobile-collapse collapse mt-3" id="forum-menu">
+                <ul className="list-group">
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      綜合討論
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      潛水心得
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      裝備討論
+                    </a>
+                  </li>
+                  <li className="list-group-item">
+                    <a className="a text-reset" href="#">
+                      水攝攝影
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </li>
+{/*             
+            <li className="px-3 py-2">
               <a className="a text-reset" href="#">
                 活動
               </a>
@@ -233,20 +355,20 @@ export default function Header() {
               <a className="a text-reset" href="#">
                 論壇
               </a>
-            </li>
+            </li> */}
           </ul>
           <div className="border-bottom">
             <h5 className="px-3 pt-4 py-2 text-secondary">帳戶</h5>
             <ul className="m-0 px-4 list-unstyled">
               <li className="px-3 py-2">
-                <a className="a text-reset" href="#">
+                <Link className="a text-reset" href="/admin/login">
                   登入
-                </a>
+                </Link>
               </li>
               <li className="px-3 pt-2 pb-4">
-                <a className="a text-reset" href="#">
+                <Link className="a text-reset" href="/admin/register">
                   註冊
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
