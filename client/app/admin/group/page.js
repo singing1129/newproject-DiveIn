@@ -89,12 +89,23 @@ export default function MemberGroupPage() {
     getList();
   }, [condition]);
 
-  const doUpdate = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    formData.forEach((value, key) => {
-      console.log(`${key}: ${value}`);
-    });
+  const doUpload = async (e) => {
+    try {
+      // e.preventDefault();
+      const formData = new FormData(e.target);
+      formData.forEach((value, key) => {
+          console.log(`${key}: ${value}`);
+      });
+      const res = await axios.put(api + "/group/update", formData);
+      console.log(res.data.status);
+      if (res.data.status == "success") {
+        alert("成功修改揪團");
+      } else {
+        alert(res.data.message || "修改失敗");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   async function doCancel(myGroupId) {
@@ -315,11 +326,17 @@ export default function MemberGroupPage() {
               </div>
               <form
                 className="group-create d-flex flex-column w-100"
-                onSubmit={(e) => doUpdate(e)}
+                onSubmit={(e) => doUpload(e)}
               >
                 <div className="modal-body">
                   {modalGroup ? (
                     <>
+                      <input
+                        type="hidden"
+                        name="groupId"
+                        id=""
+                        value={modalGroup.id}
+                      />
                       <input
                         type="hidden"
                         name="userId"

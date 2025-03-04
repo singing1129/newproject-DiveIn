@@ -63,7 +63,7 @@ export default function GroupDetailPage() {
       user_id: user.id,
       number: count,
       group_name: group.name,
-      group_date:group.date
+      group_date: group.date
     };
 
     console.log(joinInformation);

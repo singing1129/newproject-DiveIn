@@ -24,6 +24,7 @@ import groupDetailRouter from "../routes/group/detail.js";
 import groupCreate from "../routes/group/create.js";
 import groupJoin from "../routes/group/join.js";
 import "../cron.js"; //    排程自動檢查並更新揪團狀態
+import groupUpdate from "../routes/group/update.js"
 // 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
@@ -143,6 +144,7 @@ apiRouter.use("/group", groupListRouter);
 apiRouter.use("/group", groupDetailRouter);
 apiRouter.use("/group", groupCreate);
 apiRouter.use("/group", groupJoin);
+apiRouter.use("/group", groupUpdate);
 
 // 租借相關路由
 apiRouter.use("/rent", rentRouter); // 負責 `/api/rent`

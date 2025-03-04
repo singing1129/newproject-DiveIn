@@ -24,9 +24,9 @@ export default function Sidebar() {
           </Link>
         </li>
         <li>
-          <Link href="/admin/groups">
+          <Link href="/admin/group">
             <i className={`bi bi-people ${styles.iconSpacing}`}></i>
-            我的鳩團
+            我的揪團
           </Link>
         </li>
         <li>
