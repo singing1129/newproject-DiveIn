@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import styles from "./bundle.module.css";
 
-
 export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
   const [selectedVariants, setSelectedVariants] = useState({});
   const [selectedColors, setSelectedColors] = useState({});
@@ -27,7 +26,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
     const element = sectionsRef.current[index];
     if (element) {
       const headerHeight = 60; // 頂部導航高度
-      const overviewHeight = 120; // 概覽區域高度
+      const overviewHeight = 120; // 商品區高度
       const offset = headerHeight + overviewHeight;
 
       const modalContent = document.querySelector(`.${styles.modalContent}`);
@@ -208,7 +207,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
           </div>
         </div>
 
-          {/* 商品選擇區域 */}
+        {/* 商品選擇區域 */}
         <div className={styles.sectionsContainer}>
           {bundle?.items?.map((item, index) => (
             <div
@@ -346,7 +345,17 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
             <button
               className={styles.addToCartButton}
               onClick={() => {
-                onSelect({ variants: selectedVariants, quantities });
+                // 格式化要發送的數據
+                const bundleData = {
+                  type: "bundle",
+                  bundleId: bundle.id,
+                  quantity: 1, // bundle 數量默認為1
+                  variants: selectedVariants, // 包含用戶為每個產品選擇的變體
+                  quantities: quantities, // 每個項目的數量
+                };
+
+                console.log("要發送的套組數據:", bundleData); // 方便調試
+                onSelect(bundleData);
                 onClose();
               }}
               disabled={!isAllSelected()}

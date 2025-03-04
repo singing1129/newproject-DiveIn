@@ -101,6 +101,32 @@ export const CartProvider = ({ children }) => {
   };
 
   // 加入商品到購物車
+  // const addToCart = async (cartItem) => {
+  //   if (!user || user === -1) {
+  //     setError("請先登入");
+  //     return false;
+  //   }
+
+  //   try {
+  //     const response = await axios.post(`${API_BASE_URL}/cart/add`, {
+  //       userId: user.id,
+  //       ...cartItem,
+  //     });
+
+  //     if (response.data.success) {
+  //       // 重新獲取購物車資料
+  //       await fetchCart();
+  //       showToast("商品已加入購物車");
+  //       return true;
+  //     }
+  //   } catch (error) {
+  //     console.error("加入購物車失敗:", error);
+  //     setError(error.message);
+  //     return false;
+  //   }
+  // };
+
+  // 在 cartContext.js 中
   const addToCart = async (cartItem) => {
     if (!user || user === -1) {
       setError("請先登入");
@@ -108,20 +134,35 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/cart/add`, {
-        userId: user.id,
-        ...cartItem,
-      });
+      // 檢查是否為 bundle 類型
+      if (cartItem.type === "bundle") {
+        console.log("添加套組到購物車:", cartItem);
 
-      if (response.data.success) {
-        // 重新獲取購物車資料
-        await fetchCart();
-        showToast("商品已加入購物車");
-        return true;
+        // 發送包含變體選擇的請求
+        const response = await axios.post(`${API_BASE_URL}/cart/add`, {
+          userId: user.id,
+          type: "bundle",
+          bundleId: cartItem.bundleId,
+          quantity: cartItem.quantity,
+          variants: cartItem.variants, // 傳遞用戶選擇的變體
+          quantities: cartItem.quantities, // 傳遞數量信息
+        });
+
+        if (response.data.success) {
+          // 重新獲取購物車資料
+          await fetchCart();
+          showToast("套組已加入購物車");
+          return true;
+        }
+      } else {
+        const response = await axios.post(`${API_BASE_URL}/cart/add`, {
+          userId: user.id,
+          ...cartItem,
+        });
       }
     } catch (error) {
       console.error("加入購物車失敗:", error);
-      setError(error.message);
+      setError(error.response?.data?.message || error.message);
       return false;
     }
   };

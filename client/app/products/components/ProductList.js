@@ -90,7 +90,7 @@ export default function ProductList() {
       resetPageTitle();
     }
 
-    // 修改这里：无论是否有查询条件，都获取产品
+    
     fetchProducts();
   }, [currentQuery]);
 
