@@ -267,7 +267,7 @@ router.post("/complete", async (req, res) => {
         [orderId, item.variant_id, item.quantity, item.price, item.bundle_id]
       );
 
-      // 更新商品库存
+      // 更新商品庫存
       await connection.execute(
         "UPDATE product_variant SET stock = stock - ? WHERE id = ?",
         [item.quantity, item.variant_id]
@@ -368,16 +368,16 @@ router.post("/complete", async (req, res) => {
       [cartId]
     );
 
-    // 8. 如果有使用優惠券，更新優惠券使用狀態
-    if (couponCode) {
-      await connection.execute(
-        `UPDATE coupon_usage 
-         SET status = '已使用', used_at = NOW() 
-         WHERE coupon_id = (SELECT id FROM coupon WHERE code = ?) 
-         AND users_id = ?`,
-        [couponCode, userId]
-      );
-    }
+    // // 8. 如果有使用優惠券，更新優惠券使用狀態
+    // if (couponCode) {
+    //   await connection.execute(
+    //     `UPDATE coupon_usage
+    //      SET status = '已使用', used_at = NOW()
+    //      WHERE coupon_id = (SELECT id FROM coupon WHERE code = ?)
+    //      AND users_id = ?`,
+    //     [couponCode, userId]
+    //   );
+    // }
 
     await connection.commit();
 

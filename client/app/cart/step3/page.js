@@ -15,7 +15,6 @@ const Cart2 = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  console.log("user", user);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { cartData, completeCheckout } = useCart();
   const [checkoutSteps, setCheckoutSteps] = useState({
@@ -84,7 +83,8 @@ const Cart2 = () => {
       !cartData ||
       (cartData.products.length === 0 &&
         cartData.activities.length === 0 &&
-        cartData.rentals.length === 0)
+        cartData.rentals.length === 0 &&
+        cartData.bundles.length === 0)
     ) {
       router.push("/cart/step1");
       return;
@@ -242,6 +242,11 @@ const Cart2 = () => {
       </div>
     </div>
   );
+  console.log("cartData組件＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿", cartData.bundles);
+  console.log(
+    "cartData組件＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿",
+    cartData.cartData
+  );
   // 處理商品名稱
   const itemNames = [
     ...cartData.products.map(
@@ -251,6 +256,13 @@ const Cart2 = () => {
       (item) => `${item.activity_name} x ${item.quantity}`
     ),
     ...cartData.rentals.map((item) => `${item.rental_name} x ${item.quantity}`),
+    ...cartData.bundles.map(
+      (item) =>
+        `${item.name} x ${item.quantity} ${item.items.map(
+      
+          (i) => i.product_name + " x " + i.quantity
+        )}`
+    ),
   ];
 
   //linepay
@@ -286,7 +298,7 @@ const Cart2 = () => {
         }
       }
 
-      // 1️⃣ **先建立訂單**
+      // **先建立訂單**
       const orderResponse = await fetch(
         "http://localhost:3005/api/checkout/complete",
         {
@@ -308,7 +320,12 @@ const Cart2 = () => {
 
       // 2️⃣ **取得訂單金額**
       const amount = orderResult.data.totalAmount;
-      const itemNames = cartData.products.map((p) => p.product_name).join(",");
+      const itemNames = [
+        ...cartData.products.map((p) => p.product_name),
+        ...cartData.activities.map((a) => a.activity_name),
+        ...cartData.rentals.map((r) => r.rental_name),
+        ...cartData.bundles.map((b) => b.bundle_name),
+      ].join(",");
 
       // 3️⃣ **向 `/linepay/reserve` 發送付款請求**
       const response = await fetch(
@@ -433,7 +450,7 @@ const Cart2 = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            userId: 1,
+            userId: user.id,
             shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
             paymentMethod: "ecpay",
             couponCode: null,
@@ -519,7 +536,8 @@ const Cart2 = () => {
       !cartData ||
       (cartData.products.length === 0 &&
         cartData.activities.length === 0 &&
-        cartData.rentals.length === 0)
+        cartData.rentals.length === 0 &&
+        cartData.bundles.length === 0)
     ) {
       throw new Error("購物車是空的");
     }
