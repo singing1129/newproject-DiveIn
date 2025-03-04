@@ -9,11 +9,13 @@ import { nextUrl } from "../../../config";
 import { useCart } from "@/hooks/cartContext";
 import axios from "axios";
 import Link from "next/link";
-
+import { useAuth } from "@/hooks/useAuth";
 const API_BASE_URL = "http://localhost:3005/api";
 const Cart2 = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  console.log("user", user);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { cartData, completeCheckout } = useCart();
   const [checkoutSteps, setCheckoutSteps] = useState({
@@ -60,7 +62,7 @@ const Cart2 = () => {
         const response = await axios.post(
           `${API_BASE_URL}/checkout/initialize`,
           {
-            userId: 1, // 這裡應該使用實際的 userId
+            userId: user.id, // 這裡應該使用實際的 userId
           }
         );
 
@@ -291,7 +293,7 @@ const Cart2 = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: 1,
+            userId: user.id,
             paymentMethod: "linepay",
             couponCode: null,
             activityTravelers: Object.values(activityTravelers).flat(),
@@ -335,48 +337,48 @@ const Cart2 = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const transactionId = urlParams.get("transactionId");
       if (!transactionId) return;
-  
+
       const storedTransactionId = localStorage.getItem("linePayTransactionId");
       if (storedTransactionId !== transactionId) {
         console.error("❌ 交易 ID 不匹配");
         return;
       }
-  
+
       console.log("🟢 確認付款中，交易 ID:", transactionId);
-      
+
       try {
         const amount = calculateTotal();
         const response = await fetch(
           `http://localhost:3005/api/linepay/confirm?transactionId=${transactionId}&amount=${amount}`
         );
-  
+
         const result = await response.json();
         console.log("🟢 LINE Pay 確認結果:", result);
-  
+
         if (result.success) {
           console.log("✅ 付款成功，重新獲取訂單資訊...");
-          
+
           // 1️⃣ **重新請求最新訂單資訊**
           const lastOrderId = localStorage.getItem("lastOrderId");
           if (!lastOrderId) {
             console.error("❌ 找不到 lastOrderId，無法更新訂單狀態！");
             return;
           }
-  
+
           const orderResponse = await axios.get(
             `http://localhost:3005/api/order/${lastOrderId}`
           );
-  
+
           const updatedOrder = orderResponse.data.data;
           console.log("🟢 更新後的訂單資訊:", updatedOrder);
-  
+
           // 2️⃣ **更新狀態**
           if (updatedOrder.orderInfo.orderStatus === "paid") {
             alert("付款成功，訂單狀態已更新！");
           } else {
             alert("付款成功，但訂單狀態未更新，請聯絡客服！");
           }
-  
+
           // 3️⃣ **確保 `orderStatus` 不會卡在 `pending`**
           router.push("/order/success");
         } else {
@@ -386,10 +388,9 @@ const Cart2 = () => {
         console.error("❌ 確認付款時發生錯誤:", error);
       }
     };
-  
+
     confirmLinePay();
   }, []);
-  
 
   //ecpay
   const handleEcpayCheckout = async () => {
