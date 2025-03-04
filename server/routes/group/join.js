@@ -1,6 +1,6 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
-import { sendJoinGroupSuccessMail } from "../../lib/mail.js";
+import { sendJoinGroupSuccessMail, sendHostGroupSuccessMail } from "../../lib/mail.js";
 
 
 const router = express.Router();
@@ -44,12 +44,14 @@ router.post("/join", async (req, res) => {
             const link = `http://localhost:3000/group/list/${group}`
             for (const participant of participants) {
                 await sendJoinGroupSuccessMail(participant.email, groupName, groupDate, link);
-              }
+            }
+            const searchHoster = `SELECT users.email, groups.user_id FROM users JOIN groups ON groups.user_id = users.id WHERE groups.id = ${group}`
+            const [hoster] = await pool.execute(searchHoster)
+            await sendHostGroupSuccessMail(hoster[0].email,groupName, groupDate, link)
         }
         res.status(200).json({
             status: "success",
-            message: "新建跟團資料成功",
-            participants: participants
+            message: "新建跟團資料成功"
         });
     } catch (error) {
         console.log(error);

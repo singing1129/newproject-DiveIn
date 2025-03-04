@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import axios from "axios";
+import { useState, useEffect } from "react"; // 管理表單狀態 & 載入現有文章
+import { useRouter, useParams } from "next/navigation"; // 路由跳轉 & 取得文章 ID
+import Image from "next/image"; // 若有封面圖片上傳
+import axios from "axios"; // 提交表單請求
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 
 const ArticleForm = () => {
+  const { id } = useParams(); // 这里 `id` 可能是文章 ID，如果页面是创建新文章，则 `id` 可能为 undefined
+  const articleId = id || null; // 如果是创建文章，articleId 为空
   const router = useRouter();
   const [new_title, setTitle] = useState("");
   const [new_content, setContent] = useState("");
@@ -86,6 +88,15 @@ const ArticleForm = () => {
     reader.readAsDataURL(file);
   };
 
+  const [ckeditorImages, setCkeditorImages] = useState([]);
+  // 提取 CKEditor 內的圖片 URL
+  const extractImageUrls = (content) => {
+    const div = document.createElement("div");
+    div.innerHTML = content;
+    const imgTags = div.querySelectorAll("img");
+    return Array.from(imgTags).map((img) => img.getAttribute("src"));
+  };
+
   // 提交表單
   const handleSubmit = async (status) => {
     try {
@@ -95,10 +106,18 @@ const ArticleForm = () => {
       formData.append("new_categorySmall", new_categorySmall);
       formData.append("new_tags", JSON.stringify(tagsList));
       formData.append("status", status);
-      
+
       if (new_coverImage) {
         formData.append("new_coverImage", new_coverImage);
       }
+
+      // 提取 CKEditor 中的圖片 URL
+      const imgUrls = extractImageUrls(new_content || "").map((url) => {
+        // 將完整的 URL 轉換為相對路徑
+        return url.replace("http://localhost:3005", "");
+      });
+
+      formData.append("ckeditor_images", JSON.stringify(imgUrls));
 
       const response = await axios.post(
         "http://localhost:3005/api/article/create",
@@ -106,37 +125,14 @@ const ArticleForm = () => {
       );
 
       if (response.data.success) {
-        const articleId = response.data.articleId;
-        
-        // 從 CKEditor 內容中提取圖片 URL
-        const imgUrls = extractImageUrls(new_content);
-
-        // 更新 article_image，設置正確的 article_id
-        await Promise.all(
-          imgUrls.map(async (url) => {
-            await axios.post("http://localhost:3005/api/update-article-image", {
-              article_id: articleId,
-              img_url: url,
-            });
-          })
-        );
-
         alert("文章創建成功！");
-        router.push(`/article/${articleId}`);
+        router.push(`/article/${response.data.articleId}`);
       } else {
         alert("創建文章失敗");
       }
     } catch (error) {
       console.error("❌ 文章創建錯誤：", error);
     }
-  };
-
-  // 提取 CKEditor 內的圖片 URL
-  const extractImageUrls = (content) => {
-    const div = document.createElement("div");
-    div.innerHTML = content;
-    const imgTags = div.querySelectorAll("img");
-    return Array.from(imgTags).map((img) => img.getAttribute("src"));
   };
 
   return (
@@ -158,7 +154,13 @@ const ArticleForm = () => {
         </span>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(submitStatus); }} encType="multipart/form-data">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(submitStatus);
+        }}
+        encType="multipart/form-data"
+      >
         {/* 封面圖片 */}
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
@@ -234,6 +236,7 @@ const ArticleForm = () => {
           value={new_content}
           editorLoaded={true}
           onChange={(data) => setContent(data)}
+          articleId={articleId} // 这里不会再报错
         />
 
         {/* 標籤 */}

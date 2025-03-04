@@ -42,7 +42,7 @@ export default function Breadcrumb() {
       detail: "文章詳情",
       create: "建立文章",
     },
-    member: {
+    admin: {
       "": "會員中心",
       account: "我的帳戶",
       favorite: "我的最愛",
