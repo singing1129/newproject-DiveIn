@@ -22,7 +22,7 @@ import groupListRouter from "../routes/group/list.js";
 import groupDetailRouter from "../routes/group/detail.js";
 import groupCreate from "../routes/group/create.js";
 import groupJoin from "../routes/group/join.js";
-import "../cron.js" //    排程自動檢查並更新揪團狀態
+import "../cron.js"; //    排程自動檢查並更新揪團狀態
 // 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
@@ -38,7 +38,7 @@ import rentIdColorRouter from "../routes/rent/idcolors.js";
 // 論壇相關路由
 import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態文章頁
 import articleCreateRouter from "../routes/article/create.js"; // 取得新建文章所需的分類/標籤 & 新增文章
-// import articleSidebarRouter from "../routes/article/sidebar.js"; // 側邊欄篩選數據
+import articleUpdateRouter from "../routes/article/update.js"; // 文章修改
 // import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
 // import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
 // 優惠券相關路由
@@ -62,11 +62,15 @@ import passwordResetRouter from "../routes/admin/passwordReset.js";
 const app = express();
 
 // 獲取文章當前文件的目錄路徑
-// const __filename = fileURLToPath(import.meta.url); 
-const __dirname = path.dirname(fileURLToPath(import.meta.url)); 
+// const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // 設定允許的跨域來源
-const whiteList = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3005"];
+const whiteList = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3005",
+];
 const corsOptions = {
   credentials: true,
   origin(origin, callback) {
@@ -152,7 +156,7 @@ apiRouter.use("/rent", rentIdColorRouter); // 負責 `/api/rent/:id/colors`
 // 文章相關路由
 apiRouter.use("/article", articleRouter); // `/api/article` 文章列表 & 文章內容
 apiRouter.use("/article", articleCreateRouter); // `/api/article/create` 新增文章、取得新建文章所需數據
-// apiRouter.use("/article", articleSidebarRouter); // `/api/article/sidebar` 側邊欄篩選數據
+apiRouter.use("/article", articleUpdateRouter); // `/api/article/update`
 // apiRouter.use("/article", articleReplyRouter); // `/api/article/reply` 留言 & 回覆
 // apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
 

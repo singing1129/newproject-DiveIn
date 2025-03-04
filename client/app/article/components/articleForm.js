@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
-
-import Image from "next/image";
-import axios from "axios";
+import { useState, useEffect } from "react"; // 管理表單狀態 & 載入現有文章
+import { useRouter, useParams } from "next/navigation"; // 路由跳轉 & 取得文章 ID
+import Image from "next/image"; // 若有封面圖片上傳
+import axios from "axios"; // 提交表單請求
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 

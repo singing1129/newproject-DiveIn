@@ -92,10 +92,25 @@ const Edit = ({ initialData = {}, onSave }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setCoverImage(file);
+    // 檢查文件類型
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      alert("只支持 JPG 和 PNG 格式的圖片");
+      return;
+    }
+
+    // 檢查圖片大小（假設限制為 5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      alert("圖片大小不能超過 5MB");
+      return;
+    }
+
+    setCoverImage(file); // 設置選擇的圖片文件
+    // 創建一個 FileReader 實例來讀取圖片並設置預覽
     const reader = new FileReader();
-    reader.onloadend = () => setPreviewImage(reader.result);
-    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      setPreviewImage(reader.result); // 設置預覽圖片的數據
+    };
+    reader.readAsDataURL(file); // 讀取選擇的圖片為 base64 字符串
   };
 
   // 提交表單
@@ -109,10 +124,10 @@ const Edit = ({ initialData = {}, onSave }) => {
     formData.append("status", submitStatus || "draft"); // 確保 submitStatus 不是 undefined
 
     if (coverImage) {
-      formData.append("coverImage", coverImage); // 確保 coverImage 被正確地添加到 formData
+      formData.append("coverImage", coverImage);
     }
 
-    onSave(formData); // 將表單數據傳遞給父組件
+    onSave(formData, submitStatus); // 把狀態一併傳給父組件
   };
   return (
     <div className="create-form">
