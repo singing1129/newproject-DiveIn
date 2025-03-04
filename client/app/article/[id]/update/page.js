@@ -38,27 +38,28 @@ export default function ArticleUpdate() {
   }
   // 處理保存
 
-  const handleSave = async (formData, status) => {
-    try {
-      const response = await axios.put(
-        `http://localhost:3005/api/article/update/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      if (response.data.success) {
-        alert(`文章已成功${status === "published" ? "發佈" : "儲存草稿"}！`);
-        router.push(`/article/${id}`);
-      } else {
-        alert("更新文章失敗");
+const handleSave = async (formData, status) => {
+  try {
+    const response = await axios.put(
+      `http://localhost:3005/api/article/update/${id}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
-    } catch (error) {
-      console.error("❌ 提交表單失敗：", error);
+    );
+    if (response.data.status === "success") { // 改為使用 status
+      alert("文章更新成功！");
+      router.push(`/article/${id}`);
+    } else {
+      alert("更新文章失敗");
     }
-  };
+  } catch (error) {
+    console.error("❌ 提交表單失敗：", error);
+  }
+};
+
 
   return (
     <div className="container mt-4">

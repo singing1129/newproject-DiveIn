@@ -19,10 +19,8 @@ const Edit = ({ initialData = {}, onSave }) => {
 
   const [newTag, setNewTag] = useState("");
   const [tagsList, setTagsList] = useState(initialData?.tags || []);
-  const [coverImage, setCoverImage] = useState(null);
-  const [previewImage, setPreviewImage] = useState(
-    initialData?.img_url ? `http://localhost:3005${initialData.img_url}` : null
-  );
+  const [coverImage, setCoverImage] = useState(null); // 存儲選中的圖片
+  const [previewImage, setPreviewImage] = useState(null); // 存儲圖片預覽的 URL
 
   const [submitStatus, setSubmitStatus] = useState("");
 
@@ -86,6 +84,10 @@ const Edit = ({ initialData = {}, onSave }) => {
   const removeTag = (tagToRemove) => {
     setTagsList(tagsList.filter((tag) => tag !== tagToRemove));
   };
+  // 從後端返回的初始數據中獲取舊圖片 URL
+  const oldImageUrl = initialData?.img_url
+    ? `http://localhost:3005${initialData.img_url}`
+    : "http://localhost:3005/uploads/article/no_is_main.png";
 
   // 處理封面圖片選擇
   const handleImageChange = (e) => {
@@ -104,13 +106,15 @@ const Edit = ({ initialData = {}, onSave }) => {
       return;
     }
 
-    setCoverImage(file); // 設置選擇的圖片文件
-    // 創建一個 FileReader 實例來讀取圖片並設置預覽
+    // 設置新的封面圖片
+    setCoverImage(file);
+
+    // 使用 FileReader 加載圖片並更新預覽
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewImage(reader.result); // 設置預覽圖片的數據
+      setPreviewImage(reader.result); // 更新預覽圖片
     };
-    reader.readAsDataURL(file); // 讀取選擇的圖片為 base64 字符串
+    reader.readAsDataURL(file);
   };
 
   // 提交表單
@@ -146,15 +150,12 @@ const Edit = ({ initialData = {}, onSave }) => {
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
           <label htmlFor="coverImage" className="upload-square">
-            {previewImage ? (
-              <img
-                src={`${API_URL}${initialData.img_url}`}
-                alt="封面预览"
-                className="upload-image"
-              />
-            ) : (
-              <span>請選擇圖片</span>
-            )}
+          {previewImage ? (
+  <img src={previewImage} alt="封面圖片預覽" />
+) : (
+  <img src={oldImageUrl} alt="舊封面圖片" />
+)}
+
           </label>
           <input
             type="file"
@@ -185,7 +186,7 @@ const Edit = ({ initialData = {}, onSave }) => {
             onChange={(e) => setCategoryBig(e.target.value)}
             required
           >
-            <option value="">请选择大分类</option>
+            <option value="">請選擇大分類</option>
             {categoriesBig.map((category) => (
               <option
                 key={category.big_category_id}
@@ -202,7 +203,7 @@ const Edit = ({ initialData = {}, onSave }) => {
             onChange={(e) => setCategorySmall(e.target.value)}
             required
           >
-            <option value="">请选择小分类</option>
+            <option value="">請選擇小分類</option>
             {filteredSmallCategories.map((category) => (
               <option
                 key={category.small_category_id}
