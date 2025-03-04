@@ -18,7 +18,6 @@ import {
   FaCircle,
 } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
-import { useState } from "react";
 import Carousel from "./components/Swiper/Carousel";
 
 
@@ -76,7 +75,7 @@ export default function Home() {
               <FaAngleRight />
             </button>
           </div>
-        </div> */}
+        </div>
 
         {/* section start */}
         <div className={`container ${styles.sectionStart}`}>

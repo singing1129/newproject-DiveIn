@@ -25,43 +25,79 @@
   font-size: 16px;
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-decoration: none;
-  color: inherit;
-  border: 1px solid var(--gray-100-color);
-  border-radius: 5px;
-  background: var(--white);
-  overflow: hidden;
-  transition: box-shadow 0.3s ease;
-  flex: 1 1 calc(25% - 20px); /* 每個卡片佔 25% 寬度，減去間距 */
-  box-sizing: border-box; /* 確保 padding 和 border 不影響寬度 */
-  max-width: calc(25% - 20px); /* 最大寬度 */
-}
-
-.card:hover {
-  box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.1);
-}
-
-.imgContainer {
+/* 卡片容器 */
+.cardContainer {
   width: 100%;
-  height: 200px;
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 20px; /* 卡片之間的間距 */
+  max-width: calc(25% - 20px);
+}
+
+/* 卡片樣式 */
+.card {
+  flex: 1 1 calc(25% - 20px);
+  background-color: var(--white);
+  border: none;
+  /* border-radius: 8px; */
   overflow: hidden;
+  transition: all 0.4s ease-in-out;
   position: relative;
+}
+
+/* 卡片懸浮狀態 */
+.card:hover {
+  box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.08);
+  transform: scale(1.05);
+}
+
+/* 圖片容器 */
+.imgContainer {
+  position: relative;
+  /* width: 100%; */
+  aspect-ratio: 1 / 1; /* 確保所有圖片為正方形 */
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
-.imgContainer img {
+.imgContainer::after {
+  content: "";
+  position: absolute;
+  top: 40%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.4));
+  filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover .imgContainer::after {
+    opacity: 1;
+  }
+
+/* 商品圖片 */
+.img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-.circleIcons {
+.card:hover .img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.1);
+}
+
+/* 懸浮按鈕容器 */
+.hoverActionContainer {
   position: absolute;
   bottom: 10px;
   left: 50%;
@@ -72,7 +108,19 @@
   z-index: 100;
 }
 
-.circleIcon {
+/* 卡片懸浮時顯示按鈕 */
+.card:hover .hoverActionContainer {
+  opacity: 1;
+}
+
+/* 按鈕群組 */
+.iconGroup {
+  display: flex;
+  gap: 15px;
+}
+
+/* 按鈕通用樣式 */
+.hoverActionBtn {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -84,92 +132,46 @@
   transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-.circleIcon i {
+
+.hoverActionBtn svg {
   color: var(--black);
   transition: color 0.2s ease;
 }
-.circleIcon:hover {
+
+/* 懸浮互動效果 */
+.hoverActionBtn:hover {
   background: var(--primary-color);
   transform: scale(1.1);
 }
 
-.circleIcon:hover i {
+.hoverActionBtn:hover svg {
   color: var(--white);
 }
 
+/* 星級評分 */
 .stars {
   position: absolute;
-  bottom: 10px;
-  left: 10px;
+  top: 10px;
+  right: 10px;
   display: flex;
-  gap: 5px;
-  color: var(--secondary-color);
+  gap: 4px;
+  color: var(--secondary-deep-color);
 }
 
+/* 商品名稱和價格 */
 .title {
   padding: 10px;
-  text-align: center;
+  background: var(--white);
 }
 
 .title p {
-  margin: 0;
   font-size: 14px;
-  color: #000;
+  color: var(--black);
+  margin: 0;
 }
 
 .title h6 {
-  margin: 0;
   font-size: 16px;
-  font-weight: bold;
   color: var(--primary-color);
-}
-
-/* 響應式設計 */
-@media (max-width: 1200px) {
-  .card {
-    flex: 1 1 calc(33.33% - 20px); /* 每行 3 張卡片 */
-    max-width: calc(33.33% - 20px);
-  }
-}
-
-@media (max-width: 768px) {
-  .card {
-    flex: 1 1 calc(50% - 20px); /* 每行 2 張卡片 */
-    max-width: calc(50% - 20px);
-  }
-}
-
-@media (max-width: 576px) {
-  .card {
-    flex: 1 1 100%; /* 每行 1 張卡片 */
-    max-width: 100%;
-  }
-
-  .imgContainer {
-    height: 150px;
-  }
-
-  .circleIcons {
-    top: 5px;
-    right: 5px;
-  }
-
-  .circleIcon {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
-  }
-
-  .stars {
-    bottom: 5px;
-    left: 5px;
-  }
-
-  .title p {
-    font-size: 12px;
-  }
-
-  .title h6 {
-    font-size: 14px;
-  }
+  margin: 0;
 }
