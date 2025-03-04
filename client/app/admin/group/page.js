@@ -385,7 +385,7 @@ export default function MemberGroupPage() {
                           <option value="3">需AOWD證照</option>
                         </select>
                       </div>
-                      <div>
+                      <div className="d-flex flex-column gap-2">
                         <div className="fs-22px mb-15px">
                           揪團地點
                         </div>
