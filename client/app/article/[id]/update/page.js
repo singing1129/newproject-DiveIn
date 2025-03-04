@@ -36,7 +36,12 @@ export default function ArticleUpdate() {
     try {
       const response = await axios.put(
         `http://localhost:3005/api/article/update/${id}`, // 更新 URL
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // 確保正確的 Content-Type
+          },
+        }
       );
       if (response.data.success) {
         alert("文章更新成功！");
@@ -48,7 +53,6 @@ export default function ArticleUpdate() {
       console.error("❌ 提交表單失敗：", error);
     }
   };
-
   return (
     <div className="container mt-4">
       <div className="row">

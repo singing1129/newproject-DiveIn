@@ -4,21 +4,26 @@ import axios from "axios";
 import EditMyeditor from "./editMyeditor"; // 引入編輯用的 CKEditor 組件
 import "./articleCreate.css"; // 共用樣式
 
+const API_URL = "http://localhost:3005";
+
 const Edit = ({ initialData = {}, onSave }) => {
   const [title, setTitle] = useState(initialData?.title || "");
   const [content, setContent] = useState(initialData?.content || "");
+  // 使用 ID 来设置分类字段
   const [categoryBig, setCategoryBig] = useState(
-    initialData?.category_big_id || ""
+    initialData?.category_big_name || ""
   );
   const [categorySmall, setCategorySmall] = useState(
-    initialData?.article_category_small_id || ""
+    initialData?.category_small_name || ""
   );
+
   const [newTag, setNewTag] = useState("");
   const [tagsList, setTagsList] = useState(initialData?.tags || []);
   const [coverImage, setCoverImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(
-    initialData?.cover_image || null
+    initialData?.img_url ? `http://localhost:3005${initialData.img_url}` : null
   );
+
   const [submitStatus, setSubmitStatus] = useState("");
 
   // 其他狀態（分類、標籤等）
@@ -82,8 +87,8 @@ const Edit = ({ initialData = {}, onSave }) => {
     setTagsList(tagsList.filter((tag) => tag !== tagToRemove));
   };
 
-   // 處理封面圖片選擇
-   const handleImageChange = (e) => {
+  // 處理封面圖片選擇
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -102,14 +107,13 @@ const Edit = ({ initialData = {}, onSave }) => {
     formData.append("article_category_small_id", categorySmall || null); // 確保 categorySmall 不是 undefined
     formData.append("tags", JSON.stringify(tagsList || [])); // 確保 tagsList 不是 undefined
     formData.append("status", submitStatus || "draft"); // 確保 submitStatus 不是 undefined
-  
+
     if (coverImage) {
-      formData.append("coverImage", coverImage);
+      formData.append("coverImage", coverImage); // 確保 coverImage 被正確地添加到 formData
     }
-  
+
     onSave(formData); // 將表單數據傳遞給父組件
   };
-
   return (
     <div className="create-form">
       <div className="article-controls-btn">
@@ -128,7 +132,11 @@ const Edit = ({ initialData = {}, onSave }) => {
         <div className="image-upload-box">
           <label htmlFor="coverImage" className="upload-square">
             {previewImage ? (
-              <img src={previewImage} alt="封面預覽" className="upload-image" />
+              <img
+                src={`${API_URL}${initialData.img_url}`}
+                alt="封面预览"
+                className="upload-image"
+              />
             ) : (
               <span>請選擇圖片</span>
             )}
@@ -156,14 +164,13 @@ const Edit = ({ initialData = {}, onSave }) => {
         {/* 文章分類 */}
         <div className="secondaryTitle">文章分類</div>
         <div className="category-container">
-          {/* 大分類 */}
           <select
             className="form-control category-big"
             value={categoryBig}
             onChange={(e) => setCategoryBig(e.target.value)}
             required
           >
-            <option value="">請選擇大分類</option>
+            <option value="">请选择大分类</option>
             {categoriesBig.map((category) => (
               <option
                 key={category.big_category_id}
@@ -174,16 +181,18 @@ const Edit = ({ initialData = {}, onSave }) => {
             ))}
           </select>
 
-          {/* 小分類 */}
           <select
             className="form-control category-small"
             value={categorySmall}
             onChange={(e) => setCategorySmall(e.target.value)}
             required
           >
-            <option value="">請選擇小分類</option>
-            {filteredSmallCategories.map((category, index) => (
-              <option key={index} value={category.small_category_id}>
+            <option value="">请选择小分类</option>
+            {filteredSmallCategories.map((category) => (
+              <option
+                key={category.small_category_id}
+                value={category.small_category_id}
+              >
                 {category.small_category_name}
               </option>
             ))}
