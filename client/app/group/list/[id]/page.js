@@ -9,7 +9,7 @@ import styles from "../products.module.css";
 import { FaRegCalendar } from "react-icons/fa";
 import Calendar from "react-calendar";
 import "./Calendar.css";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function GroupDetailPage() {
   const [count, setCount] = useState(0);
@@ -71,7 +71,7 @@ export default function GroupDetailPage() {
       const res = await axios.post(api + "/group/join", joinInformation);
       if (res.data.status == "success") {
         alert("成功跟團");
-        window.location = `/admin/group`;
+        window.location = `/member/group`;
       } else {
         alert(res.data.message || "跟團失敗！請稍後再試");
       }
