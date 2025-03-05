@@ -29,7 +29,7 @@ import { usePathname } from "next/navigation";
 
 export default function MemberLayout({ children }) {
   const pathname = usePathname();
-  const noLayoutPages = ["/admin/login", "/admin/register", "/admin/login2", "/admin/register2"];
+  const noLayoutPages = ["/admin/login", "/admin/register", "/admin/login2", "/admin/register2", "/admin/coupon/coupon-claim"];
   const isNoLayoutPage = noLayoutPages.includes(pathname);
 
   // 如果是登入頁面，直接返回 children，不渲染任何佈局

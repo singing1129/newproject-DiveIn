@@ -45,8 +45,9 @@ import articleUpdateRouter from "../routes/article/update.js"; // 文章修改
 // import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
 // import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
 // 優惠券相關路由
-import couponRouter from "../routes/coupon/index.js";
-import couponClaimRouter from "../routes/coupon/claim.js";
+import myCouponRouter from "../routes/coupon/myCoupon.js";
+import couponClaimRouter from "../routes/coupon/couponClaim.js";
+import couponHistoryRouter from "../routes/coupon/couponHistory.js";
 // 會員相關路由
 import memberRouter from "../routes/admin/index.js";
 import memberMyGroupRouter from "../routes/admin/mygroup.js";
@@ -174,8 +175,9 @@ apiRouter.use("/article", articleUpdateRouter); // `/api/article/update`
 // apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
 
 // 優惠券相關路由
-apiRouter.use("/coupon", couponRouter); // 負責 `/api/coupon/index`
-apiRouter.use("/coupon", couponClaimRouter); // 負責 `/api/coupon/claim`
+apiRouter.use("/coupon", myCouponRouter); // 負責 `/api/coupon/myCoupon`
+apiRouter.use("/coupon", couponClaimRouter); // 負責 `/api/coupon/couponClaim`
+apiRouter.use("/coupon", couponHistoryRouter); // 負責 `/api/coupon/couponHistory`
 
 // 會員相關路由
 apiRouter.use("/admin", memberRouter);
