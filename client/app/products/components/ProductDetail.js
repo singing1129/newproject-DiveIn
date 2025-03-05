@@ -44,6 +44,13 @@ export default function ProductDetail() {
   const [allImages, setAllImages] = useState([]);
   const mainSwiperRef = useRef(null);
 
+  const handleShare = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    showToast("連結已複製到剪貼簿", {
+      style: { backgroundColor: "green" },
+    });
+  };
   //瀏覽紀錄
   useEffect(() => {
     if (!product) return;
@@ -345,7 +352,7 @@ export default function ProductDetail() {
                     {product.brand_name}
                   </h3>
                   <div className="d-flex gap-2">
-                    <button className="btn p-0">
+                    <button className="btn p-0" onClick={handleShare}>
                       <i className="fa-solid fa-share-from-square fs-4"></i>
                     </button>
                     <button

@@ -105,7 +105,7 @@ router.get("/:orderId", async (req, res) => {
 
     const bundles = [];
     for (const { bundle_id } of bundleIds) {
-      // 查询套装基本信息
+      // 查詢套裝基本
       const [bundleInfo] = await connection.execute(
         `SELECT id, name, description, discount_price
          FROM product_bundle
@@ -115,7 +115,7 @@ router.get("/:orderId", async (req, res) => {
 
       if (bundleInfo.length === 0) continue;
 
-      // 查询套装中的商品
+      // 查詢套裝
       const [bundleItems] = await connection.execute(
         `SELECT oi.id, oi.variant_id, oi.quantity, oi.price,
                 pv.product_id, p.name as product_name, c.name as color_name, 
