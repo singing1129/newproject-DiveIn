@@ -82,10 +82,7 @@ export default function HeaderPop({ show, activeMenu }) {
                   <Link href="/group/join">參加揪團</Link>
                 </li>
                 <li>
-                  <Link href="/group/my">我的揪團</Link>
-                </li>
-                <li>
-                  <Link href="/group/nearby">附近揪團</Link>
+                  <Link href="/admin/group">我的揪團</Link>
                 </li>
               </ul>
             </div>
@@ -93,16 +90,16 @@ export default function HeaderPop({ show, activeMenu }) {
               <h3>熱門目的地</h3>
               <ul>
                 <li>
-                  <Link href="/group/locations/kenting">墾丁</Link>
+                  <a href="http://localhost:3000/group/list?page=1&limit=24&sort=1&location=1">屏東</a>
                 </li>
                 <li>
-                  <Link href="/group/locations/greenisland">綠島</Link>
+                  <a href="http://localhost:3000/group/list?page=1&limit=24&sort=1&location=7">小琉球</a>
                 </li>
                 <li>
-                  <Link href="/group/locations/orchidisland">蘭嶼</Link>
+                  <a href="http://localhost:3000/group/list?page=1&limit=24&sort=1&location=14">宿霧</a>
                 </li>
                 <li>
-                  <Link href="/group/locations/penghu">澎湖</Link>
+                  <a href="http://localhost:3000/group/list?page=1&limit=24&sort=1&location=10">沖繩</a>
                 </li>
               </ul>
             </div>
