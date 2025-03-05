@@ -39,7 +39,7 @@ const favoriteStore = {
   // 檢查是否已收藏
   isFavorite(type, id) {
     const storeKey = this.getStoreKey(type);
-    return this[storeKey].has(id);
+    return this[storeKey] instanceof Set && this[storeKey].has(id);
   },
 
   // 獲取正確的存儲 key
@@ -69,7 +69,7 @@ export default function useFavorite(itemId, type = "products", options = {}) {
   const [error, setError] = useState(null);
   const { showToast } = useToast();
   const { user } = useAuth();
-  const { disableToast = false } = options; // 设置默认值为false
+  const { disableToast = false } = options; // 設置默認值為false
 
   const API_BASE_URL = "http://localhost:3005/api/favorites";
 
@@ -109,7 +109,7 @@ export default function useFavorite(itemId, type = "products", options = {}) {
               Object.keys(response.data.data).forEach((key) => {
                 const items = response.data.data[key];
                 const ids = items.map((item) => {
-                  // 确保使用正确的ID字段
+                  // 確保使用正確的的ID字段
                   return item[`${key.slice(0, -1)}_id`]; // 例如：products -> product_id
                 });
                 favoriteStore.setInitialFavorites(key, ids);
