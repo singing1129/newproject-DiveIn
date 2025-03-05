@@ -62,7 +62,6 @@ export default function GroupHomePage() {
               我要開團
             </button>
           </Link>
-
           <Link href="/group/list">
             <button className="btn btn-join">
               <i className="icon bi bi-people-fill" /> 我要跟團

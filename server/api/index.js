@@ -24,6 +24,8 @@ import groupDetailRouter from "../routes/group/detail.js";
 import groupCreate from "../routes/group/create.js";
 import groupJoin from "../routes/group/join.js";
 import "../cron.js"; //    排程自動檢查並更新揪團狀態
+import groupUpdate from "../routes/group/update.js"
+import createWebsocketRomm from "../routes/webSocket/index.js"
 // 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
@@ -148,6 +150,8 @@ apiRouter.use("/group", groupListRouter);
 apiRouter.use("/group", groupDetailRouter);
 apiRouter.use("/group", groupCreate);
 apiRouter.use("/group", groupJoin);
+apiRouter.use("/group", groupUpdate);
+apiRouter.use("/websocket", createWebsocketRomm);
 
 // 租借相關路由
 apiRouter.use("/rent", rentRouter); // 負責 `/api/rent`
@@ -161,6 +165,7 @@ apiRouter.use("/rent", rentSearchRouter); // 負責 `/api/rent/search`
 apiRouter.use("/rent", rentDetailRouter); // 負責 `/api/rent/:id`
 apiRouter.use("/rent", rentRecommendedRouter); // 負責 `/api/rent/:id/recommended`
 apiRouter.use("/rent", rentIdColorRouter); // 負責 `/api/rent/:id/colors`
+
 // 文章相關路由
 apiRouter.use("/article", articleRouter); // `/api/article` 文章列表 & 文章內容
 apiRouter.use("/article", articleCreateRouter); // `/api/article/create` 新增文章、取得新建文章所需數據

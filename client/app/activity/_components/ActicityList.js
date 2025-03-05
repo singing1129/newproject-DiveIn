@@ -9,99 +9,89 @@ import ProductCard from "./ProductCard";
 import { FaRegCalendar } from "react-icons/fa";
 import Calendar from "react-calendar";
 import "./Calendar.css";
-import { max } from "lodash";
 
 // API 基礎 URL
 const API_BASE_URL = "http://localhost:3005/api";
 
 export default function ProductList() {
-    // 撈取資料
     const [products, setProducts] = useState([]);
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    // 狀態管理
     const [showDropdown, setShowDropdown] = useState(false);
     const [showDisplayDropdown, setShowDisplayDropdown] = useState(false);
     const [selectedSort, setSelectedSort] = useState({
         text: "排序",
         value: 1,
     });
-    const [showClassification, setShowClassification] = useState(false);
     const [selectedDisplay, setSelectedDisplay] = useState("每頁顯示24件");
-    const [showBrandClassification, setShowBrandClassification] =
-        useState(false);
-    const [location, setLocation] = useState("");
-    const [country, setCountry] = useState("");
-    const [language, setLanguage] = useState([]);
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
-    const [duration, setDuration] = useState("");
+    const [location, setLocation] = useState(searchParams.get("location") || "");
+    const [country, setCountry] = useState(searchParams.get("country") || "");
+    const [language, setLanguage] = useState(searchParams.getAll("language") || []);
+    const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
+    const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
+    const [duration, setDuration] = useState(searchParams.getAll("duration") || []);
+    const [type,setType] = useState(searchParams.get("type") || "")
 
     // 分頁
-    //parseInt 把字串轉成數字    || 負責設定預設值
     const [page, setPage] = useState(parseInt(searchParams.get("page")) || 1);
-    const [limit, setLimit] = useState(
-        parseInt(searchParams.get("limit")) || 24
-    );
+    const [limit, setLimit] = useState(parseInt(searchParams.get("limit")) || 24);
     const [totalPages, setTotalPages] = useState(1);
-    // 可以放動畫 先不動
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 獲取產品資料
+    // 從 URL 同步篩選條件並獲取資料
     useEffect(() => {
-        console.log("有動");
-        fetchActivity(page, limit, selectedSort.value, location,country,language,minPrice,maxPrice,duration); // 讓 API 依照當前排序方式請求
-    }, [page, limit, selectedSort.value, location,country,language,minPrice,maxPrice,duration]);
+        fetchActivity(page, limit, selectedSort.value, location, country, language, minPrice, maxPrice, duration,type);
+    }, [page, limit, selectedSort.value, location, country, language, minPrice, maxPrice, duration,type]);
+
+    // 更新 URL 的函數
+    const updateURL = (newPage, newLimit, sortValue, loc, cnt, lang, minP, maxP, dur,type) => {
+        const params = new URLSearchParams();
+        params.set("page", newPage);
+        params.set("limit", newLimit);
+        params.set("sort", sortValue);
+        if (loc) params.set("location", loc);
+        if (cnt) params.set("country", cnt);
+        if (lang && lang.length > 0) lang.forEach(l => params.append("language", l));
+        if (minP) params.set("minPrice", minP);
+        if (maxP) params.set("maxPrice", maxP);
+        if (dur && dur.length > 0) dur.forEach(d => params.append("duration", d));
+        if (type) params.set("type", type);
+        router.push(`/activity?${params.toString()}`);
+    };
 
     // 每頁顯示按鈕
     const handleDisplayChange = (newLimit, displayText) => {
         setSelectedDisplay(displayText);
         setLimit(newLimit);
-        setPage(1); // 切換顯示數量時重置為第一頁
-        setShowDisplayDropdown(false); //關閉下拉選單
+        setPage(1); // 重置為第一頁
+        setShowDisplayDropdown(false);
+        updateURL(1, newLimit, selectedSort.value, location, country, language, minPrice, maxPrice, duration);
     };
 
     // 處理排序
     const handleSort = (text, value) => {
-        console.log("text:"+text , "value:"+value);
         setSelectedSort({ text, value });
-        setShowDropdown(false); // 關閉下拉選單
-
-        const sortedProducts = [...products];
-        switch (value) {
-            case 1: // 綜合
-                sortedProducts.sort((a, b) => a.id - b.id);
-                break;
-            case 2: // 最新上架
-                sortedProducts.sort(
-                    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-                );
-                break;
-            case 3: // 價格：由低到高
-                sortedProducts.sort((a, b) => a.price - b.price);
-                break;
-            case 4: // 價格：由高到低
-                sortedProducts.sort((a, b) => b.price - a.price);
-                break;
-            default:
-                break;
-        }
+        setShowDropdown(false);
+        updateURL(page, limit, value, location, country, language, minPrice, maxPrice, duration);
     };
-
 
     // 處理側邊欄篩選
     const handleFilter = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const choselanguage = formData.getAll("language");
-        const minPrice = formData.get("minPrice");
-        console.log("minPrice:"+minPrice);
-        const maxPrice = formData.get("maxPrice");
-        const duration = formData.getAll("duration");
+        const minP = formData.get("minPrice");
+        const maxP = formData.get("maxPrice");
+        const dur = formData.getAll("duration");
         setLanguage(choselanguage);
-        setMinPrice(minPrice);
-        setMaxPrice(maxPrice);
-        setDuration(duration);
+        setMinPrice(minP);
+        setMaxPrice(maxP);
+        setDuration(dur);
+        setPage(1); // 重置為第一頁
+        updateURL(1, limit, selectedSort.value, location, country, choselanguage, minP, maxP, dur);
     };
 
     // 處理點擊外部關閉下拉選單
@@ -121,46 +111,24 @@ export default function ProductList() {
         currentPage,
         itemsPerPage,
         sortValue,
-        location,
-        country,
-        language,
-        minPrice,
-        maxPrice,
-        duration
+        loc,
+        cnt,
+        lang,
+        minP,
+        maxP,
+        dur,
+        type
     ) => {
         try {
             setLoading(true);
-            let url = `${API_BASE_URL}/activity?page=${currentPage}&limit=${itemsPerPage}&sort=${sortValue}&location=${location}`;
-            if(country){
-                url += `&country=${country}`;
-            }
-            if (language) {
-                if (language.length > 1) {
-                    language.map((v) => {
-                        url += `&language=${v}`;
-                    });
-                } else {
-                    url += `&language=${language}`;
-                }
-            }
-            if(minPrice){
-                url += `&minPrice=${minPrice}`
-            }
-            if(maxPrice){
-                url += `&maxPrice=${maxPrice}`
-            }
-            if(duration){
-                if (duration.length > 1) {
-                    duration.map((v) => {
-                        url += `&duration=${v}`;
-                    });
-                } else {
-                    url += `&duration=${duration}`;
-                }
-            }
+            let url = `${API_BASE_URL}/activity?page=${currentPage}&limit=${itemsPerPage}&sort=${sortValue}&location=${loc || ""}&country=${cnt || ""}`;
+            if (lang && lang.length > 0) lang.forEach(l => url += `&language=${l}`);
+            if (minP) url += `&minPrice=${minP}`;
+            if (maxP) url += `&maxPrice=${maxP}`;
+            if (dur && dur.length > 0) dur.forEach(d => url += `&duration=${d}`);
+            if (type) url+= `&type=${type}`
             console.log(url);
             const response = await axios.get(url);
-            console.log("API Response:", response.data);
             if (response.data.status === "success") {
                 setProducts(response.data.data);
                 setTotalPages(response.data.pagination.totalPages);
@@ -176,339 +144,106 @@ export default function ProductList() {
         }
     };
 
+    // 處理地點和國家篩選
+    const handleLocationClick = (newLocation, newCountry = "") => {
+        setLocation(newLocation);
+        setCountry(newCountry);
+        setPage(1); // 重置為第一頁
+        updateURL(1, limit, selectedSort.value, newLocation, newCountry, language, minPrice, maxPrice, duration, type);
+    };
+
+    // 處理活動類型
+    const handleType = (e)=>{
+        setType(e)
+        updateURL(1, limit, selectedSort.value, location, country, language, minPrice, maxPrice, duration, type);
+    }
+
+
+    // 處理分頁
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+        updateURL(newPage, limit, selectedSort.value, location, country, language, minPrice, maxPrice, duration, type);
+    };
+
     return (
         <div className="container py-4">
             <div className="row">
                 {/* 左側邊欄 */}
                 <div className="col-lg-3 col-md-4">
-                    <div className="d-grid ">
+                    <div className="d-grid">
                         {/* 活動地點分類 */}
-                        <div
-                            className={`${styles.productClassification} ${styles.sideCard} ${styles.open}`}>
+                        <div className={`${styles.productClassification} ${styles.sideCard} ${styles.open}`}>
                             <div className={styles.cardTitle}>
                                 <h5>活動地點</h5>
                                 <i className="bi bi-chevron-down"></i>
                             </div>
                             <ul className={styles.classificationMenu}>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            const newCountry = "台灣";
-                                            setCountry(newCountry);
-                                        }}>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", "台灣"); }}>
                                         台灣
                                     </a>
                                     <ul className={styles.submenu}>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 1;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                屏東
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 2;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                台東
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 3;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                澎湖
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 4;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                綠島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 5;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                蘭嶼
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 7;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                小琉球
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 8;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                其他
-                                            </a>
-                                        </li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("1"); }}>屏東</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("2"); }}>台東</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("3"); }}>澎湖</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("4"); }}>綠島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("5"); }}>蘭嶼</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("7"); }}>小琉球</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("8"); }}>其他</a></li>
                                     </ul>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            const newCountry = "日本";
-                                            setCountry(newCountry);
-                                            // updateURL(
-                                            //     page,
-                                            //     limit,
-                                            //     selectedSort.value,
-                                            //     "",
-                                            //     newCountry
-                                            // );
-                                        }}
-                                    >
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", "日本"); }}>
                                         日本
                                     </a>
                                     <ul className={styles.submenu}>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 10;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                沖繩
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 11;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                石垣島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 12;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                其他
-                                            </a>
-                                        </li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("10"); }}>沖繩</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("11"); }}>石垣島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("12"); }}>其他</a></li>
                                     </ul>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            const newCountry = "菲律賓";
-                                            setCountry(newCountry);
-                                            // updateURL(
-                                            //     page,
-                                            //     limit,
-                                            //     selectedSort.value,
-                                            //     "",
-                                            //     newCountry
-                                            // );
-                                        }}
-                                    >
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", "菲律賓"); }}>
                                         菲律賓
                                     </a>
                                     <ul className={styles.submenu}>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 13;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                長灘島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 14;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                宿霧
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 15;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                薄荷島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLocation = 16;
-                                                    setLocation(newLocation);
-                                                    // updateURL(
-                                                    //     page,
-                                                    //     limit,
-                                                    //     selectedSort.value,
-                                                    //     newLocation
-                                                    // );
-                                                }}>
-                                                其他
-                                            </a>
-                                        </li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("13"); }}>長灘島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("14"); }}>宿霧</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("15"); }}>薄荷島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("16"); }}>其他</a></li>
                                     </ul>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                        // onClick={(e) => {
-                                        //     e.preventDefault();
-                                        //     handleCategoryFilter("蛙鞋");
-                                        // }}
-                                    >
-                                        其他
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", ""); }}>
+                                        所有活動
                                     </a>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            const newLocation = "";
-                                            const newCountry = ""
-                                            setLocation(newLocation);
-                                            setCountry(newCountry)
-                                        }}>
+                            </ul>
+                        </div>
+                        {/* 活動分類 */}
+                        <div className={`${styles.productClassification} ${styles.sideCard} ${styles.open}`}>
+                            <div className={styles.cardTitle}>
+                                <h5>活動類型</h5>
+                                <i className="bi bi-chevron-down"></i>
+                            </div>
+                            <ul className={styles.classificationMenu}>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(1); }}>
+                                        浮潛
+                                    </a>
+                                </li>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(2); }}>
+                                        水肺潛水
+                                    </a>
+                                </li>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(3); }}>
+                                        自由潛水
+                                    </a>
+                                </li>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(""); }}>
                                         所有活動
                                     </a>
                                 </li>
@@ -522,202 +257,61 @@ export default function ProductList() {
                                     <h5>活動篩選</h5>
                                 </div>
                                 <div className={styles.filterSection}>
-                                    {/* TODO: p2 證照資格篩選 */}
-                                    {/* <div className={styles.filterTitle}>
-                                    證照資格
-                                </div>
-                                <div className={styles.checkboxGroup}>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-leaders"
-                                        />
-                                        <label htmlFor="brand-leaders">
-                                            無須證照 (4)
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-owd"
-                                        />
-                                        <label htmlFor="brand-owd">
-                                            需OWD證照 (15)
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-aowd"
-                                        />
-                                        <label htmlFor="brand-aowd">
-                                            需AOWD證照 (15)
-                                        </label>
-                                    </div>
-                                </div> */}
-                                    {/* TODO: 導覽語言這邊是不是要直接reduce然後做成陣列，就變成語言是活的，然後數量也比較好算？但可能要useEffect確保他只有在第一次載入時讀取，不然他會一直變動影響ui */}
-                                    <div className={styles.filterTitle}>
-                                        導覽語言
-                                    </div>
+                                    <div className={styles.filterTitle}>導覽語言</div>
                                     <div className={styles.checkboxGroup}>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="language-english"
-                                                value="english"
-                                                name="language"
-                                            />
-                                            <label htmlFor="language-english">
-                                                英文
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="language-english" value="english" name="language" defaultChecked={language.includes("english")} />
+                                            <label htmlFor="language-english">英文</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="language-chinese"
-                                                value="中文"
-                                                name="language"
-                                            />
-                                            <label htmlFor="language-chinese">
-                                                中文
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="language-chinese" value="中文" name="language" defaultChecked={language.includes("中文")} />
+                                            <label htmlFor="language-chinese">中文</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="language-jp"
-                                                value="日本語"
-                                                name="language"
-                                            />
-                                            <label htmlFor="language-jp">
-                                                日文
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="language-jp" value="日本語" name="language" defaultChecked={language.includes("日本語")} />
+                                            <label htmlFor="language-jp">日文</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="language-korean"
-                                                value="한국어"
-                                                name="language"
-                                            />
-                                            <label htmlFor="language-korean">
-                                                韓文
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="language-korean" value="한국어" name="language" defaultChecked={language.includes("한국어")} />
+                                            <label htmlFor="language-korean">韓文</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="language-cantonese"
-                                                value="廣東話"
-                                                name="language"
-                                            />
-                                            <label htmlFor="language-cantonese">
-                                                廣東話
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="language-cantonese" value="廣東話" name="language" defaultChecked={language.includes("廣東話")} />
+                                            <label htmlFor="language-cantonese">廣東話</label>
                                         </div>
                                     </div>
-                                    <div className={styles.filterTitle}>
-                                        價格區間
-                                    </div>
+                                    <div className={styles.filterTitle}>價格區間</div>
                                     <div className={styles.priceInputs}>
-                                        <input
-                                            type="number"
-                                            placeholder="最低"
-                                            className={styles.priceInput}
-                                            name="minPrice"
-                                        />
+                                        <input type="number" placeholder="最低" className={styles.priceInput} name="minPrice" defaultValue={minPrice} />
                                         <span>-</span>
-                                        <input
-                                            type="number"
-                                            placeholder="最高"
-                                            className={styles.priceInput}
-                                            name="maxPrice"
-                                        />
+                                        <input type="number" placeholder="最高" className={styles.priceInput} name="maxPrice" defaultValue={maxPrice} />
                                     </div>
-                                    <div className={styles.filterTitle}>
-                                        行程時間
-                                    </div>
+                                    <div className={styles.filterTitle}>行程時間</div>
                                     <div className={styles.checkboxGroup}>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="duration-less4"
-                                                value="less4"
-                                                name="duration"
-                                            />
-                                            <label htmlFor="duration-less4">
-                                                少於4小時
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="duration-less4" value="less4" name="duration" defaultChecked={duration.includes("less4")} />
+                                            <label htmlFor="duration-less4">少於4小時</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="duration-4toDay"
-                                                value="4toDay"
-                                                name="duration"
-                                            />
-                                            <label htmlFor="duration-4toDay">
-                                                4小時-1日
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="duration-4toDay" value="4toDay" name="duration" defaultChecked={duration.includes("4toDay")} />
+                                            <label htmlFor="duration-4toDay">4小時-1日</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="oneToTwo"
-                                                value="oneToTwo"
-                                                name="duration"
-                                            />
-                                            <label htmlFor="oneToTwo">
-                                                1日-2日
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="oneToTwo" value="oneToTwo" name="duration" defaultChecked={duration.includes("oneToTwo")} />
+                                            <label htmlFor="oneToTwo">1日-2日</label>
                                         </div>
                                         <div className={styles.checkboxItem}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.checkbox}
-                                                id="twoDaysUp"
-                                                value="twoDaysUp"
-                                                name="duration"
-                                            />
-                                            <label htmlFor="twoDaysUp">
-                                                2日以上
-                                            </label>
+                                            <input type="checkbox" className={styles.checkbox} id="twoDaysUp" value="twoDaysUp" name="duration" defaultChecked={duration.includes("twoDaysUp")} />
+                                            <label htmlFor="twoDaysUp">2日以上</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* TODO: p2 活動日期選擇 */}
-                            {/* <div className={styles.sideCard}>
-                                <div className={styles.cardTitle}>
-                                    <h5 className="d-flex gap-2 align-items-center">
-                                        <FaRegCalendar />
-                                        選擇出發日期
-                                    </h5>
-                                </div>
-                                <div className="">
-                                    <Calendar />
-                                </div>
-                            </div> */}
-
-                            <button className="btn btn-primary w-100 mb-3">
-                                套用篩選
-                            </button>
+                            <button className="btn btn-primary w-100 mb-3">套用篩選</button>
                         </form>
 
-                        {/* 最新活動 */}
-                        <div className={styles.sideCard}>
+                         {/* 最新活動 */}
+                         <div className={styles.sideCard}>
                             <div className={styles.cardTitle}>
                                 <h5>最新活動</h5>
                             </div>
@@ -805,146 +399,60 @@ export default function ProductList() {
                 {/* 右側主要內容區 */}
                 <div className="col-lg-9 col-md-8">
                     {/* 商品介紹 */}
-                    <div className="mb-4">
-                        <h3 className="mb-3">潛入藍色世界，追逐自由與夢想</h3>
-                        <p className="mb-2">
-                            歡迎來到我們的課程與活動專區，這裡匯集了潛水愛好者不可錯過的精彩體驗！從基礎潛水課程到進階技術培訓，還有刺激有趣的深海探險活動，我們為您精心設計每一項內容，確保安全與專業性兼具。無論您是剛開始接觸潛水還是已有豐富經驗，這裡都有適合您的選擇。
-                        </p>
-                        <p>
-                            現在報名，還可享受獨家優惠：單次報名滿 $3000
-                            即贈精美潛水紀念品，部分課程更有限時折扣活動！立即瀏覽，輕鬆找到專屬於您的潛水體驗，為下一次海底旅程做好準備。學習新技能、探索深海奧秘，就從這裡開始！
-                        </p>
-                    </div>
-
-                    {/* 輪播圖 */}
-                    <div
-                        className="position-relative mb-4"
-                        style={{ height: "188px", overflow: "hidden" }}>
-                        <Image
-                            src="/image/product-top-slide.png"
-                            alt="潛水裝備橫幅"
-                            priority
-                            fill
-                            style={{ objectFit: "cover" }}
-                        />
-                        <div className="position-absolute top-50 end-0 translate-middle-y pe-5">
-                            <div className="text-end">
-                                <h3 className="text-white mb-4">
-                                    專業裝備，
-                                    <br />
-                                    陪你深海冒險每一步！
-                                </h3>
-                            </div>
-                        </div>
-                    </div>
+                                        <div className="mb-4">
+                                            <h3 className="mb-3">潛入藍色世界，追逐自由與夢想</h3>
+                                            <p className="mb-2">
+                                                歡迎來到我們的課程與活動專區，這裡匯集了潛水愛好者不可錯過的精彩體驗！從基礎潛水課程到進階技術培訓，還有刺激有趣的深海探險活動，我們為您精心設計每一項內容，確保安全與專業性兼具。無論您是剛開始接觸潛水還是已有豐富經驗，這裡都有適合您的選擇。
+                                            </p>
+                                            <p>
+                                                現在報名，還可享受獨家優惠：單次報名滿 $3000
+                                                即贈精美潛水紀念品，部分課程更有限時折扣活動！立即瀏覽，輕鬆找到專屬於您的潛水體驗，為下一次海底旅程做好準備。學習新技能、探索深海奧秘，就從這裡開始！
+                                            </p>
+                                        </div>
+                    
+                                        {/* 輪播圖 */}
+                                        <div
+                                            className="position-relative mb-4"
+                                            style={{ height: "188px", overflow: "hidden" }}>
+                                            <Image
+                                                src="/image/product-top-slide.png"
+                                                alt="潛水裝備橫幅"
+                                                priority
+                                                fill
+                                                style={{ objectFit: "cover" }}
+                                            />
+                                            <div className="position-absolute top-50 end-0 translate-middle-y pe-5">
+                                                <div className="text-end">
+                                                    <h3 className="text-white mb-4">
+                                                        專業裝備，
+                                                        <br />
+                                                        陪你深海冒險每一步！
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                        </div>
 
                     {/* 排序和顯示選項 */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <div className="dropdown">
-                            <button
-                                className="btn btn-outline-secondary dropdown-toggle"
-                                onClick={() =>
-                                    setShowDisplayDropdown(!showDisplayDropdown)
-                                }>
+                            <button className="btn btn-outline-secondary dropdown-toggle" onClick={() => setShowDisplayDropdown(!showDisplayDropdown)}>
                                 {selectedDisplay}
                             </button>
-                            <ul
-                                className={`dropdown-menu ${
-                                    showDisplayDropdown ? "show" : ""
-                                }`}>
-                                <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleDisplayChange(
-                                                24,
-                                                "每頁顯示24件"
-                                            )
-                                        }>
-                                        每頁顯示24件
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleDisplayChange(
-                                                48,
-                                                "每頁顯示48件"
-                                            )
-                                        }>
-                                        每頁顯示48件
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleDisplayChange(
-                                                72,
-                                                "每頁顯示72件"
-                                            )
-                                        }>
-                                        每頁顯示72件
-                                    </button>
-                                </li>
+                            <ul className={`dropdown-menu ${showDisplayDropdown ? "show" : ""}`}>
+                                <li><button className="dropdown-item" onClick={() => handleDisplayChange(24, "每頁顯示24件")}>每頁顯示24件</button></li>
+                                <li><button className="dropdown-item" onClick={() => handleDisplayChange(48, "每頁顯示48件")}>每頁顯示48件</button></li>
+                                <li><button className="dropdown-item" onClick={() => handleDisplayChange(72, "每頁顯示72件")}>每頁顯示72件</button></li>
                             </ul>
                         </div>
-
                         <div className="dropdown">
-                            <button
-                                className="btn btn-outline-secondary dropdown-toggle"
-                                onClick={() => setShowDropdown(!showDropdown)}>
+                            <button className="btn btn-outline-secondary dropdown-toggle" onClick={() => setShowDropdown(!showDropdown)}>
                                 <i className="bi bi-sort-down-alt me-2"></i>
                                 {selectedSort.text}
                             </button>
-                            <ul
-                                className={`dropdown-menu ${
-                                    showDropdown ? "show" : ""
-                                }`}>
-                                <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() => handleSort("綜合", 1)}>
-                                        綜合
-                                    </button>
-                                </li>
-                                {/* <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleSort("最新上架", 2)
-                                        }>
-                                        最新上架
-                                    </button>
-                                </li> */}
-                                <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleSort("價格：由低到高", 3)
-                                        }>
-                                        價格：由低到高
-                                    </button>
-                                </li>
-                                <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleSort("價格：由高到低", 4)
-                                        }>
-                                        價格：由高到低
-                                    </button>
-                                </li>
-                                {/* <li>
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            handleSort("商品評分最高", 5)
-                                        }>
-                                        商品評分最高
-                                    </button>
-                                </li> */}
+                            <ul className={`dropdown-menu ${showDropdown ? "show" : ""}`}>
+                                <li><button className="dropdown-item" onClick={() => handleSort("綜合", 1)}>綜合</button></li>
+                                <li><button className="dropdown-item" onClick={() => handleSort("價格：由低到高", 3)}>價格：由低到高</button></li>
+                                <li><button className="dropdown-item" onClick={() => handleSort("價格：由高到低", 4)}>價格：由高到低</button></li>
                             </ul>
                         </div>
                     </div>
@@ -958,86 +466,39 @@ export default function ProductList() {
 
                     {/* 分頁 */}
                     <div className="d-flex justify-content-between align-items-center mt-4">
-                        <div>
-                            第{page}頁/共{totalPages}頁
-                        </div>
+                        <div>第{page}頁/共{totalPages}頁</div>
                         <nav aria-label="Page navigation">
                             <ul className="pagination mb-0">
-                                {/* 上一頁按鈕 */}
-                                <li
-                                    className={`page-item ${
-                                        page === 1 ? "disabled" : ""
-                                    }`}>
-                                    <button
-                                        className="page-link"
-                                        onClick={() =>
-                                            setPage((prev) =>
-                                                Math.max(prev - 1, 1)
-                                            )
-                                        }
-                                        disabled={page === 1}>
+                                <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
+                                    <button className="page-link" onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
                                         <span aria-hidden="true">&laquo;</span>
                                     </button>
                                 </li>
-
-                                {/* 動態生成頁碼按鈕 */}
                                 {[...Array(totalPages)].map((_, index) => {
                                     const pageNumber = index + 1;
-                                    // 只顯示當前頁附近的頁碼
                                     if (
-                                        pageNumber === 1 || // 第一頁
-                                        pageNumber === totalPages || // 最後一頁
-                                        (pageNumber >= page - 1 &&
-                                            pageNumber <= page + 1) // 當前頁的前後一頁
+                                        pageNumber === 1 ||
+                                        pageNumber === totalPages ||
+                                        (pageNumber >= page - 1 && pageNumber <= page + 1)
                                     ) {
                                         return (
-                                            <li
-                                                key={pageNumber}
-                                                className={`page-item ${
-                                                    page === pageNumber
-                                                        ? "active"
-                                                        : ""
-                                                }`}>
-                                                <button
-                                                    className="page-link"
-                                                    onClick={() =>
-                                                        setPage(pageNumber)
-                                                    }>
+                                            <li key={pageNumber} className={`page-item ${page === pageNumber ? "active" : ""}`}>
+                                                <button className="page-link" onClick={() => handlePageChange(pageNumber)}>
                                                     {pageNumber}
                                                 </button>
                                             </li>
                                         );
-                                    } else if (
-                                        pageNumber === page - 2 ||
-                                        pageNumber === page + 2
-                                    ) {
-                                        // 顯示省略號
+                                    } else if (pageNumber === page - 2 || pageNumber === page + 2) {
                                         return (
-                                            <li
-                                                key={pageNumber}
-                                                className="page-item disabled">
-                                                <span className="page-link">
-                                                    ...
-                                                </span>
+                                            <li key={pageNumber} className="page-item disabled">
+                                                <span className="page-link">...</span>
                                             </li>
                                         );
                                     }
                                     return null;
                                 })}
-
-                                {/* 下一頁按鈕 */}
-                                <li
-                                    className={`page-item ${
-                                        page === totalPages ? "disabled" : ""
-                                    }`}>
-                                    <button
-                                        className="page-link"
-                                        onClick={() =>
-                                            setPage((prev) =>
-                                                Math.min(prev + 1, totalPages)
-                                            )
-                                        }
-                                        disabled={page === totalPages}>
+                                <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
+                                    <button className="page-link" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
                                         <span aria-hidden="true">&raquo;</span>
                                     </button>
                                 </li>

@@ -7,8 +7,12 @@ import styles from "./products.module.css";
 import { useRouter, useSearchParams } from "next/navigation";
 import GroupCard from "../_components/GroupCard";
 import Calendar from "react-calendar";
+import { useRef } from "react";
+// 選擇用的日曆
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
+
 import { FaRegCalendar } from "react-icons/fa";
-import "./Calendar.css";
 
 export default function GroupListPage() {
     // 設定揪團資料
@@ -23,16 +27,17 @@ export default function GroupListPage() {
     });
     const [showClassification, setShowClassification] = useState(false);
     const [selectedDisplay, setSelectedDisplay] = useState("每頁顯示24件");
-    const [showBrandClassification, setShowBrandClassification] =
-        useState(false);
-    const [location, setLocation] = useState("");
-    const [country, setCountry] = useState("");
-    const [language, setLanguage] = useState([]);
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
-    const [duration, setDuration] = useState("");
+    const [location, setLocation] = useState(searchParams.get("location") || "");
+    const [country, setCountry] = useState(searchParams.get("country") || "");
+    const [type, setType] = useState(searchParams.get("type") || "");
+    const [certificates, setCertificates] = useState(searchParams.getAll("certificates") || []);
+    const [status, setStatus] = useState(searchParams.getAll("status") || []);
+    const [startDate, setStartDate] = useState(searchParams.get("startDate") || null)
+    const [endDate, setEndDate] = useState(searchParams.get("endDate") || null);
+
+
     // 分頁
-    //parseInt 把字串轉成數字    || 負責設定預設值
+    // parseInt 把字串轉成數字    || 負責設定預設值
     const [page, setPage] = useState(parseInt(searchParams.get("page")) || 1);
     const [limit, setLimit] = useState(
         parseInt(searchParams.get("limit")) || 24
@@ -41,6 +46,24 @@ export default function GroupListPage() {
     // 可以放動畫 先不動
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // 更新 URL 的函數
+    const updateURL = (newPage, newLimit, sortValue, loc, cnt, type, certificates, status, startDate, endDate) => {
+        const params = new URLSearchParams();
+        params.set("page", newPage);
+        params.set("limit", newLimit);
+        params.set("sort", sortValue);
+        if (loc) params.set("location", loc);
+        if (cnt) params.set("country", cnt);
+        if (type) params.set("type", type);
+        if (certificates && certificates.length > 0) certificates.forEach(certificate => params.append("certificates", certificate));
+        if (status && status.length > 0) status.forEach(s => params.append("status", s));
+        if (startDate && endDate) {
+            params.set("startDate", startDate)
+            params.set("endDate", endDate)
+        };
+        router.push(`/group/list?${params.toString()}`);
+    };
     // 處理排序
     const handleSort = (text, value) => {
         console.log("text:" + text, "value:" + value);
@@ -50,23 +73,57 @@ export default function GroupListPage() {
         const sortedGroups = [...groups];
         switch (value) {
             case 1: // 綜合
-            sortedGroups.sort((a, b) => a.id - b.id);
+                sortedGroups.sort((a, b) => a.id - b.id);
                 break;
             case 2: // 最新上架
-            sortedGroups.sort(
+                sortedGroups.sort(
                     (a, b) => new Date(b.created_at) - new Date(a.created_at)
                 );
                 break;
-            case 3: // 價格：由低到高
-            sortedGroups.sort((a, b) => a.price - b.price);
+            case 3: // 揪團人數：由低到高
+                sortedGroups.sort((a, b) => a.price - b.price);
                 break;
-            case 4: // 價格：由高到低
-            sortedGroups.sort((a, b) => b.price - a.price);
+            case 4: // 揪團人數：由高到低
+                sortedGroups.sort((a, b) => b.price - a.price);
                 break;
             default:
                 break;
         }
     };
+
+    // 處理地點和國家篩選
+    const handleLocationClick = (newLocation, newCountry = "") => {
+        setLocation(newLocation);
+        setCountry(newCountry);
+        setPage(1); // 重置為第一頁
+        updateURL(1, limit, selectedSort.value, newLocation, newCountry, type, certificates);
+    };
+
+    // 處理類型
+    const handleType = (e) => {
+        setType(e)
+        updateURL(1, limit, selectedSort.value, location, country, type, certificates);
+    }
+
+    // 處理側邊欄篩選
+    const handleFilter = (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const choseCertificates = formData.getAll("certificates");
+        const choseStatus = formData.getAll("status");
+        setCertificates(choseCertificates)
+        setStatus(choseStatus)
+        setPage(1); // 重置為第一頁
+        updateURL(1, limit, selectedSort.value, location, country, type, choseCertificates, choseStatus, startDate, endDate);
+    };
+
+    // 處理分頁
+    const handlePageChange = (newPage) => {
+        setPage(newPage);
+        updateURL(newPage, limit, selectedSort.value, location, country, type, certificates, status, startDate, endDate);
+    };
+
+
     // 每頁顯示按鈕
     const handleDisplayChange = (newLimit, displayText) => {
         setSelectedDisplay(displayText);
@@ -79,20 +136,63 @@ export default function GroupListPage() {
     const api = "http://localhost:3005/api";
 
     // 連接後端獲取揪團資料
+    // useEffect(() => {
+    //     const getList = async () => {
+    //         await axios
+    //             .get(api + "/group")
+    //             .then((res) => {
+    //                 // console.log(res.data.data);
+    //                 setGroups(res.data.data);
+    //             })
+    //             .catch((error) => {
+    //                 console.log(error);
+    //             });
+    //     };
+    //     getList();
+    // }, []);
+    
+    // 送出條件獲取資料的function
+    const fetchGroups = async (
+        currentPage,
+        itemsPerPage,
+        sortValue,
+        loc,
+        cnt,
+        type,
+        certificates,
+        status, 
+        startDate, 
+        endDate
+    ) => {
+        try {
+            setLoading(true);
+            let url = `${api}/group/list?page=${currentPage}&limit=${itemsPerPage}&sort=${sortValue}&location=${loc || ""}&country=${cnt || ""}`;
+            if (certificates && certificates.length > 0) certificates.forEach(certificate => url += `&certificates=${certificate}`);
+            if (status && status.length > 0) status.forEach(s => url += `&status=${s}`);
+            if (startDate) url += `&startDate=${startDate}`;
+            if (endDate) url += `&endDate=${endDate}`;
+            if (type) url += `&type=${type}`
+            console.log(url);
+            const response = await axios.get(url);
+            if (response.data.status === "success") {
+                setGroups(response.data.data);
+                setTotalPages(response.data.pagination.totalPages);
+                setPage(response.data.pagination.currentPage);
+            } else {
+                setError("獲取揪團資料失敗");
+            }
+        } catch (error) {
+            console.error("Error fetching groups:", error.response || error);
+            setError("獲取揪團資料時發生錯誤");
+        } finally {
+            setLoading(false);
+        }
+    };
+    // 從 URL 同步篩選條件並獲取資料
     useEffect(() => {
-        const getList = async () => {
-            await axios
-                .get(api + "/group")
-                .then((res) => {
-                    // console.log(res.data.data);
-                    setGroups(res.data.data);
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-        };
-        getList();
-    }, []);
+        fetchGroups(page, limit, selectedSort.value, location, country, type, certificates, status, startDate,endDate);
+    }, [page, limit, selectedSort.value, location, country, type, certificates, status, startDate,endDate]);
+
 
     // 處理點擊外部關閉下拉選單
     useEffect(() => {
@@ -106,6 +206,42 @@ export default function GroupListPage() {
         return () => document.removeEventListener("click", handleClickOutside);
     }, []);
 
+    // 設定flatpickr日曆
+    const calendarRef = useRef(null);
+    useEffect(() => {
+        if (calendarRef.current) {
+            flatpickr(calendarRef.current, {
+                mode: "range",
+                dateFormat: "Y-m-d", // 日期格式
+                inline: true, // 直接顯示日曆
+                locale: {
+                    firstDayOfWeek: 1, // 星期一為一周的第一天
+                    weekdays: {
+                        shorthand: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+                        longhand: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+                    },
+                    months: {
+                        shorthand: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+                        longhand: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                    },
+                },
+                disableMobile: true, // 禁用移動端原生選擇器
+                onChange: (selectedDates, dateStr) => {
+                    console.log("選中的日期範圍1:", dateStr); // 檢查選擇結果
+                    console.log("選中的日期範圍2:", selectedDates); // 檢查選擇結果
+                    if ((dateStr.split(" to ")).length > 1) {
+                        setStartDate(dateStr.split(" to ")[0])
+                        setEndDate(dateStr.split(" to ")[1])
+                    }
+                },
+            });
+        }
+    }, []);
+    useEffect(() => {
+        console.log("開始日:" + startDate);
+        console.log("結束日:" + endDate);
+    }, [startDate, endDate])
+
     return (
         <div className="container py-4">
             <div className="row">
@@ -113,259 +249,194 @@ export default function GroupListPage() {
                 <div className="col-lg-3 col-md-4">
                     <div className="d-grid ">
                         {/* 活動地點分類 */}
-                        <div
-                            className={`${styles.productClassification} ${styles.sideCard} ${styles.open}`}>
+                        <div className={`${styles.productClassification} ${styles.sideCard} ${styles.open}`}>
                             <div className={styles.cardTitle}>
                                 <h5>活動地點</h5>
                                 <i className="bi bi-chevron-down"></i>
                             </div>
                             <ul className={styles.classificationMenu}>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                    >
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", "台灣"); }}>
                                         台灣
                                     </a>
                                     <ul className={styles.submenu}>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                屏東
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                台東
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                澎湖
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                綠島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                蘭嶼
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                小琉球
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                其他
-                                            </a>
-                                        </li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("1"); }}>屏東</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("2"); }}>台東</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("3"); }}>澎湖</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("4"); }}>綠島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("5"); }}>蘭嶼</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("7"); }}>小琉球</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("8"); }}>其他</a></li>
                                     </ul>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                    >
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", "日本"); }}>
                                         日本
                                     </a>
                                     <ul className={styles.submenu}>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                沖繩
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                石垣島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                其他
-                                            </a>
-                                        </li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("10"); }}>沖繩</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("11"); }}>石垣島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("12"); }}>其他</a></li>
                                     </ul>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                    >
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", "菲律賓"); }}>
                                         菲律賓
                                     </a>
                                     <ul className={styles.submenu}>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                長灘島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                宿霧
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                薄荷島
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a
-                                                href="#"
-                                            >
-                                                其他
-                                            </a>
-                                        </li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("13"); }}>長灘島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("14"); }}>宿霧</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("15"); }}>薄荷島</a></li>
+                                        <li><a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("16"); }}>其他</a></li>
                                     </ul>
                                 </li>
-                                <li
-                                    className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
-                                    <a
-                                        href="#"
-                                    >
-                                        其他
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleLocationClick("", ""); }}>
+                                        所有活動
                                     </a>
                                 </li>
                             </ul>
                         </div>
-
+                        {/* 活動分類 */}
+                        <div className={`${styles.productClassification} ${styles.sideCard} ${styles.open}`}>
+                            <div className={styles.cardTitle}>
+                                <h5>活動類型</h5>
+                                <i className="bi bi-chevron-down"></i>
+                            </div>
+                            <ul className={styles.classificationMenu}>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(1); }}>
+                                        浮潛
+                                    </a>
+                                </li>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(3); }}>
+                                        水肺潛水
+                                    </a>
+                                </li>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(2); }}>
+                                        自由潛水
+                                    </a>
+                                </li>
+                                <li className={`${styles.categoryItem} ${styles.hasSubmenu}`}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); handleType(""); }}>
+                                        所有活動
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                         {/* 揪團篩選 */}
-                        <div className={styles.sideCard}>
-                            <div className={styles.cardTitle}>
-                                <h5>揪團篩選</h5>
+                        <form action="" onSubmit={handleFilter}>
+                            <div className={styles.sideCard}>
+                                <div className={styles.cardTitle}>
+                                    <h5>揪團篩選</h5>
+                                </div>
+                                <div className={styles.filterSection}>
+                                    <div className={styles.filterTitle}>
+                                        證照資格
+                                    </div>
+                                    <div className={styles.checkboxGroup}>
+                                        <div className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id="noCertificates"
+                                                name="certificates"
+                                                value={1}
+                                            />
+                                            <label htmlFor="noCertificates">
+                                                無須證照
+                                            </label>
+                                        </div>
+                                        <div className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id="owd"
+                                                name="certificates"
+                                                value={2}
+                                            />
+                                            <label htmlFor="owd">
+                                                需OWD證照
+                                            </label>
+                                        </div>
+                                        <div className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id="aowd"
+                                                name="certificates"
+                                                value={3}
+                                            />
+                                            <label htmlFor="aowd">
+                                                需AOWD證照
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className={styles.filterTitle}>
+                                        揪團狀態
+                                    </div>
+                                    <div className={styles.checkboxGroup}>
+                                        <div className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id="status0"
+                                                name="status"
+                                                value={0}
+                                            />
+                                            <label htmlFor="status0">
+                                                揪團中
+                                            </label>
+                                        </div>
+                                        <div className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id="status1"
+                                                name="status"
+                                                value={1}
+                                            />
+                                            <label htmlFor="status1">
+                                                已成團
+                                            </label>
+                                        </div>
+                                        <div className={styles.checkboxItem}>
+                                            <input
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                                id="status2"
+                                                name="status"
+                                                value={2}
+                                            />
+                                            <label htmlFor="status2">
+                                                已取消
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className={styles.filterSection}>
-                                <div className={styles.filterTitle}>
-                                    證照資格
+                            {/* 活動日期選擇 */}
+                            <div className={styles.sideCard}>
+                                <div className={styles.cardTitle}>
+                                    <h5 className="d-flex gap-2 align-items-center">
+                                        <FaRegCalendar />
+                                        選擇出發日期
+                                    </h5>
                                 </div>
-                                <div className={styles.checkboxGroup}>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-leaders"
-                                        />
-                                        <label htmlFor="brand-leaders">
-                                            無須證照
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-owd"
-                                        />
-                                        <label htmlFor="brand-owd">
-                                            需OWD證照
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-aowd"
-                                        />
-                                        <label htmlFor="brand-aowd">
-                                            需AOWD證照
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className={styles.filterTitle}>
-                                    揪團類型
-                                </div>
-                                <div className={styles.checkboxGroup}>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-leaders"
-                                        />
-                                        <label htmlFor="brand-leaders">
-                                            浮潛
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-owd"
-                                        />
-                                        <label htmlFor="brand-owd">
-                                            自由潛水
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="brand-aowd"
-                                        />
-                                        <label htmlFor="brand-aowd">
-                                            水肺潛水
-                                        </label>
-                                    </div>
-                                    <div className={styles.checkboxItem}>
-                                        <input
-                                            type="checkbox"
-                                            className={styles.checkbox}
-                                            id="type-other"
-                                        />
-                                        <label htmlFor="type-other">
-                                            其他
-                                        </label>
-                                    </div>
+                                <div className="">
+                                    <div ref={calendarRef}></div>
+
                                 </div>
                             </div>
+                            <button className="btn btn-primary w-100 mb-3">
+                                套用篩選
+                            </button>
+                        </form>
 
 
-                        </div>
 
-                        {/* 活動日期選擇 */}
-                        <div className={styles.sideCard}>
-                            <div className={styles.cardTitle}>
-                                <h5 className="d-flex gap-2 align-items-center">
-                                    <FaRegCalendar />
-                                    選擇出發日期
-                                </h5>
-                            </div>
-                            <div className="">
-                                <Calendar />
-                            </div>
-                        </div>
-
-                        <button className="btn btn-primary w-100 mb-3">
-                            套用篩選(0/20)
-                        </button>
 
                         {/* 最新揪團 */}
                         {/* <div className={styles.sideCard}>
@@ -520,36 +591,36 @@ export default function GroupListPage() {
                                     <button
                                         className="dropdown-item"
                                         onClick={() =>
-                                            handleSort("最新上架", 2)
+                                            handleSort("最新揪團", 2)
                                         }>
-                                        最新上架
+                                        最新揪團
                                     </button>
                                 </li>
                                 <li>
                                     <button
                                         className="dropdown-item"
                                         onClick={() =>
-                                            handleSort("價格：由低到高", 3)
+                                            handleSort("揪團人數：由高到低", 3)
                                         }>
-                                        價格：由低到高
+                                        揪團人數：由低到高
                                     </button>
                                 </li>
                                 <li>
                                     <button
                                         className="dropdown-item"
                                         onClick={() =>
-                                            handleSort("價格：由高到低", 4)
+                                            handleSort("揪團人數：由高到低", 4)
                                         }>
-                                        價格：由高到低
+                                        揪團人數：由高到低
                                     </button>
                                 </li>
                                 <li>
                                     <button
                                         className="dropdown-item"
                                         onClick={() =>
-                                            handleSort("商品評分最高", 5)
+                                            handleSort("出發日期：由近到晚", 5)
                                         }>
-                                        商品評分最高
+                                        出發日期：由近到晚
                                     </button>
                                 </li>
                             </ul>

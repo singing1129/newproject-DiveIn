@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import { useParams } from "next/navigation";
-
 import styles from "./Card.module.css";
 import { FaRegHeart, FaStar, FaRegStar } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
@@ -30,41 +28,42 @@ const Card = ({ item }) => {
         ? `/image/rent/${item.id}/${item.image_url}`
         : defaultImage;
     }
-    return defaultImage; 
+    return defaultImage;
   };
 
-  console.log("Item:", item);
-  console.log("Image Path:", getImagePath(item));
-
   return (
-    <div className={styles.card}>
-      <div className={styles.imgContainer}>
-        {/* 愛心和購物車按鈕 */}
-        <div className={styles.circleIcons}>
-          <button className={styles.circleIcon}>
-            <FaRegHeart />
-          </button>
-          <button className={styles.circleIcon}>
-            <FiShoppingCart />
-          </button>
+    <div className={styles.cardContainer}>
+      <div className={styles.card}>
+        <div className={styles.imgContainer}>
+          {/* 商品圖片 */}
+          <img
+            className={styles.img}
+            src={getImagePath(item)} // 使用動態生成的圖片路徑
+            alt={item.name}
+          />
+          {/* 懸浮按鈕容器 */}
+          <div className={styles.hoverActionContainer}>
+            <div className={styles.iconGroup}>
+              <button className={styles.hoverActionBtn}>
+                <FaRegHeart />
+              </button>
+              <button className={styles.hoverActionBtn}>
+                <FiShoppingCart />
+              </button>
+            </div>
+          </div>
+          {/* 星級評分 */}
+          <div className={styles.stars}>
+            {[...Array(5)].map((_, i) =>
+              i < 4 ? <FaStar key={i} /> : <FaRegStar key={i} />
+            )}
+          </div>
         </div>
-        {/* 星級評分 */}
-        <div className={styles.stars}>
-          {[...Array(5)].map((_, i) =>
-            i < 4 ? <FaStar key={i} /> : <FaRegStar key={i} />
-          )}
+        {/* 商品名稱和價格 */}
+        <div className={`text-center ${styles.title}`}>
+          <p className="m-0">{item.name}</p>
+          <h6 className="m-0">NT ${item.price}</h6>
         </div>
-        {/* 商品圖片 */}
-        <img
-          className={styles.img}
-          src={getImagePath(item)} // 使用動態生成的圖片路徑
-          alt={item.name}
-        />
-      </div>
-      {/* 商品名稱和價格 */}
-      <div className={`text-center ${styles.title}`}>
-        <p className="m-0">{item.name}</p>
-        <h6 className="m-0">NT ${item.price}</h6>
       </div>
     </div>
   );

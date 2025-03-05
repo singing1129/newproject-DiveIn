@@ -10,7 +10,7 @@ export default function Breadcrumb() {
 
   // 租借用：取得最後一個 segment，檢查是否為商品 ID
   const lastSegment = pathSegments[pathSegments.length - 1];
-  const isProductDetail = pathname.includes("/rent/"); // 檢查是否為商品詳情頁
+  const isRentDetail = pathname.includes("/rent/"); // 檢查是否為商品詳情頁
   const [productName, setProductName] = useState(null); // 用來存儲商品名稱
   // 麵包屑名稱對應表
   const breadcrumbNames = {
@@ -26,15 +26,9 @@ export default function Breadcrumb() {
     },
     rent: {
       "": "租借商品列表", // rent 主分類名稱
-      list: "租借商品詳情",
-      detail: "",
     },
     products: {
       "": "商品列表",
-    },
-    cart: {
-      "": "購物車",
-      create: "新增文章",
     },
     article: {
       "": "文章首頁",
@@ -45,7 +39,7 @@ export default function Breadcrumb() {
     admin: {
       "": "會員中心",
       account: "我的帳戶",
-      favorite: "我的最愛",
+      favorites: "我的收藏",
       group: "我的揪團",
       order: "我的訂單",
       orderActivity: "活動清單",
@@ -55,12 +49,14 @@ export default function Breadcrumb() {
       account: "個人資料",
       login: "用戶登入",
       coupon: "我的優惠券",
-    },
+      "coupon-claim":"領取專屬優惠",
+      "coupon-history":"歷史紀錄"
+    }
   };
 
   // 租借用：在商品詳情頁獲取商品名稱
   useEffect(() => {
-    if (isProductDetail) {
+    if (isRentDetail) {
       const fetchProductName = async () => {
         try {
           const API_BASE_URL =
@@ -88,7 +84,7 @@ export default function Breadcrumb() {
       };
       fetchProductName();
     }
-  }, [isProductDetail, lastSegment]);
+  }, [isRentDetail, lastSegment]);
 
   return (
     <div className="bread container d-none d-sm-block">
@@ -110,7 +106,7 @@ export default function Breadcrumb() {
             const isLast = index === pathSegments.length - 1; // 是否是最後一個
 
             // 處理商品詳情頁面的名稱顯示
-            if (isProductDetail && isLast) {
+            if (isRentDetail && isLast) {
               return (
                 <li key={index} className="breadcrumb-item active">
                   <span>{productName || `${lastSegment}`}</span>{" "}

@@ -214,3 +214,73 @@
   border-bottom: 2px solid #ccc;
   margin: 0 10px;
 }
+.middleSection {
+  gap: 28px;
+  max-width: 100%;
+  .joinBtn{
+      background-color: var(--primary-deep-color);
+      color: #fff;
+      padding: 15px 60px;
+  }
+  .editBtn{
+      background-color: var(--secondary-deep-color);
+      color: #fff;
+      padding: 15px 60px;
+  }
+  .groupState {
+      padding: 10px 23px;
+      background-color: var(--secondary-deep-color);
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 6px;
+  }
+  .stateSection {
+      padding: 0 20px;
+  }
+  .imgContainera {
+    object-fit: fill;
+    overflow: hidden;
+    height: 394px;
+    width: 100%;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .img {
+        width: 100%;
+        min-height: 100%;
+    }
+  }
+  .groupInfo {
+    border-radius: 6px;
+    border: 1px solid #d6d6d6;
+    padding: 32px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.groupDescription {
+  border-radius: 6px;
+  border: 1px solid #d6d6d6;
+  height: 100%;
+  padding: 10px 17px;
+  .title{
+      margin-bottom: 10px;
+  }
+}
+}
+.hr {
+  color: #757575;
+}
+.timeCards{
+  gap: 14px;
+  .timeCard {
+      padding: 17px 38px;
+      border-radius: 6px;
+      border: 1px solid #e7ecee;
+      .number {
+          font-size: 28px;
+      }
+  }
+}
