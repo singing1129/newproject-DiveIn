@@ -23,16 +23,15 @@ export default function GroupListPage() {
     });
     const [showClassification, setShowClassification] = useState(false);
     const [selectedDisplay, setSelectedDisplay] = useState("每頁顯示24件");
-    const [showBrandClassification, setShowBrandClassification] =
-        useState(false);
+    const [showBrandClassification, setShowBrandClassification] = useState(false);
     const [location, setLocation] = useState("");
     const [country, setCountry] = useState("");
     const [language, setLanguage] = useState([]);
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
-    const [duration, setDuration] = useState("");
+
     // 分頁
-    //parseInt 把字串轉成數字    || 負責設定預設值
+    // parseInt 把字串轉成數字    || 負責設定預設值
     const [page, setPage] = useState(parseInt(searchParams.get("page")) || 1);
     const [limit, setLimit] = useState(
         parseInt(searchParams.get("limit")) || 24

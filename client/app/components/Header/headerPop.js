@@ -38,13 +38,13 @@ export default function HeaderPop({ show, activeMenu }) {
               <h3>熱門活動</h3>
               <ul>
                 <li>
-                  <Link href="/events/freediving">自由潛水課程</Link>
+                  <a href="http://localhost:3000/activity?page=1&limit=24&sort=1&type=1">浮潛</a>
                 </li>
                 <li>
-                  <Link href="/events/scuba">水肺潛水課程</Link>
+                  <a href="http://localhost:3000/activity?page=1&limit=24&sort=1&type=2">水肺潛水</a>
                 </li>
                 <li>
-                  <Link href="/events/trips">潛水旅遊</Link>
+                  <a href="http://localhost:3000/activity?page=1&limit=24&sort=1&type=3">自由潛水</a>
                 </li>
               </ul>
             </div>
