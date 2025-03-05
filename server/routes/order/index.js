@@ -166,7 +166,7 @@ router.get("/:orderId", async (req, res) => {
 
     // 7. 查詢使用者資訊
     const [userRows] = await connection.execute(
-      `SELECT id, name, phone, email, address
+      `SELECT id, name, phone, email
        FROM users
        WHERE id = ?`,
       [orderInfo.user_id]
@@ -364,7 +364,7 @@ router.get("/:orderId", async (req, res) => {
 // 查詢用戶的所有訂單
 router.get("/user/:userId", async (req, res) => {
   const { userId } = req.params;
-
+  console.log(userId);
   try {
     // 查詢用戶所有訂單基本資訊
     const [orderRows] = await pool.execute(
@@ -441,10 +441,10 @@ router.get("/user/:userId", async (req, res) => {
               ...order,
               orderNumber: `OD${String(order.id).padStart(8, "0")}`,
               totalItems:
-                (productCount[0].count || 0) +
-                (activityCount[0].count || 0) +
-                (rentalCount[0].count || 0) +
-                (bundleCount[0].count || 0),
+                Number(productCount[0].count || 0) +
+                Number(activityCount[0].count || 0) +
+                Number(rentalCount[0].count || 0) +
+                Number(bundleCount[0].count || 0),
               firstItem: firstRental.length > 0 ? firstRental[0] : null,
             };
           }
