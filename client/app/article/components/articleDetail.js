@@ -39,12 +39,12 @@ export default function ArticleDetail() {
 
   // 設置main-photo圖片 URL
   useEffect(() => {
-      if (article && article.img_url) {
-          const fullImageUrl = article.img_url.startsWith("http")
-              ? article.img_url
-              : `${backendURL}${article.img_url || defaultImage}`;
-          setImageUrl(fullImageUrl);
-      }
+    if (article && article.img_url) {
+      const fullImageUrl = article.img_url.startsWith("http")
+        ? article.img_url
+        : `${backendURL}${article.img_url || defaultImage}`;
+      setImageUrl(fullImageUrl);
+    }
   }, [article]);
 
   // 獲取相關文章數據
@@ -75,7 +75,7 @@ export default function ArticleDetail() {
 
     fetchArticle();
   }, [id]);
-  
+
   // 渲染回覆
   const renderReplies = () => {
     if (!article.replies || article.replies.length === 0) {
@@ -242,6 +242,10 @@ export default function ArticleDetail() {
             const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
               ? relatedArticle.img_url
               : `${backendURL}${relatedArticle.img_url || defaultImage}`;
+            {
+              /* relatedArticles content 去掉標籤樣式 */
+            }
+            const sanitizedContent = DOMPurify.sanitize(relatedArticle.content);
 
             return (
               <div className="related-card" key={index}>
@@ -260,7 +264,10 @@ export default function ArticleDetail() {
                 </div>
                 <div className="card-body">
                   <div className="card-title">{relatedArticle.title}</div>
-                  <div className="card-content">{relatedArticle.content}</div>
+                  <div
+                    className="card-content"
+                    dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+                  />
                   <div className="related-tag-area">
                     {Array.isArray(relatedArticle.tags) ? (
                       relatedArticle.tags.map((tag, index) => (

@@ -77,6 +77,11 @@ const ArticleListPage = () => {
       let url = `${API_BASE_URL}/article`; // 基礎 URL
       const params = new URLSearchParams(); // 使用 URLSearchParams 來管理查詢參數
 
+      // 當 `status` 參數不存在時，預設設為 `published`
+      if (!status && !isMyArticles) {
+        params.set("status", "published");
+      }
+
       // 添加分頁參數
       params.set("page", page);
       params.set("limit", 10);
@@ -139,39 +144,55 @@ const ArticleListPage = () => {
   };
 
   // 處理篩選條件變更
+  // 处理排序变更
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortOption(newSort);
 
     const params = new URLSearchParams(searchParams);
 
-    // 更新排序條件
+    // 更新排序条件
     if (newSort === "all") {
+      // 清除排序和其他所有筛选条件
       params.delete("sort");
+      params.delete("category");
+      params.delete("tag");
+      params.delete("status");
+      router.push("/article"); // 返回默认的文章列表
     } else {
       params.set("sort", newSort);
+      router.push(`/article?${params.toString()}`);
     }
-
-    // 更新網址
-    router.push(`/article?${params.toString()}`);
   };
 
+  // 处理状态筛选
   const handleStatusChange = (e) => {
     const newStatus = e.target.value;
     setStatusOption(newStatus);
 
     const params = new URLSearchParams(searchParams);
 
-    // 更新狀態條件
+    // 更新状态条件
     if (newStatus === "all") {
+      // 清除状态和其他所有筛选条件
       params.delete("status");
+      params.delete("category");
+      params.delete("tag");
+      router.push("/article"); // 返回默认的文章列表
     } else {
       params.set("status", newStatus);
+      router.push(`/article?${params.toString()}`);
     }
+  };
 
-    // 更新網址
+  //
+  const handleCategoryClick = (categorySmallName) => {
+    // 清除其他筛选条件，跳转到默认的文章列表
+    const params = new URLSearchParams();
+    params.set("category", categorySmallName);
     router.push(`/article?${params.toString()}`);
   };
+  
 
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   // 我的文章 按鈕點擊
@@ -190,10 +211,11 @@ const ArticleListPage = () => {
       params.set("myArticles", "true"); // 如果是我的文章，加入參數
     } else {
       params.delete("myArticles"); // 如果取消我的文章，移除參數
-      router.push("/article"); // 返回文章列表首頁
+      // 返回默认的文章列表
+      router.push("/article");
     }
 
-    router.push(`?${params.toString()}`); // 更新網址
+    router.push(`?${params.toString()}`); // 更新网址
   };
 
   //新增文章 按鈕跳轉

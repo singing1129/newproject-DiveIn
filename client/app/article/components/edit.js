@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import EditMyeditor from "./editMyeditor"; // 引入編輯用的 CKEditor 組件
 import "./articleCreate.css"; // 共用樣式
 
@@ -21,7 +22,6 @@ const Edit = ({ initialData = {}, onSave }) => {
   const [tagsList, setTagsList] = useState(initialData?.tags || []);
   const [coverImage, setCoverImage] = useState(null); // 存儲選中的圖片
   const [previewImage, setPreviewImage] = useState(null); // 存儲圖片預覽的 URL
-
   const [submitStatus, setSubmitStatus] = useState("");
 
   // 其他狀態（分類、標籤等）
@@ -133,6 +133,9 @@ const Edit = ({ initialData = {}, onSave }) => {
 
     onSave(formData, submitStatus); // 把狀態一併傳給父組件
   };
+
+  const router = useRouter();
+
   return (
     <div className="create-form">
       <div className="article-controls-btn">
@@ -150,12 +153,11 @@ const Edit = ({ initialData = {}, onSave }) => {
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
           <label htmlFor="coverImage" className="upload-square">
-          {previewImage ? (
-  <img src={previewImage} alt="封面圖片預覽" />
-) : (
-  <img src={oldImageUrl} alt="舊封面圖片" />
-)}
-
+            {previewImage ? (
+              <img src={previewImage} alt="封面圖片預覽" />
+            ) : (
+              <img src={oldImageUrl} alt="舊封面圖片" />
+            )}
           </label>
           <input
             type="file"
