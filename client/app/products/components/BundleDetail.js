@@ -3,58 +3,50 @@ import { useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import { useCart } from "@/hooks/cartContext";
 import { useAuth } from "@/hooks/useAuth";
 import useFavorite from "@/hooks/useFavorite";
 import useToast from "@/hooks/useToast";
 import SelectBundle from "../components/SelectBundle";
 import Link from "next/link";
+import { useCart } from "@/hooks/cartContext";
 // import styles from "./bundle.module.css";
 
 // components/BundleDetail.js
 export default function BundleDetail({ bundle }) {
   // const params = useParams();
   // const bundleId = params?.id;
+
   console.log(bundle);
+  console.log("bundle.items", bundle.items);
 
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorite(bundle?.id, "bundle");
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+  const { showToast } = useToast();
 
-  // 修改後的加入購物車處理函數
-  const handleAddToCart = async () => {
+  const handleOpenSelectModal = () => {
     if (!user || user === -1) {
       showToast("請先登入");
       return;
     }
-
-    try {
-      // 修改請求參數以符合API需求
-      const cartData = {
-        type: "bundle",
-        bundleId: bundle.id,  // 使用bundleId而不是variantId
-        quantity: 1,  // 套組數量預設為1
-      };
-
-      const success = await addToCart(cartData);
-      if (success) {
-        showToast("套組已加入購物車");
-      } else {
-        showToast("加入購物車失敗");
-      }
-    } catch (error) {
-      console.error("加入購物車失敗:", error);
-      showToast("加入購物車失敗");
-    }
-  };
-
-  const handleOpenSelectModal = () => {
     setIsSelectModalOpen(true);
   };
 
-  console.log("bundle.items", bundle.items);
+  // 處理套組選擇
+  // 處理套組選擇
+  const handleBundleSelect = async (bundleData) => {
+    try {
+      console.log("從 SelectBundle 收到的數據:", bundleData);
+      const success = await addToCart(bundleData);
+      if (success) {
+        showToast("套組已成功加入購物車！");
+      }
+    } catch (error) {
+      console.error("添加套組到購物車失敗:", error);
+      showToast("添加失敗，請稍後再試");
+    }
+  };
 
   if (!bundle) return <div>載入中...</div>;
 
@@ -84,7 +76,7 @@ export default function BundleDetail({ bundle }) {
                   {bundle.brand_name || "自由潛水套組"}
                 </h3>
                 <div className="d-flex gap-2">
-                  <button className="btn p-0" >
+                  <button className="btn p-0">
                     <i className="fa-solid fa-share-from-square fs-4"></i>
                   </button>
 
@@ -157,19 +149,6 @@ export default function BundleDetail({ bundle }) {
                   </button>
                 </div>
               </div>
-
-              {/* 購買按鈕 */}
-              <div className="d-flex mt-4">
-                <button
-                  onClick={handleAddToCart}
-                  className="btn btn-info addCartButton flex-grow-1"
-                >
-                  加入購物車
-                </button>
-                <button className="btn btn-warning buyButton flex-grow-1">
-                  直接購買
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -196,10 +175,7 @@ export default function BundleDetail({ bundle }) {
         isOpen={isSelectModalOpen}
         onClose={() => setIsSelectModalOpen(false)}
         bundle={bundle}
-        onSelect={(selectedItems) => {
-          console.log("Selected items:", selectedItems);
-          setIsSelectModalOpen(false);
-        }}
+        onSelect={handleBundleSelect}
       />
     </div>
   );

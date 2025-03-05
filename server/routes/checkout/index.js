@@ -43,6 +43,11 @@ router.post("/initialize", async (req, res) => {
       [cartId]
     );
 
+    const [hasBundles] = await pool.execute(
+      "SELECT COUNT(*) as count FROM cart_items WHERE cart_id = ? AND bundle_id IS NOT NULL",
+      [cartId]
+    );
+
     // 創建結帳流程並返回
     return res.json({
       success: true,
@@ -51,7 +56,9 @@ router.post("/initialize", async (req, res) => {
         checkoutSteps: {
           needsActivityForm: hasActivities[0].count > 0,
           needsShippingInfo:
-            hasProducts[0].count > 0 || hasRentals[0].count > 0,
+            hasProducts[0].count > 0 ||
+            hasRentals[0].count > 0 ||
+            hasBundles[0].count > 0,
         },
       },
     });
@@ -80,8 +87,6 @@ router.post("/initialize", async (req, res) => {
 
 這些操作必須全部成功或全部失敗,不能出現訂單建立了但購物車狀態沒更新等情況。 */
 
-// 3. 處理最終結帳的endpoint
-// 3. 處理最終結帳的endpoint
 // 3. 處理最終結帳的endpoint
 router.post("/complete", async (req, res) => {
   const { userId, shippingInfo, paymentMethod, activityTravelers, couponCode } =
@@ -140,13 +145,29 @@ router.post("/complete", async (req, res) => {
     const [cartTotals] = await connection.execute(
       `
       SELECT 
-        CAST(COALESCE(SUM(ci.quantity * pv.price), 0) AS DECIMAL(10,2)) as product_total,
+        CAST(COALESCE(SUM(
+          CASE 
+            WHEN ci.bundle_id IS NULL THEN ci.quantity * pv.price 
+            ELSE 0 
+          END
+        ), 0) AS DECIMAL(10,2)) as product_total,
+        
+        CAST(COALESCE(SUM(
+          CASE 
+            WHEN ci.bundle_id IS NOT NULL THEN 
+              (SELECT discount_price FROM product_bundle WHERE id = ci.bundle_id) 
+            ELSE 0 
+          END
+        ), 0) AS DECIMAL(10,2)) as bundle_total,
+        
         CAST(COALESCE(SUM(cai.quantity * ap.price), 0) AS DECIMAL(10,2)) as activity_total,
+        
         CAST(COALESCE(SUM(
           cri.quantity * 
           COALESCE(ri.price2, ri.price) * 
           (DATEDIFF(cri.end_date, cri.start_date) + 1)
         ), 0) AS DECIMAL(10,2)) as rental_total,
+        
         CAST(COALESCE(SUM(cri.quantity * ri.deposit), 0) AS DECIMAL(10,2)) as deposit_total
       FROM carts c
       LEFT JOIN cart_items ci ON c.id = ci.cart_id
@@ -156,12 +177,14 @@ router.post("/complete", async (req, res) => {
       LEFT JOIN cart_rental_items cri ON c.id = cri.cart_id
       LEFT JOIN rent_item ri ON cri.rental_id = ri.id
       WHERE c.id = ?
+      GROUP BY c.id
       `,
       [cartId]
     );
 
     const totalAmount =
       Number(cartTotals[0].product_total) +
+      Number(cartTotals[0].bundle_total) +
       Number(cartTotals[0].activity_total) +
       Number(cartTotals[0].rental_total) +
       Number(cartTotals[0].deposit_total);
@@ -230,19 +253,18 @@ router.post("/complete", async (req, res) => {
     }
 
     // 6. 移動購物車商品到訂單
-    // 6.1 一般商品
     const [products] = await connection.execute(
-      `SELECT ci.variant_id, ci.quantity, pv.price
-       FROM cart_items ci
-       JOIN product_variant pv ON ci.variant_id = pv.id
-       WHERE ci.cart_id = ?`,
+      `SELECT ci.variant_id, ci.quantity, pv.price, ci.bundle_id
+   FROM cart_items ci
+   JOIN product_variant pv ON ci.variant_id = pv.id
+   WHERE ci.cart_id = ?`,
       [cartId]
     );
 
     for (const item of products) {
       await connection.execute(
-        "INSERT INTO order_items (order_id, variant_id, quantity, price) VALUES (?, ?, ?, ?)",
-        [orderId, item.variant_id, item.quantity, item.price]
+        "INSERT INTO order_items (order_id, variant_id, quantity, price, bundle_id) VALUES (?, ?, ?, ?, ?)",
+        [orderId, item.variant_id, item.quantity, item.price, item.bundle_id]
       );
 
       // 更新商品庫存
@@ -346,16 +368,16 @@ router.post("/complete", async (req, res) => {
       [cartId]
     );
 
-    // 8. 如果有使用優惠券，更新優惠券使用狀態
-    if (couponCode) {
-      await connection.execute(
-        `UPDATE coupon_usage 
-         SET status = '已使用', used_at = NOW() 
-         WHERE coupon_id = (SELECT id FROM coupon WHERE code = ?) 
-         AND users_id = ?`,
-        [couponCode, userId]
-      );
-    }
+    // // 8. 如果有使用優惠券，更新優惠券使用狀態
+    // if (couponCode) {
+    //   await connection.execute(
+    //     `UPDATE coupon_usage
+    //      SET status = '已使用', used_at = NOW()
+    //      WHERE coupon_id = (SELECT id FROM coupon WHERE code = ?)
+    //      AND users_id = ?`,
+    //     [couponCode, userId]
+    //   );
+    // }
 
     await connection.commit();
 

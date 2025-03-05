@@ -101,6 +101,33 @@ export const CartProvider = ({ children }) => {
   };
 
   // 加入商品到購物車
+  // const addToCart = async (cartItem) => {
+  //   if (!user || user === -1) {
+  //     setError("請先登入");
+  //     return false;
+  //   }
+
+  //   try {
+  //     const response = await axios.post(`${API_BASE_URL}/cart/add`, {
+  //       userId: user.id,
+  //       ...cartItem,
+  //     });
+
+  //     if (response.data.success) {
+  //       // 重新獲取購物車資料
+  //       await fetchCart();
+  //       showToast("商品已加入購物車");
+  //       return true;
+  //     }
+  //   } catch (error) {
+  //     console.error("加入購物車失敗:", error);
+  //     setError(error.message);
+  //     return false;
+  //   }
+  // };
+
+  // 在 cartContext.js 中
+  // 在 cartContext.js 的 addToCart 函數中
   const addToCart = async (cartItem) => {
     if (!user || user === -1) {
       setError("請先登入");
@@ -108,20 +135,49 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/cart/add`, {
+      // 詳細記錄請求內容，幫助調試
+      console.log("商品詳情:", cartItem);
+      console.log("用戶ID:", user.id);
+
+      // 添加 userId 到請求中
+      const requestData = {
         userId: user.id,
         ...cartItem,
-      });
+      };
+
+      console.log("正在添加商品到購物車，請求資料:", requestData);
+
+      // 發送請求到後端
+      const response = await axios.post(
+        `${API_BASE_URL}/cart/add`,
+        requestData
+      );
+      console.log("後端響應:", response.data);
 
       if (response.data.success) {
         // 重新獲取購物車資料
         await fetchCart();
-        showToast("商品已加入購物車");
+
+        // 根據商品類型顯示相應訊息
+        const typeText =
+          {
+            bundle: "套組",
+            product: "商品",
+            activity: "活動",
+            rental: "租借商品",
+          }[cartItem.type] || "商品";
+
+        showToast(`${typeText}已加入購物車`);
         return true;
+      } else {
+        console.warn("加入購物車失敗，後端回傳訊息:", response.data.message);
+        setError(response.data.message || "加入購物車失敗");
+        return false;
       }
     } catch (error) {
-      console.error("加入購物車失敗:", error);
-      setError(error.message);
+      console.error("加入購物車發生錯誤:", error);
+      console.error("錯誤詳情:", error.response?.data || error.message);
+      setError(error.response?.data?.message || error.message);
       return false;
     }
   };
@@ -190,7 +246,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // 修改 proceedToCheckout 函數
   const proceedToCheckout = async () => {
     if (!user || user === -1) {
       setError("請先登入");
@@ -204,7 +259,7 @@ export const CartProvider = ({ children }) => {
 
       if (response.data.success) {
         const { checkoutSteps } = response.data.data;
-
+        console.log("checkoutSteps", checkoutSteps);
         // 根據後端返回的結果決定導向
         if (checkoutSteps.needsActivityForm) {
           // 如果需要填寫活動表單，導向 step2

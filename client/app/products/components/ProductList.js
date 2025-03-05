@@ -90,7 +90,7 @@ export default function ProductList() {
       resetPageTitle();
     }
 
-    // 修改这里：无论是否有查询条件，都获取产品
+    
     fetchProducts();
   }, [currentQuery]);
 
@@ -938,27 +938,9 @@ export default function ProductList() {
 
           {/* 輪播圖 */}
           <ProductBanner />
-          {/* <div className="position-relative mb-4" style={{ height: "200px" }}>
-            <Image
-              src="/images/product-top-slide.png"
-              alt="潛水裝備橫幅"
-              fill
-              priority
-              style={{ objectFit: "cover" }}
-            />
-            <div className="position-absolute top-50 end-0 translate-middle-y pe-5">
-              <div className="text-end">
-                <h3 className="text-white mb-4">
-                  專業裝備，
-                  <br />
-                  陪你深海冒險每一步！
-                </h3>
-              </div>
-            </div>
-          </div> */}
 
           {/* 排序和顯示選項 */}
-          <div className="d-flex justify-content-between align-items-center mb-4">
+          <div className="d-flex justify-content-end gap-4 align-items-center mb-4 mt-3">
             <div className="dropdown">
               <button
                 className="btn btn-outline-secondary dropdown-toggle"

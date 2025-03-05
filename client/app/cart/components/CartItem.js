@@ -4,10 +4,11 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./CartItem.css";
 import SpecModal from "./SpecModal";
+import ActivitySpecModal from "./ActivitySpecModal";
+import BundleModal from "./bundleModal";
 import RentalSpecModal from "./RentalSpecModal";
 import { useCart } from "@/hooks/cartContext";
 import useFavorite from "@/hooks/useFavorite";
-
 
 // 計算租借天數的函數
 const calculateRentalDays = (startDate, endDate) => {
@@ -25,7 +26,28 @@ const CartItem = ({ item, type = "products" }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   // 租借修改資料的 modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // 新增活動修改 modal
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [activityInfo, setActivityInfo] = useState({
+    date: item.date,
+    time: item.time,
+  });
+  // 處理活動 Modal 關閉
+  const handleActivityModalClose = () => {
+    setIsActivityModalOpen(false);
+  };
 
+  // 處理活動 Modal 更新
+  const handleActivityModalUpdate = (updatedItem) => {
+    // 更新本地狀態
+    setActivityInfo({
+      date: updatedItem.date,
+      time: updatedItem.time,
+    });
+
+    // 關閉 Modal
+    setIsActivityModalOpen(false);
+  };
   // 根據類型獲取正確的 ID
   const getFavoriteId = () => {
     switch (type) {
@@ -51,7 +73,7 @@ const CartItem = ({ item, type = "products" }) => {
   const handleQuantityChange = async (newQuantity) => {
     if (newQuantity < 1 || isUpdating) return;
 
-    // 調試訊息：打印當前商品信息和數量
+    // 調試訊息：打印當前商品和數量
     console.log("Updating quantity for item:", {
       type,
       itemId: item.id,
@@ -124,20 +146,12 @@ const CartItem = ({ item, type = "products" }) => {
     }
   };
 
-  // 新增處理 租借修改資訊的 Modal 關閉
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-  };
-
-  // 新增處理 租借修改資訊的 Modal 更新
-
   // 新增狀態來管理租借資訊
   const [rentalInfo, setRentalInfo] = useState({
     start_date: item.start_date,
     end_date: item.end_date,
     color: item.color,
   });
-  
 
   // 處理 Modal 更新
   const handleModalUpdate = (updatedItem) => {
@@ -213,18 +227,34 @@ const CartItem = ({ item, type = "products" }) => {
         );
       case "activities":
         return (
-          <div className="info-display">
-            <div className="info-content">
-              <div className="info-row">
-                <span className="info-label">活動時間：</span>
-                <div className="info-value">
-                  <div>{item.date}</div>
-                  <div className="time">{item.time}</div>
+          <>
+            <div
+              className="info-display"
+              onClick={() => setIsActivityModalOpen(true)}
+            >
+              <div className="info-content">
+                <div className="info-row">
+                  <span className="info-label">活動時間：</span>
+                  <div className="info-value">
+                    <div>{activityInfo.date}</div>
+                    <div className="time">{activityInfo.time}</div>
+                  </div>
                 </div>
               </div>
+              <span className="edit-mark">修改</span>
             </div>
-          </div>
+
+            {isActivityModalOpen && (
+              <ActivitySpecModal
+                item={item}
+                onClose={handleActivityModalClose}
+                onUpdate={handleActivityModalUpdate}
+              />
+            )}
+          </>
         );
+       
+
       case "rentals":
         return (
           <>
@@ -234,20 +264,27 @@ const CartItem = ({ item, type = "products" }) => {
             >
               <div className="rent-content">
                 <div className="rent-row">
-                <span className="rent-label">
-                  租借期間：{" "}
-                  <span className="days">
-                    ({calculateRentalDays(rentalInfo.start_date, rentalInfo.end_date)}天)
+                  <span className="rent-label">
+                    租借期間：{" "}
+                    <span className="days">
+                      (
+                      {calculateRentalDays(
+                        rentalInfo.start_date,
+                        rentalInfo.end_date
+                      )}
+                      天)
+                    </span>
                   </span>
-                </span>
                   <div className="rent-value">
-                  <div>自 {rentalInfo.start_date}</div>
-                  <div>至 {rentalInfo.end_date}</div>
+                    <div>自 {rentalInfo.start_date}</div>
+                    <div>至 {rentalInfo.end_date}</div>
                   </div>
                 </div>
                 <div className="rent-row">
                   <span className="rent-label">顏色：</span>
-                  <span className="rent-value">{rentalInfo.color || "無"} </span>
+                  <span className="rent-value">
+                    {rentalInfo.color || "無"}{" "}
+                  </span>
                 </div>
                 {/* <div className="info-row">
                 <span className="info-label">每日租金：</span>
@@ -272,14 +309,47 @@ const CartItem = ({ item, type = "products" }) => {
             </div>
 
             {isModalOpen && (
-            <RentalSpecModal
-              item={item}
-              onClose={() => setIsModalOpen(false)}
-              onUpdate={handleModalUpdate}
-            />
-          )}
+              <RentalSpecModal
+                item={item}
+                onClose={() => setIsModalOpen(false)}
+                onUpdate={handleModalUpdate}
+              />
+            )}
           </>
         );
+      case "bundles":
+        return (
+          <div className="bundle-display">
+            <div className="bundle-content">
+              <div className="bundle-row">
+                <span className="bundle-label">套組內容：</span>
+                <div className="bundle-value">
+                  共 {item.items?.length || 0} 件商品
+                  <div className="bundle-items">
+                    {(item.items || []).map((bundleItem, index) => (
+                      <div key={index} className="bundle-item">
+                        {bundleItem.product_name}
+                        {bundleItem.color_name && ` - ${bundleItem.color_name}`}
+                        {bundleItem.size_name && ` - ${bundleItem.size_name}`}
+                        {` x ${bundleItem.quantity}`}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="bundle-row">
+                <span className="bundle-label">節省：</span>
+                <span className="bundle-value text-success">
+                  NT$ {item.original_total - item.discount_price}
+                </span>
+              </div>
+            </div>
+            <BundleModal item={item}>
+              <span className="edit-mark">查看</span>
+            </BundleModal>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -353,9 +423,13 @@ const CartItem = ({ item, type = "products" }) => {
               ? (Number(item.price_per_day) + Number(item.deposit)) *
                 quantity *
                 item.rental_days
+              : type === "bundles"
+              ? Number(item.discount_price) * quantity // 根据数量计算折扣价
               : Number(item.price) * quantity}
-            {type === "rentals" && item.deposit > 0 && (
-              <div className="text-muted small"></div>
+            {type === "bundles" && (
+              <div className="text-decoration-line-through text-muted">
+                NT$ {item.original_price * quantity}
+              </div>
             )}
           </div>
         </div>

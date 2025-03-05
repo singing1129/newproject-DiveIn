@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-
+import axios from "axios";
+import { useAuth } from "@/hooks/useAuth";
 import styles from "./AccountForm.module.css";
 
 export default function AccountForm() {
@@ -11,83 +12,229 @@ export default function AccountForm() {
     email: "",
     password: "",
     phone: "",
-    address: "",
     avatar: "",
+    avatarFile: null, // 新增：儲存上傳的檔案物件
+    avatarPreview: null, // 新增：用於本地預覽
     level: 100, // 會員等級
   });
+  console.log("formData", formData);
+  const { getToken, getDecodedToken, user } = useAuth();
+  const token = getToken();
+  const decodedToken = getDecodedToken();
+  console.log("user", user);
+  console.log("token", token);
+  console.log("更新資料的用戶ID", decodedToken);
+  const [providers, setProviders] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [originalEmail, setOriginalEmail] = useState(""); // 儲存原始 email 值
 
   // 從後端獲取會員資料
-  useEffect(() => {
-    const fetchMemberData = async () => {
-      try {
-        const response = await fetch("/admin");
-        const data = await response.json();
-        setFormData(data); // 將後端資料設置到表單狀態
-      } catch (error) {
-        console.error("獲取會員資料失敗：", error);
-      }
-    };
+  const fetchMemberData = useCallback(async () => {
+    if (!token) return;
 
+    try {
+      setIsLoading(true);
+      const response = await axios.get("http://localhost:3005/api/admin/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200 && response.data.status === "success") {
+        // 設置從後端取得的資料
+        setFormData({
+          ...response.data.data,
+          // 清空這些欄位
+          password: "",
+          avatarFile: null,
+          avatarPreview: null,
+        });
+        setOriginalEmail(response.data.data.email || "");
+
+        // 設置登入方式
+        if (response.data.data.providers) {
+          setProviders(response.data.data.providers);
+        }
+      } else {
+        throw new Error("獲取會員資料失敗");
+      }
+    } catch (error) {
+      console.error("獲取會員資料失敗：", error);
+      setMessage({ type: "error", text: "獲取會員資料失敗，請稍後再試" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  // 初始載入資料
+  useEffect(() => {
     fetchMemberData();
-  }, []);
+  }, [fetchMemberData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB
+        setMessage({ type: "error", text: "圖片大小不能超過 5MB" });
+        return;
+      }
+
+      // 釋放舊的 URL 物件（如果存在）
+      if (formData.avatarPreview) {
+        URL.revokeObjectURL(formData.avatarPreview);
+      }
+
+      // 儲存檔案物件並創建本地預覽
+      setFormData((prev) => ({
+        ...prev,
+        avatarFile: file,
+        avatarPreview: URL.createObjectURL(file),
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!token) {
+      setMessage({ type: "error", text: "請先登入" });
+      return;
+    }
+
+    // 檢查 email 修改
+    if (formData.email !== originalEmail && providers.includes("email")) {
+      if (!confirm("修改電子郵件將影響你的登入方式。確定要修改嗎？")) {
+        return;
+      }
+    }
+
+    setMessage({ type: "", text: "" });
+
     try {
-      const response = await fetch("/api/member", {
-        method: "PUT", // 使用 PUT 方法更新資料
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      if (response.ok) {
-        alert("資料更新成功！");
+      setIsLoading(true);
+
+      // 創建 FormData 對象
+      const formDataToSend = new FormData();
+
+      // 添加文本字段
+      if (formData.name) formDataToSend.append("name", formData.name);
+      if (formData.email) formDataToSend.append("email", formData.email);
+      if (formData.password)
+        formDataToSend.append("password", formData.password);
+      if (formData.phone) formDataToSend.append("phone", formData.phone);
+
+      // 如果有新的頭像檔案，添加到 FormData
+      if (formData.avatarFile) {
+        formDataToSend.append("avatar", formData.avatarFile);
+      }
+
+      // 發送請求
+      const response = await axios.put(
+        "http://localhost:3005/api/admin/user",
+        formDataToSend,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // 不要手動設置 Content-Type，讓 axios 自動處理
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setMessage({
+          type: "success",
+          text: response.data.message || "資料更新成功！",
+        });
+
+        // 更新原始 email 值
+        if (formData.email !== originalEmail) {
+          setOriginalEmail(formData.email);
+        }
+
+        // 重新獲取會員資料以更新頭像顯示
+        fetchMemberData();
       } else {
-        alert("資料更新失敗！");
+        setMessage({
+          type: "error",
+          text: response.data.message || "資料更新失敗！",
+        });
       }
     } catch (error) {
       console.error("提交表單失敗：", error);
+      setMessage({
+        type: "error",
+        text: error.response?.data.message || "提交表單失敗，請稍後再試",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    // 重置表單為初始狀態
-    setFormData({
-      name: "",
-      email: "",
-      password: "",
-      phone: "",
-      address: "",
-      avatar: "",
-      level: 100, // 會員等級
-    });
+    // 釋放本地預覽
+    if (formData.avatarPreview) {
+      URL.revokeObjectURL(formData.avatarPreview);
+    }
+
+    // 重新從後端獲取資料
+    fetchMemberData();
+    setMessage({ type: "", text: "" });
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, avatar: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
+  // 在組件卸載時清理 URL 對象
+  useEffect(() => {
+    return () => {
+      if (formData.avatarPreview) {
+        URL.revokeObjectURL(formData.avatarPreview);
+      }
+    };
+  }, [formData.avatarPreview]);
+
+  // 判斷 email 是否為不可編輯狀態（當使用 email 登入，且沒有其他登入方式時）
+  const isEmailReadOnly = providers.includes("email") && providers.length === 1;
+
+  // 取得登入方式中文名稱
+  const getProviderName = (provider) => {
+    const names = {
+      email: "電子郵件",
+      google: "Google",
+      facebook: "Facebook",
+      line: "LINE",
+      phone: "手機號碼",
+    };
+    return names[provider] || provider;
   };
 
   return (
     <div className={styles.container}>
-      <div className={styles.contentWrapper}>
+      {message.text && (
+        <div
+          className={`${styles.message} ${
+            message.type === "success" ? styles.success : styles.error
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      <form className={styles.contentWrapper} onSubmit={handleSubmit}>
         {/* 大頭貼區塊 */}
         <div className={styles.avatarSection}>
           <div className={styles.avatarPreview}>
             <Image
-              src={formData.avatar || "/image/default-memberimg.png"}
+              // 幹救命這裡寫超久
+              src={
+                `http://localhost:3005${formData.avatar}` ||
+                formData.avatarPreview ||
+                "/image/default-memberimg.png"
+              }
               alt="會員頭像"
               width={250}
               height={250}
@@ -101,32 +248,62 @@ export default function AccountForm() {
               type="file"
               id="avatar"
               name="avatar"
+              accept="image/*"
               onChange={handleAvatarChange}
               className={styles.avatarInput}
             />
           </label>
+
+          {/* 登入方式區塊 */}
+          {providers.length > 0 && (
+            <div className={styles.providersSection}>
+              <h3>已連結的登入方式</h3>
+              <ul className={styles.providerList}>
+                {providers.map((provider) => (
+                  <li key={provider} className={styles.providerItem}>
+                    {getProviderName(provider)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* 個人資訊區塊 */}
-        <form className={styles.accountForm} onSubmit={handleSubmit}>
+        <div className={styles.accountForm}>
           <div className={styles.formGroup}>
             <label htmlFor="name">姓名</label>
             <input
               type="text"
               id="name"
               name="name"
-              value={formData.name}
+              value={formData.name || ""}
               onChange={handleChange}
+              required
             />
           </div>
           <div className={styles.formGroup}>
-            <label htmlFor="email">電子郵件</label>
+            <label htmlFor="email">
+              電子郵件
+              {isEmailReadOnly && (
+                <span className={styles.readonlyHint}> (不可修改)</span>
+              )}
+              {providers.includes("email") && providers.length > 1 && (
+                <span className={styles.warningHint}>
+                  {" "}
+                  (修改將影響登入方式)
+                </span>
+              )}
+            </label>
             <input
               type="email"
               id="email"
               name="email"
-              value={formData.email}
+              value={formData.email || ""}
               onChange={handleChange}
+              required={providers.includes("email")}
+              readOnly={isEmailReadOnly}
+              className={isEmailReadOnly ? styles.readonlyInput : ""}
             />
           </div>
           <div className={styles.formGroup}>
@@ -135,8 +312,9 @@ export default function AccountForm() {
               type="password"
               id="password"
               name="password"
-              value={formData.password}
+              value={formData.password || ""}
               onChange={handleChange}
+              placeholder="如不修改密碼請留空"
             />
           </div>
           <div className={styles.formGroup}>
@@ -145,26 +323,31 @@ export default function AccountForm() {
               type="tel"
               id="phone"
               name="phone"
-              value={formData.phone}
+              value={formData.phone || ""}
               onChange={handleChange}
             />
           </div>
-        </form>
-      </div>
 
-      {/* 按鈕區塊 */}
-      <div className={styles.buttonGroup}>
-        <button type="submit" className={styles.saveBtn}>
-          儲存
-        </button>
-        <button
-          type="button"
-          className={styles.cancelBtn}
-          onClick={handleCancel}
-        >
-          取消
-        </button>
-      </div>
+          {/* 按鈕區塊 */}
+          <div className={styles.buttonGroup}>
+            <button
+              type="submit"
+              className={styles.saveBtn}
+              disabled={isLoading}
+            >
+              {isLoading ? "處理中..." : "儲存"}
+            </button>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={handleCancel}
+              disabled={isLoading}
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
