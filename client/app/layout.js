@@ -9,6 +9,7 @@ import Footer from "./components/Footer/footer";
 import Breadcrumb from "./components/Breadcrumb/breadcrumb";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ClientLayout from "./ClientLayout";
 
 
 import Script from "next/script";
@@ -65,14 +66,16 @@ export default function RootLayout({ children }) {
         ></Script>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Providers>
+        {/* <Providers>
           <Header />
           <CartProvider>
-            {/* <Breadcrumb /> */}
             {children}
             <ToastContainer />
           </CartProvider>
           <Footer />
+        </Providers> */}
+        <Providers>
+          <ClientLayout>{children}</ClientLayout> {/* 交給 ClientLayout 處理 */}
         </Providers>
       </body>
     </html>

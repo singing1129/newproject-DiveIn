@@ -1,0 +1,299 @@
+:root {
+  --primary-color: #219ebc;
+  --primary-deep-color: #023047;
+  --primary-light-color: #8ecae6;
+  --secondary-color: #ffd500;
+  --secondary-deep-color: #ffb703;
+  --secondary-light-color: #f1d691;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-50-color: #e5e5e5;
+  --gray-100-color: #dedede;
+  --gray-200-color: #e5e5e5;
+  --gray-300-color: #cfcfcf;
+  --gray-400-color: #b2b2b2;
+  --gray-500-color: #a3a3a3;
+  --gray-600-color: #898989;
+  --gray-700-color: #6f6f6f;
+  --gray-800-color: #555555;
+  --gray-900-color: #3b3b3b;
+}
+
+* {
+  font-family: "Noto Sans TC", serif;
+  font-size: 16px;
+}
+
+/* 確保 html 和 body 填滿視窗 */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 登入頁面容器 */
+.login2-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to bottom, #023047, #219ebc);
+  overflow: hidden;
+}
+
+/* 氣泡感的粒子背景 */
+.particles-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 光線效果 */
+.login2-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.1),
+    transparent 70%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 登入框 */
+.login-box {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  color: var(--white);
+}
+
+/* 登入框大標題 */
+.login-box h3 {
+  font-size: 24px;
+  color: var(--white);
+}
+
+/* 登入框小標題 */
+.login-box p {
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: var(--white);
+}
+
+/* 輸入框 */
+.input-field {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+  font-size: 1rem;
+  outline: none;
+  transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* 輸入框 focus */
+.input-field:focus {
+  box-shadow: 0 0 0 3px rgba(33, 158, 188, 0.3);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 輸入框佔位符 */
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 登入btn */
+.login-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: var(--primary-light-color);
+  border: none;
+  color: var(--primary-deep-color);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 登入btn hover */
+.login-btn:hover {
+  background: var(--primary-deep-color);
+  color: var(--white);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 分隔線 */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.divider span {
+  padding: 0 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+/* 圖標按鈕 */
+.icon-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: var(--white);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.icon {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 忘記密碼與註冊新帳號 */
+.additional-options {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.additional-options .link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease-in-out;
+}
+
+.additional-options .link:hover {
+  color: var(--white);
+}
+
+/* RWD 調整 */
+@media (max-width: 768px) {
+  .login-box {
+    max-width: 80%;
+    padding: 1.5rem;
+  }
+
+  .login-box h3 {
+    font-size: 20px;
+  }
+
+  .login-box p {
+    font-size: 11px;
+  }
+
+  .input-field {
+    padding: 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .login-btn {
+    padding: 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .icon-buttons {
+    gap: 1rem;
+  }
+
+  .icon-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+  }
+
+  .additional-options .link {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-box {
+    max-width: 60%;
+    padding: 1.2rem;
+  }
+
+  .login-box h3 {
+    font-size: 18px;
+  }
+
+  .login-box p {
+    font-size: 10px;
+    margin-bottom: 15px;
+  }
+
+  .input-field {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .login-btn {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .icon-buttons {
+    gap: 0.8rem;
+  }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+
+  .additional-options .link {
+    font-size: 0.75rem;
+  }
+
+  .divider {
+    margin: 1rem 0;
+  }
+}
