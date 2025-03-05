@@ -1,12 +1,14 @@
 /* HeroSection.module.css */
+
+/* 主容器 */
 .heroSection {
   position: relative;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  box-sizing: border-box;
 }
 
+/* 影片背景 */
 .videoBackground {
   position: absolute;
   top: 0;
@@ -14,82 +16,77 @@
   width: 100%;
   height: 100%;
   z-index: 0;
-  overflow: hidden;
 }
 
 .videoBackground video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* 確保影片覆蓋整個區域 */
 }
 
+/* 遮罩層 */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* 半透明黑色遮罩 */
+  z-index: 1;
+}
+
+/* 氣泡 */
+.bubble {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  z-index: 2;
+  pointer-events: auto; /* 允許滑鼠互動 */
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.bubble.hovered {
+  transform: scale(1.5); /* 放大氣泡 */
+}
+
+/* 氣泡資訊 */
+.bubbleInfo {
+  position: absolute;
+  top: 120px; /* 資訊顯示在氣泡下方 */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* 文字動畫 */
 .heroText {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
+  z-index: 3;
   text-align: center;
   color: white;
-  font-family: 'Arial', 'Noto Sans TC', sans-serif;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: Arial, sans-serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* 文字陰影 */
 }
 
 .heroText h1 {
-  font-size: 4rem;
-  margin-bottom: 20px;
+  font-size: 2rem; /* 縮小字體 */
+  margin-bottom: 10px;
 }
 
 .heroText p {
-  font-size: 1.5rem;
+  font-size: 1rem; /* 縮小字體 */
 }
 
-.fish {
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  z-index: 4;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.diveIcon {
+/* 滾動箭頭 */
+.scrollArrow {
   position: absolute;
   bottom: 20px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  z-index: 3;
-  cursor: pointer;
-  transition: transform 0.3s;
-}
-
-.diveIcon:hover {
-  transform: scale(1.1); /* 懸停時放大一點，增加趣味性 */
-}
-
-.diveIcon img {
-  width: 100%;
-  height: 100%;
-}
-
-.infoBubble {
-  position: absolute;
-  bottom: 100px; /* 出現在圖標上方 */
-  right: 20px;
-  width: 300px;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.2); /* 半透明氣泡感 */
-  border-radius: 20px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px); /* 模糊效果 */
-  color: white;
-  text-align: center;
-  z-index: 3;
-}
-
-.infoBubble p {
-  font-size: 1rem;
-  margin-top: 10px;
-  font-family: 'Arial', 'Noto Sans TC', sans-serif;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
 }
