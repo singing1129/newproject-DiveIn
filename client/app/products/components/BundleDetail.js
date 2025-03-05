@@ -58,7 +58,11 @@ export default function BundleDetail({ bundle }) {
           <div className="col-md-6">
             <div className="product-img">
               <Image
-                src={`/img/product/${bundle.main_image}`}
+                src={
+                  bundle.main_image
+                    ? `/image/product/${bundle.main_image}`
+                    : "/image/product/no-img.png"
+                }
                 alt={bundle.name || "套組商品圖片"}
                 width={500}
                 height={500}

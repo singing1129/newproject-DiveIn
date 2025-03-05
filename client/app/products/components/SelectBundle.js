@@ -180,7 +180,11 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
               >
                 <div className={styles.itemImage}>
                   <Image
-                    src={`/img/product/${item.main_image || "default.jpg"}`}
+                    src={
+                      item.main_image
+                        ? `/image/product/${item.main_image}`
+                        : "/image/product/no-img.png"
+                    }
                     alt={item.product_name}
                     width={60}
                     height={60}

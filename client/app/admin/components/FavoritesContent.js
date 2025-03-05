@@ -3,13 +3,16 @@ import { useState, useEffect } from "react";
 import styles from "./Favorites.module.css";
 import axios from "axios";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import useFavorite from "@/hooks/useFavorite";
 import Link from "next/link";
 import useToast from "@/hooks/useToast";
 import { useAuth } from "@/hooks/useAuth";
 
 // 創建一個獨立的商品卡片組件
 const FavoriteCard = ({ item, itemType, onRemove }) => {
+  const { getToken } = useAuth(); // 從 useAuth 取得 token 方法
+  const { showToast } = useToast();
+  const [removed, setRemoved] = useState(false);
+
   // 根據不同類型獲取正確的 ID
   const getItemId = () => {
     switch (itemType) {
@@ -27,16 +30,14 @@ const FavoriteCard = ({ item, itemType, onRemove }) => {
   };
 
   const itemId = getItemId();
-  const { showToast } = useToast();
-  const [removed, setRemoved] = useState(false);
 
-  // 直接使用 axios 來處理收藏移除，而不是使用 useFavorite
+  // 使用 useAuth 的 getToken() 來取得 token
   const handleRemoveFavorite = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     try {
-      const token = localStorage.getItem("loginWithToken");
+      const token = getToken();
       if (!token) return;
 
       const response = await axios.post(
@@ -139,7 +140,7 @@ export default function FavoritesContent() {
     rental: [],
     bundle: [],
   });
-  const { user } = useAuth();
+  const { user, getToken } = useAuth(); // 從 useAuth 同時取得 user 與 getToken
 
   useEffect(() => {
     if (user && user !== -1) {
@@ -147,10 +148,9 @@ export default function FavoritesContent() {
     }
   }, [user]);
 
-  const token = localStorage.getItem("loginWithToken");
-
   const fetchFavorites = async () => {
     try {
+      const token = getToken();
       const response = await axios.get("http://localhost:3005/api/favorites", {
         headers: {
           Authorization: `Bearer ${token}`,

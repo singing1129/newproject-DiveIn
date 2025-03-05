@@ -42,12 +42,16 @@ export default function Cart1() {
   // 計算單個商品的小計
   const calculateItemSubtotal = (item, type) => {
     switch (type) {
+      case "product":
       case "products":
         return Number(item.price) * item.quantity;
+      case "activity":
       case "activities":
         return Number(item.price) * item.quantity;
+      case "rental":
       case "rentals":
         return Number(item.price_per_day) * item.rental_days * item.quantity;
+      case "bundle":
       case "bundles":
         return Number(item.discount_price) * item.quantity; // 添加bundle类型处理
       default:
@@ -76,20 +80,20 @@ export default function Cart1() {
       ) || [];
 
     const productsTotal = selectedProducts.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "products"),
+      (sum, item) => sum + calculateItemSubtotal(item, "product"),
       0
     );
     const activitiesTotal = selectedActivities.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "activities"),
+      (sum, item) => sum + calculateItemSubtotal(item, "activity"),
       0
     );
     const rentalsTotal = selectedRentals.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "rentals"),
+      (sum, item) => sum + calculateItemSubtotal(item, "rental"),
       0
     );
     // 添加bundle總計計算
     const bundlesTotal = selectedBundles.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "bundles"),
+      (sum, item) => sum + calculateItemSubtotal(item, "bundle"),
       0
     );
 
@@ -101,10 +105,10 @@ export default function Cart1() {
     );
 
     return {
-      products: productsTotal,
-      activities: activitiesTotal,
-      rentals: rentalsTotal,
-      bundles: bundlesTotal, // 添加bundles總額
+      product: productsTotal,
+      activity: activitiesTotal,
+      rental: rentalsTotal,
+      bundle: bundlesTotal, // 添加bundles總額
       depositTotal,
       subtotal: productsTotal + activitiesTotal + rentalsTotal + bundlesTotal,
       total:
@@ -152,7 +156,7 @@ export default function Cart1() {
               <h5>購物車是空的</h5>
               <button
                 className="btn btn-primary mt-3"
-                onClick={() => router.push("/products")}
+                onClick={() => router.push("/product")}
               >
                 去購物
               </button>

@@ -61,7 +61,9 @@ export default function ProductDetail() {
         id: product.id,
         name: product.name,
         price: product.variants[0].price,
-        image: `/img/product/${product.main_image}`,
+        image: product.main_image
+          ? `/image/product/${product.main_image}`
+          : "/image/product/no-img.png",
       },
       ...storedHistory.filter((item) => item.id !== product.id),
     ].slice(0, 10); // 限制只保留最近 10 筆
@@ -220,6 +222,7 @@ export default function ProductDetail() {
           const images = [...productData.images, ...variantImages];
 
           setAllImages(images);
+          console.log("images", images);
           setProduct(productData);
 
           // 設置初始選中的尺寸和顏色
@@ -297,7 +300,7 @@ export default function ProductDetail() {
                     <SwiperSlide key={index}>
                       <div className="product-img-wrapper">
                         <Image
-                          src={`/img/product/${image}`}
+                          src={`/image/product/${image}`}
                           alt={`${product?.name}-${index + 1}`}
                           width={500}
                           height={500}
@@ -327,7 +330,11 @@ export default function ProductDetail() {
                     <SwiperSlide key={index}>
                       <div className="thumb-wrapper">
                         <Image
-                          src={`/img/product/${image}`}
+                          src={
+                            image
+                              ? `/image/product/${image}`
+                              : "/image/product/no-img.png"
+                          }
                           alt={`${product?.name}-${index + 1}`}
                           width={100}
                           height={100}

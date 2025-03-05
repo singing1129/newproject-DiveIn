@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 // import Image from "next/image";
 import axios from "axios";
 import "./CartItem.css";
@@ -51,20 +51,35 @@ const CartItem = ({ item, type = "products" }) => {
   // 根據類型獲取正確的 ID
   const getFavoriteId = () => {
     switch (type) {
+      case "product":
       case "products":
         return item.product_id;
+      case "activity":
       case "activities":
         return item.activity_id;
+      case "rental":
       case "rentals":
         return item.rental_id;
+      case "bundle":
+      case "bundles":
+        return item.bundle_id;
       default:
-        return null;
+        return item.id;
     }
   };
 
   const favoriteId = getFavoriteId();
-  // 不需要轉換 type，直接使用複數形式
-  const { isFavorite, toggleFavorite } = useFavorite(favoriteId, type);
+  // 创建类型映射，将复数形式转换为单数形式
+  const typeMapping = {
+    products: "product",
+    activities: "activity",
+    rentals: "rental",
+    bundles: "bundle",
+  };
+  // 获取收藏功能需要的类型（单数形式）
+  const favoriteType = typeMapping[type] || type;
+  // 使用单数形式类型
+  const { isFavorite, toggleFavorite } = useFavorite(favoriteId, favoriteType);
 
   // 檢查是否被選中
   const isSelected = selectedItems[type]?.includes(item.id);
@@ -142,7 +157,7 @@ const CartItem = ({ item, type = "products" }) => {
         await removeFromCart(type, item.id);
       }
     } catch (error) {
-      console.error("加入收藏失敗:", error);
+      console.error("移入收藏失敗:", error);
     }
   };
 
@@ -253,7 +268,6 @@ const CartItem = ({ item, type = "products" }) => {
             )}
           </>
         );
-       
 
       case "rentals":
         return (
@@ -441,9 +455,9 @@ const CartItem = ({ item, type = "products" }) => {
             className="btn p-0 text-muted"
             onClick={handleAddToFavorites}
             disabled={isFavorite}
-            title={isFavorite ? "商品已在收藏中" : "加入收藏"}
+            title={isFavorite ? "商品已在收藏中" : "移入收藏"}
           >
-            {isFavorite ? "已在收藏中" : "加入收藏"}
+            {isFavorite ? "已在收藏中" : "移入收藏"}
           </button>
           <button
             className="btn p-0 text-muted"

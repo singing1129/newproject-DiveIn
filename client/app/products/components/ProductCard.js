@@ -92,7 +92,11 @@ export default function ProductCard({ product }) {
       <Link href={`/products/${product.id}`} className={styles.productLink}>
         <div className={styles.productImg}>
           <Image
-            src={`/image/product/${product.main_image}`}
+            src={
+              product.main_image
+                ? `/image/product/${product.main_image}`
+                : "/image/product/no-img.png"
+            }
             alt={product.name || "商品圖片"}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
