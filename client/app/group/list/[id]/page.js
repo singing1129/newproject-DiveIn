@@ -11,6 +11,7 @@ import Calendar from "react-calendar";
 import "./Calendar.css";
 import { useAuth } from "@/hooks/useAuth";
 
+
 export default function GroupDetailPage() {
   const [count, setCount] = useState(1);
   if (useParams()) { }
