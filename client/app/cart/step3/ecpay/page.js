@@ -9,7 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function EcpayPage() {
   // 檢查是否登入
-  const { isAuth } = useAuth();
+  const { user } = useAuth();
+  const isAuth = user !== null && user !== -1;
   // 建立ref，用來放置form表單
   const payFormDiv = useRef(null);
   // 建立ref，用來放置金額
@@ -76,7 +77,11 @@ export default function EcpayPage() {
       <p>
         會員登入狀態: {isAuth ? "已登入" : "未登入"}
         <br />
-        <Link href="/user">連至會員登入頁</Link>
+        {isAuth ? (
+          <Link href="/user">連至會員登入頁</Link>
+        ) : (
+          <Link href="/admin/login">連至會員登入頁</Link>
+        )}
       </p>
       <hr />
       <div ref={payFormDiv}></div>

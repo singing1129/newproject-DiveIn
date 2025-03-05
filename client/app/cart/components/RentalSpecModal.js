@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./RentalSpecModal.css";
-
+import { useAuth } from "@/hooks/useAuth";
 const RentalSpecModal = ({ item, onClose, onUpdate }) => {
   const [startDate, setStartDate] = useState(item.start_date);
   const [endDate, setEndDate] = useState(item.end_date);
@@ -9,7 +9,7 @@ const RentalSpecModal = ({ item, onClose, onUpdate }) => {
   const [error, setError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
   const [allColors, setAllColors] = useState([]); // 存儲所有顏色選項（包括中文名稱和 RGB 色碼）
-
+  const { user } = useAuth();
   // 從 API 獲取該商品的所有顏色選項
   useEffect(() => {
     const fetchColors = async () => {
@@ -36,21 +36,11 @@ const RentalSpecModal = ({ item, onClose, onUpdate }) => {
       return;
     }
 
-    // // 調錯用
-    // console.log("傳遞的資料：", {
-    //   userId: 1, // 替換為實際的用戶 ID
-    //   type: "rental",
-    //   itemId: item.id,
-    //   startDate,
-    //   endDate,
-    //   color, // 傳遞顏色中文名稱
-    // });
-
     try {
       const response = await axios.put(
         `http://localhost:3005/api/cart/update`,
         {
-          userId: 1, // 替換為實際的用戶 ID
+          userId: user.id, // 替換為實際的用戶 ID
           type: "rental",
           itemId: item.id,
           startDate,
@@ -82,7 +72,7 @@ const RentalSpecModal = ({ item, onClose, onUpdate }) => {
       alert("更新失敗，請稍後再試");
     }
   };
-  
+
   // 處理關閉 modal
   const handleClose = () => {
     setIsClosing(true);

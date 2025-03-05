@@ -17,23 +17,23 @@ export default function ProductBanner() {
       >
         <SwiperSlide>
           <img
-            src="/banners/banner1.jpg"
+            src="/image/productBanner1.jpg"
             alt="春季新品特價"
-            className="w-full h-64 object-cover rounded-lg"
+            className="w-100 h-64 object-cover rounded-lg"
           />
         </SwiperSlide>
         <SwiperSlide>
           <img
-            src="/banners/banner2.jpg"
+            src="/image/productBanner2.jpg"
             alt="熱銷商品推薦"
-            className="w-full h-64 object-cover rounded-lg"
+            className="w-100 h-64 object-cover rounded-lg"
           />
         </SwiperSlide>
         <SwiperSlide>
           <img
-            src="/banners/banner3.jpg"
+            src="/image/productBanner3.jpg"
             alt="限時優惠"
-            className="w-full h-64 object-cover rounded-lg"
+            className="w-100 h-64 object-cover rounded-lg"
           />
         </SwiperSlide>
       </Swiper>

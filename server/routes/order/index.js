@@ -95,6 +95,75 @@ router.get("/:orderId", async (req, res) => {
       [orderId]
     );
 
+    // 7.查詢訂單中的bundle
+    const [bundleIds] = await connection.execute(
+      `SELECT DISTINCT oi.bundle_id
+       FROM order_items oi
+       WHERE oi.order_id = ? AND oi.bundle_id IS NOT NULL`,
+      [orderId]
+    );
+
+    const bundles = [];
+    for (const { bundle_id } of bundleIds) {
+      // 查询套装基本信息
+      const [bundleInfo] = await connection.execute(
+        `SELECT id, name, description, discount_price
+         FROM product_bundle
+         WHERE id = ?`,
+        [bundle_id]
+      );
+
+      if (bundleInfo.length === 0) continue;
+
+      // 查询套装中的商品
+      const [bundleItems] = await connection.execute(
+        `SELECT oi.id, oi.variant_id, oi.quantity, oi.price,
+                pv.product_id, p.name as product_name, c.name as color_name, 
+                s.name as size_name, pi.image_url
+         FROM order_items oi
+         JOIN product_variant pv ON oi.variant_id = pv.id
+         JOIN product p ON pv.product_id = p.id
+         LEFT JOIN color c ON pv.color_id = c.id
+         LEFT JOIN size s ON pv.size_id = s.id
+         LEFT JOIN product_images pi ON pv.product_id = pi.product_id AND pi.is_main = 1
+         WHERE oi.order_id = ? AND oi.bundle_id = ?`,
+        [orderId, bundle_id]
+      );
+
+      // 计算套装中产品的总原价
+      const originalTotal = bundleItems.reduce(
+        (sum, item) => sum + parseFloat(item.price) * item.quantity,
+        0
+      );
+
+      // 获取套装数量（基于其中一个商品的数量计算）
+      const bundleQuantity =
+        bundleItems.length > 0
+          ? Math.floor(bundleItems[0].quantity / bundleItems.length)
+          : 0;
+
+      // 添加到套装列表
+      bundles.push({
+        id: bundle_id,
+        name: bundleInfo[0].name,
+        description: bundleInfo[0].description,
+        discount_price: parseFloat(bundleInfo[0].discount_price),
+        original_total: originalTotal,
+        quantity: bundleQuantity,
+        items: bundleItems.map((item) => ({
+          id: item.id,
+          productId: item.product_id,
+          variantId: item.variant_id,
+          name: item.product_name,
+          color: item.color_name,
+          size: item.size_name,
+          quantity: item.quantity,
+          price: parseFloat(item.price),
+          image: item.image_url,
+        })),
+      });
+    }
+
     // 7. 查詢使用者資訊
     const [userRows] = await connection.execute(
       `SELECT id, name, phone, email, address
@@ -259,6 +328,7 @@ router.get("/:orderId", async (req, res) => {
             image: item.image_url,
           };
         }),
+        bundles: bundles,
       },
       userInfo:
         userRows.length > 0
@@ -326,6 +396,12 @@ router.get("/user/:userId", async (req, res) => {
           [order.id]
         );
 
+        // bundle商品數量
+        const [bundleCount] = await pool.execute(
+          "SELECT SUM(quantity) as count FROM order_items WHERE order_id = ? AND bundle_id IS NOT NULL",
+          [order.id]
+        );
+
         // 訂單第一個商品資訊 (用於預覽)
         const [firstItem] = await pool.execute(
           `SELECT 'product' as type, p.name, pi.image_url
@@ -367,7 +443,8 @@ router.get("/user/:userId", async (req, res) => {
               totalItems:
                 (productCount[0].count || 0) +
                 (activityCount[0].count || 0) +
-                (rentalCount[0].count || 0),
+                (rentalCount[0].count || 0) +
+                (bundleCount[0].count || 0),
               firstItem: firstRental.length > 0 ? firstRental[0] : null,
             };
           }

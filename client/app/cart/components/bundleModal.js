@@ -5,9 +5,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useCart } from "@/hooks/cartContext";
 import "./SpecModal.css";
-import { useAuth } from "@/hooks/useAuth";
-const SpecModal = ({ children, item }) => {
-  const { user } = useAuth();
+
+export default function BundleModal({ children, item }) {
   const { fetchCart } = useCart();
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -21,10 +20,9 @@ const SpecModal = ({ children, item }) => {
     const getProductDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3005/api/products/${item.product_id}`
+          `http://localhost:3005/api/bundle/${item.bundle_id}`
         );
         setProductDetails(response.data.data);
-        console.log("response.data.data", response.data.data);
 
         // 找到當前選中的 variant
         const currentVariant = response.data.data.variants.find(
@@ -63,7 +61,7 @@ const SpecModal = ({ children, item }) => {
     setLoading(true);
     try {
       console.log("Updating with data:", {
-        userId: user.id,
+        userId: 1,
         type: "product",
         itemId: item.id,
         variantId: selectedVariant.id,
@@ -73,7 +71,7 @@ const SpecModal = ({ children, item }) => {
       const response = await axios.put(
         "http://localhost:3005/api/cart/update",
         {
-          userId: user.id,
+          userId: 1,
           type: "product",
           itemId: item.id,
           variantId: selectedVariant.id,
@@ -82,7 +80,7 @@ const SpecModal = ({ children, item }) => {
       );
 
       if (response.data.success) {
-        await fetchCart(user.id);
+        await fetchCart(1);
         if (typeof close === "function") {
           close();
         }
@@ -217,6 +215,4 @@ const SpecModal = ({ children, item }) => {
       </Dialog.Portal>
     </Dialog.Root>
   );
-};
-
-export default SpecModal;
+}

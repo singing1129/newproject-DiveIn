@@ -9,11 +9,12 @@ import { nextUrl } from "../../../config";
 import { useCart } from "@/hooks/cartContext";
 import axios from "axios";
 import Link from "next/link";
-
+import { useAuth } from "@/hooks/useAuth";
 const API_BASE_URL = "http://localhost:3005/api";
 const Cart2 = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { cartData, completeCheckout } = useCart();
   const [checkoutSteps, setCheckoutSteps] = useState({
@@ -60,7 +61,7 @@ const Cart2 = () => {
         const response = await axios.post(
           `${API_BASE_URL}/checkout/initialize`,
           {
-            userId: 1, // 這裡應該使用實際的 userId
+            userId: user.id, // 這裡應該使用實際的 userId
           }
         );
 
@@ -82,7 +83,8 @@ const Cart2 = () => {
       !cartData ||
       (cartData.products.length === 0 &&
         cartData.activities.length === 0 &&
-        cartData.rentals.length === 0)
+        cartData.rentals.length === 0 &&
+        cartData.bundles.length === 0)
     ) {
       router.push("/cart/step1");
       return;
@@ -240,6 +242,11 @@ const Cart2 = () => {
       </div>
     </div>
   );
+  console.log("cartData組件＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿", cartData.bundles);
+  console.log(
+    "cartData組件＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿",
+    cartData.cartData
+  );
   // 處理商品名稱
   const itemNames = [
     ...cartData.products.map(
@@ -249,6 +256,12 @@ const Cart2 = () => {
       (item) => `${item.activity_name} x ${item.quantity}`
     ),
     ...cartData.rentals.map((item) => `${item.rental_name} x ${item.quantity}`),
+    ...cartData.bundles.map(
+      (item) =>
+        `${item.name} x ${item.quantity} ${item.items.map(
+          (i) => i.product_name + " x " + i.quantity
+        )}`
+    ),
   ];
 
   //linepay
@@ -284,14 +297,14 @@ const Cart2 = () => {
         }
       }
 
-      // 1️⃣ **先建立訂單**
+      // **先建立訂單**
       const orderResponse = await fetch(
         "http://localhost:3005/api/checkout/complete",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId: 1,
+            userId: user.id,
             paymentMethod: "linepay",
             couponCode: null,
             activityTravelers: Object.values(activityTravelers).flat(),
@@ -306,7 +319,12 @@ const Cart2 = () => {
 
       // 2️⃣ **取得訂單金額**
       const amount = orderResult.data.totalAmount;
-      const itemNames = cartData.products.map((p) => p.product_name).join(",");
+      const itemNames = [
+        ...cartData.products.map((p) => p.product_name),
+        ...cartData.activities.map((a) => a.activity_name),
+        ...cartData.rentals.map((r) => r.rental_name),
+        ...cartData.bundles.map((b) => b.bundle_name),
+      ].join(",");
 
       // 3️⃣ **向 `/linepay/reserve` 發送付款請求**
       const response = await fetch(
@@ -335,49 +353,49 @@ const Cart2 = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const transactionId = urlParams.get("transactionId");
       if (!transactionId) return;
-  
+
       const storedTransactionId = localStorage.getItem("linePayTransactionId");
       if (storedTransactionId !== transactionId) {
         console.error("❌ 交易 ID 不匹配");
         return;
       }
-  
+
       console.log("🟢 確認付款中，交易 ID:", transactionId);
-      
+
       try {
         const amount = calculateTotal();
         const response = await fetch(
           `http://localhost:3005/api/linepay/confirm?transactionId=${transactionId}&amount=${amount}`
         );
-  
+
         const result = await response.json();
-        console.log("🟢 LINE Pay 確認結果:", result);
-  
+        console.log(" LINE Pay 確認結果:", result);
+
         if (result.success) {
-          console.log("✅ 付款成功，重新獲取訂單資訊...");
-          
-          // 1️⃣ **重新請求最新訂單資訊**
+          console.log(" 付款成功，重新獲取訂單資訊...");
+
+          //  **重新請求最新訂單資訊**
           const lastOrderId = localStorage.getItem("lastOrderId");
           if (!lastOrderId) {
             console.error("❌ 找不到 lastOrderId，無法更新訂單狀態！");
             return;
           }
-  
+
           const orderResponse = await axios.get(
             `http://localhost:3005/api/order/${lastOrderId}`
           );
-  
+
           const updatedOrder = orderResponse.data.data;
-          console.log("🟢 更新後的訂單資訊:", updatedOrder);
-  
-          // 2️⃣ **更新狀態**
+          console.log(" 更新後的訂單資訊:", updatedOrder);
+
+          //  **更新狀態**
           if (updatedOrder.orderInfo.orderStatus === "paid") {
             alert("付款成功，訂單狀態已更新！");
           } else {
             alert("付款成功，但訂單狀態未更新，請聯絡客服！");
           }
-  
-          // 3️⃣ **確保 `orderStatus` 不會卡在 `pending`**
+
+          //**確保 `orderStatus` 不會卡在 `pending`**
           router.push("/order/success");
         } else {
           alert("付款失敗");
@@ -386,10 +404,9 @@ const Cart2 = () => {
         console.error("❌ 確認付款時發生錯誤:", error);
       }
     };
-  
+
     confirmLinePay();
   }, []);
-  
 
   //ecpay
   const handleEcpayCheckout = async () => {
@@ -432,7 +449,7 @@ const Cart2 = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            userId: 1,
+            userId: user.id,
             shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
             paymentMethod: "ecpay",
             couponCode: null,
@@ -518,7 +535,8 @@ const Cart2 = () => {
       !cartData ||
       (cartData.products.length === 0 &&
         cartData.activities.length === 0 &&
-        cartData.rentals.length === 0)
+        cartData.rentals.length === 0 &&
+        cartData.bundles.length === 0)
     ) {
       throw new Error("購物車是空的");
     }

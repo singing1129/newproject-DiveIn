@@ -48,6 +48,7 @@ import couponClaimRouter from "../routes/coupon/claim.js";
 // 會員相關路由
 import memberRouter from "../routes/admin/index.js";
 import memberMyGroupRouter from "../routes/admin/mygroup.js";
+import memberUpdateRouter from "../routes/admin/updateForm.js";
 // import shipmentRouter from "../routes/ship/index.js"; // 運送相關路由
 import checkoutRouter from "../routes/checkout/index.js";
 //ecpay
@@ -58,7 +59,6 @@ import linepayRouter from "../routes/linepay/index.js";
 import orderRouter from "../routes/order/index.js";
 // 密碼重設
 import passwordResetRouter from "../routes/admin/passwordReset.js";
-
 // 建立 Express 應用程式
 const app = express();
 
@@ -85,11 +85,16 @@ const corsOptions = {
 };
 // 應用中間件for admin
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 // 中間件
 app.use(logger("dev"));
 app.use(express.static(path.join(process.cwd(), "../public")));
+// 提供會員頭像靜態服務
+app.use(
+  "/uploads/avatars", // Change from "/uploads/avatar" to "/uploads/avatars"
+  express.static(path.join(__dirname, "..", "public", "uploads", "avatars"))
+);
 
 // 提供文章圖片靜態服務
 app.use(
@@ -170,7 +175,7 @@ apiRouter.use("/coupon", couponClaimRouter); // 負責 `/api/coupon/claim`
 // 會員相關路由
 apiRouter.use("/admin", memberRouter);
 apiRouter.use("/admin", memberMyGroupRouter);
-
+apiRouter.use("/admin", memberUpdateRouter);
 // 捕捉 404 錯誤
 app.use((req, res, next) => {
   next(createError(404));
