@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaRegUser } from "react-icons/fa";
 import { Menu, MenuItem, IconButton } from "@mui/material";
 import Link from "next/link";
@@ -17,7 +17,7 @@ export default function User() {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  console.log("當前用戶狀態:", user);
+  console.log("user", user);
 
   return (
     // FIXME: 修正下拉選單位置
@@ -45,16 +45,24 @@ export default function User() {
           {user ? (
             <>
               <MenuItem onClick={handleClose}>
-                <Link className="text-decoration-none" href="/admin/favorites">我的收藏</Link>
+                <Link className="text-decoration-none" href="/admin/favorites">
+                  我的收藏
+                </Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link className="text-decoration-none" href="/admin/coupons">優惠券</Link>
+                <Link className="text-decoration-none" href="/coupon">
+                  優惠券
+                </Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link className="text-decoration-none" href="/admin/group">我的揪團</Link>
+                <Link className="text-decoration-none" href="/admin/group">
+                  我的揪團
+                </Link>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <Link className="text-decoration-none" href="/admin/account">帳戶設定</Link>
+                <Link className="text-decoration-none" href="/admin/account">
+                  帳戶設定
+                </Link>
               </MenuItem>
               <MenuItem
                 onClick={() => {

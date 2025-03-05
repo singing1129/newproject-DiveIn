@@ -28,72 +28,73 @@ export default function Login() {
   const sendOTP = async () => {
     try {
       const formattedPhone = formatPhoneNumber(phone);
-      console.log("📞 發送 OTP 給:", formattedPhone);
-  
+      console.log(" 發送 OTP 給:", formattedPhone);
+
       if (!formattedPhone.startsWith("+")) {
         alert("請輸入完整的國際格式，例如：+886912345678");
         return;
       }
-  
+
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
       }
-  
+
       window.recaptchaVerifier = setupRecaptcha("recaptcha-container");
       const appVerifier = window.recaptchaVerifier;
-  
-      const confirmationFunc = await loginWithPhone(formattedPhone, appVerifier);
-      console.log("📩 取得的 `confirmationFunc`:", confirmationFunc);
-  
+
+      const confirmationFunc = await loginWithPhone(
+        formattedPhone,
+        appVerifier
+      );
+      console.log("取得的 `confirmationFunc`:", confirmationFunc);
+
       if (confirmationFunc) {
-        console.log("✅ OTP 發送成功，等待用戶輸入驗證碼");
+        console.log(" OTP 發送成功，等待用戶輸入驗證碼");
         setConfirmation(() => confirmationFunc);
       } else {
-        console.error("❌ OTP 發送失敗");
+        console.error(" OTP 發送失敗");
         alert("OTP 發送失敗，請稍後再試");
       }
     } catch (error) {
-      console.error("❌ 發送 OTP 失敗:", error);
+      console.error(" 發送 OTP 失敗:", error);
       alert("發送 OTP 失敗，請稍後再試");
     }
   };
-  
-  
 
   // In page.js - Update the verifyOTP function
 
   const verifyOTP = async () => {
     try {
       if (!confirmation) {
-        console.error("❌ `confirmation` 為 null，請檢查 `sendOTP` 是否有正確執行");
+        console.error(
+          "❌ `confirmation` 為 null，請檢查 `sendOTP` 是否有正確執行"
+        );
         alert("請先發送驗證碼！");
         return;
       }
-  
-      console.log("✅ 確認 `confirmation` 變數存在:", confirmation);
-      console.log("📤 使用 OTP 進行驗證:", otp);
-  
+
+      console.log(" 確認 `confirmation` 變數存在:", confirmation);
+      console.log("使用 OTP 進行驗證:", otp);
+
       const result = await confirmation(otp);
-      console.log("🔍 OTP 驗證結果:", result);
-  
+      console.log(" OTP 驗證結果:", result);
+
       if (!result || !result.success) {
         throw new Error(result?.error?.message || "驗證失敗");
       }
-  
-      console.log("✅ 驗證成功，取得使用者:", result.user);
-      
+
+      console.log(" 驗證成功，取得使用者:", result.user);
+
       // 登入成功提示
       alert("登入成功！");
-      
+
       // 讓 useAuth 中的路由保護機制處理跳轉，與其他登入方式一致
       // 這裡不需要手動跳轉，因為 useEffect 會監控 user 狀態變化
     } catch (error) {
-      console.error("❌ 驗證碼錯誤", error);
+      console.error("驗證碼錯誤", error);
       alert("驗證碼錯誤，請重新輸入");
     }
   };
-  
-  
 
   // 原本的登入
   const {
@@ -105,37 +106,31 @@ export default function Login() {
   } = useAuth();
   const router = useRouter();
 
- // 修复后的登录处理函数
-const handleLogin = async (e) => {
-  e.preventDefault(); // 防止表單提交刷新頁面
-  try {
-    const result = await loginWithEmail(email, password);
+  // 修复后的登录处理函数
+  const handleLogin = async (e) => {
+    e.preventDefault(); // 防止表單提交刷新頁面
+    try {
+      const result = await loginWithEmail(email, password);
 
-    if (result && result.status === "success") {
-      // 只有當登入成功時才跳轉
-      console.log("登入成功", result.user);
-      // 此处不需要手动跳转，useAuth 中的路由保护会自动处理
-      // router.push("/");
+      if (result && result.status === "success") {
+        // 只有當登入成功時才跳轉
+        console.log("登入成功", result.user);
+        // 此數不需要手動跳轉，useAuth 中的路由保護機制會自動處理
+        // router.push("/");
+      }
+    } catch (err) {
+      console.error("登入失敗", err);
     }
-  } catch (err) {
-    console.error("登入失敗", err);
-  }
-};
+  };
   useEffect(() => {
     if (!document.getElementById("recaptcha-container")) {
-      console.error("🚨 reCAPTCHA 容器不存在！");
+      console.error("reCAPTCHA 容器不存在！");
     }
   }, []);
 
   return (
     <form className={styles.loginPage} onSubmit={handleLogin}>
       <div className={styles.main}>
-        <img
-          src="/image/DiveIn-logo-dark-final.png"
-          alt="logo"
-          className={styles.logo}
-        />
-        <div className={styles.line1}></div>
         <div className={styles.sectionLogin}>
           {!showPhoneLogin && <h3>登入</h3>}
 

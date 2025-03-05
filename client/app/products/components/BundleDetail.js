@@ -3,20 +3,23 @@ import { useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import { useCart } from "@/hooks/cartContext";
 import { useAuth } from "@/hooks/useAuth";
 import useFavorite from "@/hooks/useFavorite";
 import useToast from "@/hooks/useToast";
 import SelectBundle from "../components/SelectBundle";
 import Link from "next/link";
+import { useCart } from "@/hooks/cartContext";
 // import styles from "./bundle.module.css";
 
 // components/BundleDetail.js
 export default function BundleDetail({ bundle }) {
   // const params = useParams();
   // const bundleId = params?.id;
-  console.log(bundle);
 
+  console.log(bundle);
+  console.log("bundle.items", bundle.items);
+
+  const { addToCart } = useCart();
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorite(bundle?.id, "bundle");
   const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
@@ -30,7 +33,20 @@ export default function BundleDetail({ bundle }) {
     setIsSelectModalOpen(true);
   };
 
-  console.log("bundle.items", bundle.items);
+  // 處理套組選擇
+  // 處理套組選擇
+  const handleBundleSelect = async (bundleData) => {
+    try {
+      console.log("從 SelectBundle 收到的數據:", bundleData);
+      const success = await addToCart(bundleData);
+      if (success) {
+        showToast("套組已成功加入購物車！");
+      }
+    } catch (error) {
+      console.error("添加套組到購物車失敗:", error);
+      showToast("添加失敗，請稍後再試");
+    }
+  };
 
   if (!bundle) return <div>載入中...</div>;
 
@@ -159,10 +175,7 @@ export default function BundleDetail({ bundle }) {
         isOpen={isSelectModalOpen}
         onClose={() => setIsSelectModalOpen(false)}
         bundle={bundle}
-        onSelect={(selectedItems) => {
-          console.log("Selected items:", selectedItems);
-          setIsSelectModalOpen(false);
-        }}
+        onSelect={handleBundleSelect}
       />
     </div>
   );

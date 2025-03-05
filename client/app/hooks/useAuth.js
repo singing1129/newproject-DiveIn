@@ -167,7 +167,7 @@ export function AuthProvider({ children }) {
 
           // 3. 準備API請求數據
           const userData = {
-            // 用戶基本信息
+            // 用戶基本訊息
             email: session.user.email || null,
             name: session.user.name || null,
             image: session.user.image || null,
@@ -575,6 +575,22 @@ export function AuthProvider({ children }) {
     }, 50);
   };
 
+  // 在 useAuth 中
+  const getToken = () => {
+    return localStorage.getItem(appKey);
+  };
+
+  const getDecodedToken = () => {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      return jwt.decode(token);
+    } catch (error) {
+      console.error("解析 token 失敗:", error);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -585,6 +601,8 @@ export function AuthProvider({ children }) {
         loginWithPhone,
         logout,
         register,
+        getToken,
+        getDecodedToken,
       }}
     >
       {children}
