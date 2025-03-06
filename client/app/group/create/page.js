@@ -438,7 +438,7 @@ export default function GroupDetailPage() {
               <img src="#" alt="" />
             )}
             </div>
-            <input type="file" name="file" onChange={(e)=>{doImagePreview(e)}} required />
+            <input type="file" name="file" onChange={(e)=>{doImagePreview(e)}} accept=".png, .jpg, .jpeg, .gif, .webp" required />
             {/* <div className="text-secondary">檔案上傳限制：3MB</div> */}
           </div>
           {/* <div className="col-12 col-sm-6 d-flex flex-column gap-3">
