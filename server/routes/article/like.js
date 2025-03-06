@@ -3,83 +3,94 @@ import { pool } from "../../config/mysql.js";
 
 const router = express.Router();
 
-// 文章点赞/倒赞
-router.post("/article/like/:id", async (req, res) => {
-  const { id } = req.params;
-  const { memberId, isLike } = req.body; // isLike: true for like, false for dislike
-
+// 獲取某用戶的按讚/倒讚記錄
+router.get("/users/:usersId", async (req, res) => {
+  const { usersId } = req.params;
   try {
-    // 检查用户是否已经对该文章点赞/倒赞
-    const [existingLike] = await pool.execute(`
-      SELECT * FROM article_like WHERE article_id = ? AND member_id = ?
-    `, [id, memberId]);
-
-    if (existingLike.length > 0) {
-      // 如果已经存在，更新状态
-      await pool.execute(`
-        UPDATE article_like 
-        SET is_like = ?
-        WHERE article_id = ? AND member_id = ?
-      `, [isLike, id, memberId]);
-    } else {
-      // 否则，新增点赞记录
-      await pool.execute(`
-        INSERT INTO article_like (article_id, member_id, is_like)
-        VALUES (?, ?, ?)
-      `, [id, memberId, isLike]);
-    }
-
-    res.json({
-      status: "success",
-      message: isLike ? "点赞成功" : "倒赞成功"
-    });
+    const [likes] = await pool.execute(
+      "SELECT article_id, reply_id, is_like FROM article_likes_dislikes WHERE users_id = ?",
+      [usersId]
+    );
+    res.json(likes);
   } catch (error) {
-    console.error("❌ 文章点赞/倒赞失败：", error);
-    res.status(500).json({
-      status: "error",
-      message: "文章点赞/倒赞失败",
-      error: error.message,
-    });
+    console.error("❌ 獲取用戶按讚記錄失敗：", error);
+    res.status(500).json({ status: "error", message: "獲取用戶按讚記錄失敗", error: error.message });
   }
 });
 
-// 留言点赞/倒赞
-router.post("/reply/like/:replyId", async (req, res) => {
-  const { replyId } = req.params;
-  const { memberId, isLike } = req.body; // isLike: true for like, false for dislike
+// 對文章按讚/倒讚
+router.post("/article/:id", async (req, res) => {
+  const { id } = req.params;
+  const { isLike } = req.body;
+  const usersId = req.user?.id;
+
+  if (!usersId) return res.status(401).json({ status: "error", message: "未授權" });
 
   try {
-    // 检查用户是否已经对该留言点赞/倒赞
-    const [existingLike] = await pool.execute(`
-      SELECT * FROM article_reply_like WHERE reply_id = ? AND member_id = ?
-    `, [replyId, memberId]);
+    const [existing] = await pool.execute(
+      "SELECT * FROM article_likes_dislikes WHERE article_id = ? AND users_id = ? AND reply_id IS NULL",
+      [id, usersId]
+    );
 
-    if (existingLike.length > 0) {
-      // 如果已经存在，更新状态
-      await pool.execute(`
-        UPDATE article_reply_like 
-        SET is_like = ?
-        WHERE reply_id = ? AND member_id = ?
-      `, [isLike, replyId, memberId]);
+    if (existing.length) {
+      await pool.execute(
+        "UPDATE article_likes_dislikes SET is_like = ? WHERE article_id = ? AND users_id = ? AND reply_id IS NULL",
+        [isLike, id, usersId]
+      );
     } else {
-      // 否则，新增点赞记录
-      await pool.execute(`
-        INSERT INTO article_reply_like (reply_id, member_id, is_like)
-        VALUES (?, ?, ?)
-      `, [replyId, memberId, isLike]);
+      await pool.execute(
+        "INSERT INTO article_likes_dislikes (article_id, users_id, is_like, reply_id) VALUES (?, ?, ?, NULL)",
+        [id, usersId, isLike]
+      );
     }
 
-    res.json({
-      status: "success",
-      message: isLike ? "留言点赞成功" : "留言倒赞成功"
-    });
+    const [updatedLikes] = await pool.execute(
+      "SELECT COUNT(is_like = TRUE) as likes, COUNT(is_like = FALSE) as dislikes " +
+      "FROM article_likes_dislikes WHERE article_id = ? AND reply_id IS NULL",
+      [id]
+    );
+    res.json(updatedLikes[0]);
   } catch (error) {
-    console.error("❌ 留言点赞/倒赞失败：", error);
-    res.status(500).json({
-      status: "error",
-      message: "留言点赞/倒赞失败",
-      error: error.message,
-    });
+    console.error("❌ 文章按讚失敗：", error);
+    res.status(500).json({ status: "error", message: "文章按讚失敗", error: error.message });
+  }
+});
+
+// 對留言按讚/倒讚
+router.post("/reply/:id", async (req, res) => {
+  const { id } = req.params;
+  const { isLike, articleId } = req.body;
+  const usersId = req.user?.id;
+
+  if (!usersId) return res.status(401).json({ status: "error", message: "未授權" });
+
+  try {
+    const [existing] = await pool.execute(
+      "SELECT * FROM article_likes_dislikes WHERE article_id = ? AND reply_id = ? AND users_id = ?",
+      [articleId, id, usersId]
+    );
+
+    if (existing.length) {
+      await pool.execute(
+        "UPDATE article_likes_dislikes SET is_like = ? WHERE article_id = ? AND reply_id = ? AND users_id = ?",
+        [isLike, articleId, id, usersId]
+      );
+    } else {
+      await pool.execute(
+        "INSERT INTO article_likes_dislikes (article_id, reply_id, users_id, is_like) VALUES (?, ?, ?, ?)",
+        [articleId, id, usersId, isLike]
+      );
+    }
+
+    const [updatedLikes] = await pool.execute(
+      "SELECT COUNT(is_like = TRUE) as likes, COUNT(is_like = FALSE) as dislikes " +
+      "FROM article_likes_dislikes WHERE article_id = ? AND reply_id = ?",
+      [articleId, id]
+    );
+    res.json(updatedLikes[0]);
+  } catch (error) {
+    console.error("❌ 留言按讚失敗：", error);
+    res.status(500).json({ status: "error", message: "留言按讚失敗", error: error.message });
   }
 });
 
