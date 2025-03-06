@@ -133,7 +133,7 @@ const CartItem = ({ item, type = "products" }) => {
       setIsUpdating(false);
     }
   };
-
+  console.log("items", item);
   // 處理刪除
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -338,16 +338,19 @@ const CartItem = ({ item, type = "products" }) => {
               <div className="bundle-row">
                 <span className="bundle-label">套組內容：</span>
                 <div className="bundle-value">
-                  共 {item.items?.length || 0} 件商品
+                  共 {Array.isArray(item.items) ? item.items.quantity : 1}{" "}
+                  件商品
                   <div className="bundle-items">
-                    {(item.items || []).map((bundleItem, index) => (
-                      <div key={index} className="bundle-item">
-                        {bundleItem.product_name}
-                        {bundleItem.color_name && ` - ${bundleItem.color_name}`}
-                        {bundleItem.size_name && ` - ${bundleItem.size_name}`}
-                        {` x ${bundleItem.quantity}`}
-                      </div>
-                    ))}
+                    {Array.isArray(item.items) &&
+                      item.items.map((bundleItem, index) => (
+                        <div key={index} className="bundle-item">
+                          {bundleItem.product_name || "未知商品"}
+                          {bundleItem.color_name &&
+                            ` - ${bundleItem.color_name}`}
+                          {bundleItem.size_name && ` - ${bundleItem.size_name}`}
+                          {` x ${bundleItem.quantity || 1}`}
+                        </div>
+                      ))}
                   </div>
                 </div>
               </div>

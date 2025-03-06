@@ -79,36 +79,27 @@ export default function ProductDetail() {
     }
   }, [selectedColor, selectedSize]);
 
-  // // 取得當前選擇的變體
-  // const getCurrentVariant = () => {
-  //   if (!product || !selectedColor || !selectedSize) return null;
-
-  //   return product.variants.find(
-  //     (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
-  //   );
-  // };
-  // 修改 getCurrentVariant 函數以處理沒有顏色或尺寸的情況
   const getCurrentVariant = () => {
-    if (!product) return null;
+  if (!product) return null;
+  
+  // 如果產品沒有顏色和尺寸，直接返回第一個變體
+  if ((!product.colors || product.colors.length === 0) && 
+      (!product.sizes || product.sizes.length === 0) && 
+      product.variants && product.variants.length > 0) {
+    console.log("產品沒有顏色和尺寸，使用第一個變體:", product.variants[0]);
+    return product.variants[0];
+  }
+  
+  // 否則尋找符合所選顏色和尺寸的變體
+  if (!selectedColor || !selectedSize) return null;
 
-    // 檢查是否有顏色和尺寸
-    const hasSelectedColor = selectedColor !== null;
-    const hasSelectedSize = selectedSize !== null;
-
-    // 根據可用的選項篩選變體
-    if (hasSelectedColor && hasSelectedSize) {
-      return product.variants.find(
-        (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
-      );
-    } else if (hasSelectedColor) {
-      return product.variants.find((v) => v.color_id === selectedColor.id);
-    } else if (hasSelectedSize) {
-      return product.variants.find((v) => v.size_id === selectedSize.id);
-    } else {
-      // 如果沒有顏色和尺寸選項，返回第一個變體
-      return product.variants.length > 0 ? product.variants[0] : null;
-    }
-  };
+  const variant = product.variants.find(
+    (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
+  );
+  
+  console.log("找到的變體:", variant);
+  return variant;
+};
 
   // 處理數量變更
   const handleQuantityChange = (value) => {

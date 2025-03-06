@@ -5,11 +5,12 @@ import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import styles from "./products.module.css";
 import useFavorite from "@/hooks/useFavorite";
 import { useCart } from "@/hooks/cartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 
 export default function ProductCard({ product }) {
+ 
   const API_BASE_URL = "http://localhost:3005/api";
   const type = product.item_type === "bundle" ? "bundle" : "product";
   const {
@@ -19,6 +20,9 @@ export default function ProductCard({ product }) {
   } = useFavorite(product.id, type);
   // console.log("product", product);
   // console.log("product.id", product.id);
+  useEffect(() => {
+    console.log(`商品 ${product.id} 的收藏狀態: ${isFavorite}`);
+  }, [isFavorite, product.id]);
 
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -48,21 +52,32 @@ export default function ProductCard({ product }) {
         };
         console.log("cartData", cartData);
       } else {
-        const response = await axios.get(
-          `${API_BASE_URL}/products/${product.id}`
-        );
-
-        const correctVariantId = response.data.data.variants[0].id;
-        console.log("response.data.data", response.data.data);
-        console.log("correctVariantId", correctVariantId);
+        console.log("準備獲取產品詳情:", product.id);
+        const response = await axios.get(`${API_BASE_URL}/products/${product.id}`);
+        console.log("獲取產品詳情成功:", response.data);
+  
+        const variants = response.data.data.variants || [];
+        if (variants.length === 0) {
+          alert("此產品沒有可用的變體");
+          return;
+        }
+  
+        // 尋找合適的變體 - 優先取第一個非刪除的變體
+        const validVariant = variants.find(v => v.isDeleted === 0);
+        if (!validVariant) {
+          alert("此產品沒有可用的變體");
+          return;
+        }
+  
+        console.log("使用的變體:", validVariant.id);
         cartData = {
           type: "product",
-          variantId: correctVariantId, // 使用正確的變體ID
+          variantId: validVariant.id,
           quantity: 1,
         };
-        console.log("cartData", cartData);
       }
-
+  
+      console.log("發送的購物車數據:", cartData);
       const success = await addToCart(cartData);
       if (!success) {
         alert("加入購物車失敗，請稍後再試");
@@ -72,6 +87,7 @@ export default function ProductCard({ product }) {
       alert(`加入購物車失敗: ${error.message || "請稍後再試"}`);
     }
   };
+  
 
   // 顯示價格範圍的函數
   const renderPriceRange = () => {

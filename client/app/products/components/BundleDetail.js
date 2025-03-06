@@ -34,19 +34,27 @@ export default function BundleDetail({ bundle }) {
   };
 
   // 處理套組選擇
-  // 處理套組選擇
-  const handleBundleSelect = async (bundleData) => {
-    try {
-      console.log("從 SelectBundle 收到的數據:", bundleData);
-      const success = await addToCart(bundleData);
-      if (success) {
-        showToast("套組已成功加入購物車！");
-      }
-    } catch (error) {
-      console.error("添加套組到購物車失敗:", error);
-      showToast("添加失敗，請稍後再試");
+
+  // 在 BundleDetail.js 或 SelectBundle.js 中
+const handleBundleSelect = async (bundleData) => {
+  try {
+    console.log("準備將套組加入購物車:", bundleData);
+    // 確保 bundleData 中包含正確的 type 和 bundleId
+    if (!bundleData.type || !bundleData.bundleId) {
+      console.error("套組數據格式不正確:", bundleData);
+      showToast("添加失敗，數據不完整");
+      return;
     }
-  };
+    
+    const success = await addToCart(bundleData);
+    if (success) {
+      showToast("套組已成功加入購物車！");
+    }
+  } catch (error) {
+    console.error("添加套組到購物車失敗:", error);
+    showToast("添加失敗，請稍後再試");
+  }
+};
 
   if (!bundle) return <div>載入中...</div>;
 

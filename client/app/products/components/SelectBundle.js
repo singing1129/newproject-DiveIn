@@ -294,6 +294,36 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
     });
   }, [isOpen, bundle]);
 
+  // 在關閉模態框時重置選擇狀態
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedVariants({});
+      setSelectedColors({});
+      setSelectedSizes({});
+      setCurrentSection(0);
+    }
+  }, [isOpen]);
+
+  // 準備後端所需的變體選擇數據格式
+  const prepareVariantsForBackend = () => {
+    if (!bundle?.items) return [];
+    
+    // 將選定的變體格式化為後端期望的格式
+    const variants = [];
+    
+    // 遍歷所有需要選擇變體的商品
+    bundle.items.forEach(item => {
+      if (item.variant_required === 1 && selectedVariants[item.product_id]) {
+        variants.push({
+          productId: parseInt(item.product_id),
+          variantId: parseInt(selectedVariants[item.product_id].id)
+        });
+      }
+    });
+    
+    return variants;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -559,7 +589,7 @@ export default function SelectBundle({ isOpen, onClose, bundle, onSelect }) {
                   type: "bundle",
                   bundleId: bundle.id,
                   quantity: 1, // bundle 數量默認為1
-                  variants: selectedVariants, // 包含用戶為每個產品選擇的變體
+                  variants: prepareVariantsForBackend() // 準備後端格式的變體數據
                 };
 
                 console.log("要發送的套組數據:", bundleData);

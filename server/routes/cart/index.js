@@ -91,57 +91,91 @@ router.post("/add", async (req, res) => {
       }
 
       case "bundle": {
-        // 检查bundle是否存在
+        // 檢查 bundle 是否存在
         const [bundle] = await pool.execute(
           "SELECT * FROM product_bundle WHERE id = ?",
           [bundleId]
         );
-
+      
         if (bundle.length === 0) {
           return res.status(400).json({
             success: false,
-            message: "找不到指定套组",
+            message: "找不到指定套組",
           });
         }
-
-        // 获取套组中的所有商品
+      
+        // 獲取套組中的所有商品
         const [bundleItems] = await pool.execute(
           "SELECT * FROM product_bundle_items WHERE bundle_id = ?",
           [bundleId]
         );
-
+      
         if (bundleItems.length === 0) {
           return res.status(400).json({
             success: false,
             message: "该套组不包含任何商品",
           });
         }
-
-        // 对于每个套组商品，添加到购物车
-        for (const bundleItem of bundleItems) {
-          // 检查该商品的默认变体
-          const [defaultVariant] = await pool.execute(
-            `SELECT pv.id 
-             FROM product_variant pv 
-             WHERE pv.product_id = ? AND pv.isDeleted = 0
-             LIMIT 1`,
-            [bundleItem.product_id]
-          );
-
-          if (defaultVariant.length === 0) {
-            continue; // 如果沒有有效變體，則跳過此產品
+      
+        // 從請求中獲取變體選擇（如果有）
+        const userSelectedVariants = req.body.variants || [];
+        // 創建產品ID到變體ID的映射
+        const variantMap = {};
+        
+        if (Array.isArray(userSelectedVariants)) {
+          for (const item of userSelectedVariants) {
+            if (item.productId && item.variantId) {
+              variantMap[item.productId] = item.variantId;
+            }
           }
-
-          const variantId = defaultVariant[0].id;
+        }
+      
+        // 對於每個套組商品，添加到購物車
+        for (const bundleItem of bundleItems) {
+          let variantId;
+          
+          // 首先檢查用戶是否為這個產品指定了變體
+          if (variantMap[bundleItem.product_id]) {
+            // 驗證這個變體確實存在並且屬於這個產品
+            const [selectedVariant] = await pool.execute(
+              `SELECT pv.id 
+               FROM product_variant pv 
+               WHERE pv.id = ? AND pv.product_id = ? AND pv.isDeleted = 0`,
+              [variantMap[bundleItem.product_id], bundleItem.product_id]
+            );
+            
+            if (selectedVariant.length > 0) {
+              variantId = selectedVariant[0].id;
+            }
+          }
+          
+          // 如果用戶沒有指定變體或指定的變體無效，使用默認變體（最低價格）
+          if (!variantId) {
+            const [defaultVariant] = await pool.execute(
+              `SELECT pv.id 
+               FROM product_variant pv 
+               WHERE pv.product_id = ? AND pv.isDeleted = 0
+               ORDER BY pv.price ASC
+               LIMIT 1`,
+              [bundleItem.product_id]
+            );
+      
+            if (defaultVariant.length === 0) {
+              continue; // 如果沒有有效變體，則跳過此產品
+            }
+            
+            variantId = defaultVariant[0].id;
+          }
+      
           // 計算實際數量：bundle項數量 * 添加的bundle數量
           const itemQuantity = bundleItem.quantity * quantity;
-
+      
           // 檢查是否已在購物車中
           const [existingItem] = await pool.execute(
             "SELECT id, quantity FROM cart_items WHERE cart_id = ? AND variant_id = ? AND bundle_id = ?",
             [cartId, variantId, bundleId]
           );
-
+      
           if (existingItem.length > 0) {
             // 更新現有項目
             await pool.execute(
@@ -348,7 +382,330 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// 查詢特定user的購物車內容 購物車專用api
+
+
+// Fixed cart GET endpoint
+// router.get("/:userId", async (req, res) => {
+//   const { userId } = req.params;
+
+//   try {
+//     // Debugging: Check if the user has a cart
+//     const [cartCheck] = await pool.execute(
+//       "SELECT * FROM carts WHERE user_id = ? AND status = 'active'",
+//       [userId]
+//     );
+    
+//     console.log(`Found ${cartCheck.length} carts for user ${userId}`);
+    
+//     if (cartCheck.length === 0) {
+//       return res.json({
+//         success: true,
+//         data: {
+//           products: [],
+//           activities: [],
+//           rentals: [],
+//           bundles: [],
+//           total: {
+//             products: 0,
+//             activities: 0,
+//             rentals: { rental_fee: 0, deposit: 0 },
+//             bundles: 0,
+//             final: 0,
+//           },
+//         },
+//       });
+//     }
+
+//     const cartId = cartCheck[0].id;
+    
+//     // Debugging: Check cart items directly
+//     const [cartItemsCheck] = await pool.execute(
+//       "SELECT * FROM cart_items WHERE cart_id = ?",
+//       [cartId]
+//     );
+    
+//     console.log(`Found ${cartItemsCheck.length} cart items for cart ${cartId}`);
+
+//     // 1. Get products with more lenient JOINs
+//     const [products] = await pool.execute(
+//       `SELECT 
+//         ci.id,
+//         ci.quantity,
+//         ci.variant_id,
+//         pv.price,
+//         pv.original_price,
+//         p.name AS product_name,
+//         p.id AS product_id,
+//         COALESCE(c.name, 'Unknown') AS color_name,
+//         COALESCE(s.name, 'One Size') AS size_name,
+//         pi.image_url
+//       FROM cart_items ci
+//       LEFT JOIN product_variant pv ON ci.variant_id = pv.id
+//       LEFT JOIN product p ON pv.product_id = p.id
+//       LEFT JOIN color c ON pv.color_id = c.id
+//       LEFT JOIN size s ON pv.size_id = s.id
+//       LEFT JOIN (
+//         SELECT product_id, MIN(id) as min_id, image_url
+//         FROM product_images
+//         GROUP BY product_id
+//       ) pi ON p.id = pi.product_id
+//       WHERE ci.cart_id = ? AND ci.bundle_id IS NULL`,
+//       [cartId]
+//     );
+    
+//     console.log(`Found ${products.length} products after JOINs`);
+
+//     // 2. Get activities
+//     const [activities] = await pool.execute(
+//       `SELECT 
+//         cai.id,
+//         cai.quantity,
+//         cai.date,
+//         cai.time,
+//         ap.id AS project_id,
+//         ap.price,
+//         ap.original_price AS original_price,
+//         ap.name AS project_name,
+//         a.name AS activity_name,
+//         a.id AS activity_id,
+//         ai.img_url AS image_url
+//       FROM cart_activity_items cai
+//       LEFT JOIN activity_project ap ON cai.activity_project_id = ap.id
+//       LEFT JOIN activity a ON ap.activity_id = a.id
+//       LEFT JOIN activity_image ai ON a.id = ai.activity_id AND ai.is_main = 1
+//       WHERE cai.cart_id = ?`,
+//       [cartId]
+//     );
+
+//     // 3. Get rentals
+//     const [rentals] = await pool.execute(
+//       `SELECT 
+//         cri.id,
+//         cri.quantity,
+//         cri.start_date,
+//         cri.end_date,
+//         COALESCE(rb.name, 'Unknown') AS rentalBrand,
+//         ri.id AS rental_id,
+//         ri.name AS rental_name,
+//         ri.price,
+//         ri.price2 AS discounted_price,
+//         ri.deposit,
+//         rim.img_url AS image_url,
+//         DATEDIFF(cri.end_date, cri.start_date) + 1 AS rental_days,
+//         cri.color
+//       FROM cart_rental_items cri
+//       LEFT JOIN rent_item ri ON cri.rental_id = ri.id
+//       LEFT JOIN rent_specification rs ON ri.id = rs.rent_item_id
+//       LEFT JOIN rent_brand rb ON rs.brand_id = rb.id
+//       LEFT JOIN rent_image rim ON ri.id = rim.rent_item_id AND rim.is_main = 1
+//       WHERE cri.cart_id = ?
+//       GROUP BY cri.id`,
+//       [cartId]
+//     );
+
+//     // 4. Check if there are bundle items
+//     const [bundleItemsCheck] = await pool.execute(
+//       "SELECT * FROM cart_items WHERE cart_id = ? AND bundle_id IS NOT NULL",
+//       [cartId]
+//     );
+    
+//     console.log(`Found ${bundleItemsCheck.length} bundle items`);
+    
+//     // 5. Get bundles with safer queries
+//     let bundles = [];
+    
+//     if (bundleItemsCheck.length > 0) {
+//       // Get distinct bundle IDs first
+//       const [bundleIds] = await pool.execute(
+//         "SELECT DISTINCT bundle_id FROM cart_items WHERE cart_id = ? AND bundle_id IS NOT NULL",
+//         [cartId]
+//       );
+      
+//       console.log(`Found ${bundleIds.length} distinct bundles`);
+      
+//       // Process each bundle separately to avoid complex JOIN failures
+//       for (const bundleItem of bundleIds) {
+//         const bundleId = bundleItem.bundle_id;
+        
+//         // Get basic bundle info
+//         const [bundleInfo] = await pool.execute(
+//           "SELECT id, name, description, discount_price FROM product_bundle WHERE id = ?",
+//           [bundleId]
+//         );
+        
+//         if (bundleInfo.length > 0) {
+//           const bundle = bundleInfo[0];
+          
+//           // Get brand info if available
+//           const [brandInfo] = await pool.execute(
+//             "SELECT b.name AS brand_name FROM product_bundle pb JOIN brand b ON pb.brand_id = b.id WHERE pb.id = ?",
+//             [bundleId]
+//           );
+          
+//           if (brandInfo.length > 0) {
+//             bundle.brand_name = brandInfo[0].brand_name;
+//           } else {
+//             bundle.brand_name = "Unknown";
+//           }
+          
+//           // Get bundle items
+//           const [bundleProducts] = await pool.execute(
+//             `SELECT 
+//               pbi.product_id, 
+//               p.name AS product_name, 
+//               pbi.quantity AS bundle_item_quantity,
+//               pi.image_url
+//             FROM product_bundle_items pbi
+//             LEFT JOIN product p ON pbi.product_id = p.id
+//             LEFT JOIN (
+//               SELECT product_id, MIN(id) as min_id, image_url 
+//               FROM product_images 
+//               GROUP BY product_id
+//             ) pi ON p.id = pi.product_id
+//             WHERE pbi.bundle_id = ?`,
+//             [bundleId]
+//           );
+          
+//           // Calculate original total and bundle quantity
+//           let originalTotal = 0;
+//           let bundleQuantity = 1;
+          
+//           // Get cart item quantities for this bundle
+//           const [cartBundleItems] = await pool.execute(
+//             `SELECT ci.quantity, pbi.quantity AS base_quantity
+//              FROM cart_items ci
+//              JOIN product_variant pv ON ci.variant_id = pv.id
+//              JOIN product p ON pv.product_id = p.id
+//              JOIN product_bundle_items pbi ON pbi.bundle_id = ? AND pbi.product_id = p.id
+//              WHERE ci.cart_id = ? AND ci.bundle_id = ?`,
+//             [bundleId, cartId, bundleId]
+//           );
+          
+//           if (cartBundleItems.length > 0) {
+//             // Calculate bundle quantity based on the first item's ratio
+//             bundleQuantity = Math.floor(cartBundleItems[0].quantity / cartBundleItems[0].base_quantity);
+//           }
+          
+//           // Try to get original price total
+//           try {
+//             const [priceInfo] = await pool.execute(
+//               `SELECT SUM(pv.price * pbi.quantity) AS original_total
+//                FROM product_bundle_items pbi
+//                JOIN product p ON pbi.product_id = p.id
+//                JOIN product_variant pv ON pv.product_id = p.id
+//                WHERE pbi.bundle_id = ?
+//                GROUP BY pbi.bundle_id`,
+//               [bundleId]
+//             );
+            
+//             if (priceInfo.length > 0) {
+//               originalTotal = priceInfo[0].original_total;
+//             }
+//           } catch (e) {
+//             console.error("Error calculating bundle price:", e);
+//           }
+          
+//           // Add to bundles array
+//           bundles.push({
+//             id: bundleId,
+//             name: bundle.name,
+//             description: bundle.description,
+//             brand_name: bundle.brand_name,
+//             original_total: Number(originalTotal || 0),
+//             discount_price: Number(bundle.discount_price || 0),
+//             quantity: bundleQuantity,
+//             items: bundleProducts || []
+//           });
+//         }
+//       }
+//     }
+
+//     // Process rentals data
+//     const processedRentals = rentals.map((item) => {
+//       const pricePerDay = item.discounted_price || item.price || 0;
+//       const rentalDays = item.rental_days || 1;
+//       const quantity = item.quantity || 1;
+      
+//       const rentalFee = pricePerDay * rentalDays * quantity;
+//       const deposit = pricePerDay * 0.3;
+//       const depositFee = deposit * quantity * rentalDays;
+
+//       return {
+//         ...item,
+//         price_per_day: pricePerDay,
+//         rental_fee: rentalFee,
+//         deposit_fee: depositFee,
+//         subtotal: rentalFee + depositFee,
+//         brand_name: item.rentalBrand
+//       };
+//     });
+
+//     // Calculate totals with null/undefined checks
+//     const calculateProductTotal = (items) => {
+//       return items.reduce((acc, curr) => {
+//         const price = Number(curr.price || 0);
+//         const quantity = Number(curr.quantity || 0);
+//         return acc + (price * quantity);
+//       }, 0);
+//     };
+
+//     const calculateBundleTotal = (items) => {
+//       return items.reduce((acc, curr) => {
+//         const price = Number(curr.discount_price || 0);
+//         const quantity = Number(curr.quantity || 0);
+//         return acc + (price * quantity);
+//       }, 0);
+//     };
+
+//     const calculateRentalTotals = (items) => {
+//       return items.reduce((acc, curr) => ({
+//         rental_fee: acc.rental_fee + (curr.rental_fee || 0),
+//         deposit: acc.deposit + (curr.deposit_fee || 0)
+//       }), { rental_fee: 0, deposit: 0 });
+//     };
+
+//     const productTotal = calculateProductTotal(products);
+//     const activityTotal = calculateProductTotal(activities);
+//     const bundleTotal = calculateBundleTotal(bundles);
+//     const rentalTotals = calculateRentalTotals(processedRentals);
+
+//     // Build response
+//     const data = {
+//       products: products.map((item) => ({
+//         ...item,
+//         subtotal: (Number(item.price || 0) * Number(item.quantity || 0))
+//       })),
+//       activities: activities.map((item) => ({
+//         ...item,
+//         subtotal: (Number(item.price || 0) * Number(item.quantity || 0))
+//       })),
+//       rentals: processedRentals,
+//       bundles: bundles,
+//       total: {
+//         products: productTotal,
+//         activities: activityTotal,
+//         bundles: Number(bundleTotal),
+//         rentals: rentalTotals,
+//         final: Number(productTotal) +
+//                Number(activityTotal) +
+//                Number(bundleTotal) +
+//                Number(rentalTotals.rental_fee)
+//       }
+//     };
+
+//     res.json({
+//       success: true,
+//       data
+//     });
+//   } catch (error) {
+//     console.error("獲取購物車內容失敗:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "獲取購物車內容失敗",
+//       error: error.message
+//     });
+//   }
+// });
 router.get("/:userId", async (req, res) => {
   const { userId } = req.params;
 
@@ -366,7 +723,7 @@ router.get("/:userId", async (req, res) => {
           products: [],
           activities: [],
           rentals: [],
-          bundles: [], // 新增空的bundles陣列
+          bundles: [],
           total: {
             products: 0,
             activities: 0,
@@ -374,7 +731,7 @@ router.get("/:userId", async (req, res) => {
               rental_fee: 0,
               deposit: 0,
             },
-            bundles: 0, // 新增bundles總金額
+            bundles: 0,
             final: 0,
           },
         },
@@ -454,66 +811,114 @@ router.get("/:userId", async (req, res) => {
       [cartId]
     );
 
-    // 5. 新增: 獲取套組商品
-    const [bundleGroups] = await pool.execute(
-      `SELECT DISTINCT 
-        ci.bundle_id,
-        pb.name AS bundle_name,
-        pb.description AS bundle_description,
-        pb.discount_price,
-        COUNT(DISTINCT ci.id) as item_count,
-        MIN(ci.quantity / pbi.quantity) as bundle_quantity
-      FROM cart_items ci
-      JOIN product_bundle pb ON ci.bundle_id = pb.id
-      JOIN product_bundle_items pbi ON pb.id = pbi.bundle_id AND pbi.product_id = (
-        SELECT product_id FROM product_variant WHERE id = ci.variant_id
-      )
-      WHERE ci.cart_id = ? AND ci.bundle_id IS NOT NULL
-      GROUP BY ci.bundle_id`,
+    // 5. 獲取所有bundle_id
+    const [bundleIds] = await pool.execute(
+      `SELECT DISTINCT bundle_id 
+       FROM cart_items 
+       WHERE cart_id = ? AND bundle_id IS NOT NULL`,
       [cartId]
     );
 
-    // 6. 獲取每個套組中的所有商品
     const bundles = [];
-    for (const bundle of bundleGroups) {
-      const [bundleItems] = await pool.execute(
+
+    // 處理每個bundle
+    for (const { bundle_id } of bundleIds) {
+      // 獲取bundle基本信息
+      const [bundleInfo] = await pool.execute(
         `SELECT 
-      ci.id,
-      ci.quantity,
-      pv.id AS variant_id,
-      pv.price,
-      pv.original_price,
-      p.name AS product_name,
-      p.id AS product_id,
-      c.name AS color_name,
-      s.name AS size_name,
-      pi.image_url,
-      pbi.quantity AS bundle_item_quantity
-    FROM cart_items ci
-    JOIN product_variant pv ON ci.variant_id = pv.id
-    JOIN product p ON pv.product_id = p.id
-    JOIN color c ON pv.color_id = c.id
-    JOIN size s ON pv.size_id = s.id
-    JOIN product_bundle_items pbi ON ci.bundle_id = pbi.bundle_id AND pbi.product_id = p.id
-    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
-    WHERE ci.cart_id = ? AND ci.bundle_id = ?`,
-        [cartId, bundle.bundle_id]
+          pb.id, 
+          pb.name, 
+          pb.description, 
+          pb.discount_price,
+          b.name as brand_name,
+          (
+            SELECT pi.image_url 
+            FROM product_images pi 
+            JOIN product_bundle_items pbi ON pi.product_id = pbi.product_id
+            WHERE pbi.bundle_id = pb.id AND pi.is_main = 1 
+            LIMIT 1
+          ) as main_image
+        FROM product_bundle pb
+        JOIN brand b ON pb.brand_id = b.id
+        WHERE pb.id = ?`,
+        [bundle_id]
       );
 
-      // 計算套組總價
-      const originalTotal = bundleItems.reduce(
-        (sum, item) => sum + item.price * (item.bundle_item_quantity || 1),
-        0
+      if (bundleInfo.length === 0) continue;
+
+      // 計算原始總價 - 使用和bundle端點一致的計算方式
+      const [originalTotalResult] = await pool.execute(
+        `SELECT SUM(min_prices.min_price * pbi.quantity) as original_total
+         FROM product_bundle_items pbi
+         JOIN (
+           SELECT product_id, MIN(price) as min_price
+           FROM product_variant
+           WHERE isDeleted = 0
+           GROUP BY product_id
+         ) as min_prices ON pbi.product_id = min_prices.product_id
+         WHERE pbi.bundle_id = ?`,
+        [bundle_id]
       );
+
+      const originalTotal = originalTotalResult.length > 0 ? 
+        Number(originalTotalResult[0].original_total) : 0;
+
+      // 獲取購物車中這個bundle的所有項目 (包含實際選擇的變體)
+      const [bundleCartItems] = await pool.execute(
+        `SELECT 
+          ci.id as cart_item_id,
+          ci.quantity,
+          ci.variant_id,
+          pv.price,
+          pv.original_price,
+          p.id as product_id,
+          p.name as product_name,
+          c.name as color_name,
+          s.name as size_name,
+          pi.image_url,
+          pbi.quantity as bundle_item_quantity
+        FROM cart_items ci
+        JOIN product_variant pv ON ci.variant_id = pv.id
+        JOIN product p ON pv.product_id = p.id
+        JOIN color c ON pv.color_id = c.id
+        JOIN size s ON pv.size_id = s.id
+        JOIN product_bundle_items pbi ON pbi.bundle_id = ? AND pbi.product_id = p.id
+        LEFT JOIN product_images pi ON pv.id = pi.variant_id AND pi.is_main = 1
+        WHERE ci.cart_id = ? AND ci.bundle_id = ?`,
+        [bundle_id, cartId, bundle_id]
+      );
+
+      // 計算bundle數量
+      let bundleQuantity = 1;
+      if (bundleCartItems.length > 0) {
+        // 從第一個項目的數量和bundle項目數量計算
+        bundleQuantity = Math.floor(
+          bundleCartItems[0].quantity / bundleCartItems[0].bundle_item_quantity
+        );
+      }
 
       bundles.push({
-        id: bundle.bundle_id,
-        name: bundle.bundle_name,
-        description: bundle.bundle_description,
-        items: bundleItems,
+        id: bundle_id,
+        name: bundleInfo[0].name,
+        description: bundleInfo[0].description,
+        discount_price: Number(bundleInfo[0].discount_price),
+        brand_name: bundleInfo[0].brand_name,
+        quantity: bundleQuantity,
         original_total: originalTotal,
-        discount_price: Number(bundle.discount_price),
-        quantity: Number(bundle.bundle_quantity || 1), // 使用計算出的套組數量
+        image_url: bundleInfo[0].main_image,
+        items: bundleCartItems.map(item => ({
+          cart_item_id: item.cart_item_id,
+          variant_id: item.variant_id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          price: item.price,
+          original_price: item.original_price,
+          color_name: item.color_name,
+          size_name: item.size_name,
+          quantity: item.quantity,
+          bundle_item_quantity: item.bundle_item_quantity,
+          image_url: item.image_url
+        }))
       });
     }
 
@@ -541,13 +946,13 @@ router.get("/:userId", async (req, res) => {
       };
     });
 
-    // 7. 計算各類總價
+    // 計算各類總價
     const calculateProductTotal = (items) => {
       return items.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
     };
 
     const calculateBundleTotal = (items) => {
-      return items.reduce((acc, curr) => acc + curr.discount_price, 0);
+      return items.reduce((acc, curr) => acc + (curr.discount_price * curr.quantity), 0);
     };
 
     const calculateRentalTotals = (items) => {
@@ -576,13 +981,12 @@ router.get("/:userId", async (req, res) => {
         subtotal: item.price * item.quantity,
       })),
       rentals: processedRentals,
-      bundles: bundles, // 新增bundles數組
+      bundles: bundles,
       total: {
         products: productTotal,
         activities: activityTotal,
-        bundles: Number(bundleTotal), // 確保是數字
+        bundles: Number(bundleTotal),
         rentals: rentalTotals,
-        // 最終總金額（包含套組價格和租借費用但不包含押金）
         final:
           Number(productTotal) +
           Number(activityTotal) +
@@ -600,6 +1004,7 @@ router.get("/:userId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "獲取購物車內容失敗",
+      error: error.message
     });
   }
 });

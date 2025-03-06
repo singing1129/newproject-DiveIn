@@ -87,7 +87,7 @@ const FavoriteCard = ({ item, itemType, onRemove }) => {
       case "bundle":
         return item.image_url;
       default:
-        return "/default-image.jpg";
+        return "/image/product/default.jpg";
     }
   };
 
@@ -97,9 +97,9 @@ const FavoriteCard = ({ item, itemType, onRemove }) => {
       case "product":
         return `/products/${item.product_id}`;
       case "bundle":
-        return `/products/bundle/${item.bundle_id}`;
+        return `/products/${item.bundle_id}`;
       case "rental":
-        return `/rental/${item.rental_id}`;
+        return `/rent/${item.rental_id}`;
       case "activity":
         return `/activity/${item.activity_id}`;
       default:
@@ -141,7 +141,7 @@ export default function FavoritesContent() {
     bundle: [],
   });
   const { user, getToken } = useAuth(); // 從 useAuth 同時取得 user 與 getToken
-
+  console.log("favorites", favorites);
   useEffect(() => {
     if (user && user !== -1) {
       fetchFavorites();
@@ -159,6 +159,7 @@ export default function FavoritesContent() {
 
       if (response.data.success) {
         setFavorites(response.data.data);
+        console.log("response.data.data", response.data.data);
       }
     } catch (error) {
       console.error("取得收藏資料失敗:", error);

@@ -22,6 +22,7 @@ const API_BASE_URL = "http://localhost:3005/api";
 // };
 
 export default function ProductList() {
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showDropdown, setShowDropdown] = useState(false);
