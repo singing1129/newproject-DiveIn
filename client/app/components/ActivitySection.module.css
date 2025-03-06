@@ -1,92 +1,180 @@
 .activitySection {
-    padding: 60px 20px;
-    background: linear-gradient(
-      to bottom,
-      var(--primary-light-color),
-      var(--white)
-    );
-    text-align: center;
-  }
-  
-  .sectionTitle {
-    font-size: 2.5rem;
-    color: var(--primary-deep-color);
-    margin-bottom: 40px;
-    font-weight: bold;
-  }
-  
-  .activityCards {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-  
-  .card {
-    width: 300px;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    background: var(--white);
-  }
-  
-  .card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  }
-  
-  .imageContainer {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-  }
-  
-  .imageContainer img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(33, 158, 188, 0.8); /* primary-color with opacity */
-    color: var(--white);
-    padding: 20px;
-    text-align: left;
-    transform: translateY(100%);
-    transition: transform 0.3s;
-  }
-  
-  .card:hover .overlay {
+  position: relative;
+  min-height: 100vh;
+  padding: 50px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--primary-deep-color), var(--primary-color));
+  z-index: -1;
+}
+
+.map {
+  width: 20%;
+  height: 80%;
+  max-width: 150px;
+  margin-right: 60px;
+  z-index: 0;
+}
+
+.title {
+  color: var(--white);
+  font-size: 3.5rem;
+  text-align: center;
+  margin-bottom: 40px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.cardContainer {
+  width: 80%;
+  max-width: 1400px;
+  height: 1000px;
+  position: relative;
+  perspective: 1000px;
+}
+
+.card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  max-width: 500px;
+  height: 350px;
+  border-radius: 15px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.imgContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+.hoverActionContainer {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover .hoverActionContainer {
+  opacity: 1;
+}
+
+.iconGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.hoverActionBtn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.hoverActionBtn:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.stars {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 2px;
+  color: var(--secondary-color);
+}
+
+.cardOverlay {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--white);
+  opacity: 0.8;
+  border-radius: 8px;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+.cardOverlay h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+}
+
+.cardOverlay p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.card:hover .cardOverlay {
+  opacity: 1;
+}
+
+.bubbles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  animation: bubbleRise 3s infinite ease-in;
+}
+
+@keyframes bubbleRise {
+  0% {
     transform: translateY(0);
+    opacity: 0.5;
   }
-  
-  .overlay h3 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+  100% {
+    transform: translateY(-100%);
+    opacity: 0;
   }
-  
-  .overlay p {
-    font-size: 1rem;
-    margin-bottom: 15px;
-  }
-  
-  .ctaButton {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 25px;
-    background: var(--secondary-color);
-    color: var(--primary-deep-color);
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s, color 0.3s;
-  }
-  
-  .ctaButton:hover {
-    background: var(--secondary-deep-color);
-    color: var(--white);
-  }
+}
