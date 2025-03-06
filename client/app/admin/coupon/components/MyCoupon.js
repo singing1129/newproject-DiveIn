@@ -98,11 +98,11 @@ export default function Coupon() {
                 >
                   <h1>我的優惠券</h1>
                   <div className="link-list">
-                    <Link className="me-3" href="/admin/coupons/coupon-claim">
+                    <Link className="me-3" href="/admin/coupon/coupon-claim">
                       領取優惠券 &gt;
                     </Link>
                     |
-                    <Link className="ms-3" href="/admin/coupons/coupon-history">
+                    <Link className="ms-3" href="/admin/coupon/coupon-history">
                       查看歷史資料
                     </Link>
                   </div>
