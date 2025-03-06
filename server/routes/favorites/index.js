@@ -48,7 +48,7 @@ router.get("/", checkToken, async (req, res) => {
        WHERE f.user_id = ? AND f.bundle_id != 0`,
       [userId]
     );
-    console.log("收藏清單結果:", { product, activity, rental });
+    console.log("收藏清單結果:", { product, activity, rental,bundle});
 
     res.json({
       success: true,

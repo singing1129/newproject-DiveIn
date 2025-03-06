@@ -23,7 +23,8 @@ router.get("/", async (req, res) => {
       sort = "newest", // newest, oldest, popular
       category,
       tag,
-      status, // 新增 status 參數
+      status,
+      users_id, // 新增 users_id 參數
     } = req.query;
 
     const offset = (page - 1) * limit;
@@ -32,7 +33,7 @@ router.get("/", async (req, res) => {
     let orderBy = "a.publish_at DESC"; // 預設最新
     if (sort === "oldest") orderBy = "a.publish_at ASC";
     else if (sort === "popular") orderBy = "a.view_count DESC";
-    else if (sort === "all") orderBy = "a.id DESC"; // 顯示所有文章（不依照熱門或最新）
+    else if (sort === "all") orderBy = "a.id DESC";
 
     // 篩選條件
     let whereClause = "a.is_deleted = FALSE";
@@ -49,6 +50,10 @@ router.get("/", async (req, res) => {
     if (status) {
       whereClause += " AND a.status = ?";
       params.push(status);
+    }
+    if (users_id) {
+      whereClause += " AND a.users_id = ?";
+      params.push(users_id);
     }
 
     // 查詢文章列表
@@ -78,7 +83,6 @@ router.get("/", async (req, res) => {
 
     // 處理圖片 URL
     const fullRows = rows.map((row) => {
-      // 如果 img_url 存在並且是相對路徑
       if (
         row.img_url &&
         !row.img_url.startsWith("http") &&
@@ -86,14 +90,12 @@ router.get("/", async (req, res) => {
       ) {
         row.img_url = `/uploads${row.img_url}`;
       }
-
-      // 如果 img_url 為 null 或空值，補充預設圖片
       if (!row.img_url) {
         row.img_url = "/uploads/article/no_is_main.png";
       }
-
       return row;
     });
+
     // 查詢總數
     const [[{ totalCount }]] = await pool.execute(
       `
@@ -110,7 +112,7 @@ router.get("/", async (req, res) => {
 
     res.json({
       status: "success",
-      data: fullRows, // 返回完整的圖片 URL
+      data: fullRows,
       pagination: {
         totalCount,
         totalPages: Math.ceil(totalCount / limit),

@@ -4,11 +4,13 @@ import Image from "next/image"; // 若有封面圖片上傳
 import axios from "axios"; // 提交表單請求
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
+import { useAuth } from "../../hooks/useAuth"; // 用戶驗證
 
 const ArticleForm = () => {
   const { id } = useParams(); // 这里 `id` 可能是文章 ID，如果页面是创建新文章，则 `id` 可能为 undefined
   const articleId = id || null; // 如果是创建文章，articleId 为空
   const router = useRouter();
+  const { user } = useAuth(); // 獲取當前用戶資訊
   const [new_title, setTitle] = useState("");
   const [new_content, setContent] = useState("");
   const [new_categoryBig, setCategoryBig] = useState("");
@@ -100,12 +102,20 @@ const ArticleForm = () => {
   // 提交表單
   const handleSubmit = async (status) => {
     try {
+      // 檢查用戶是否登入
+      if (!user || !user.id) {
+        alert("請先登入以創建文章！");
+        router.push("/admin/login");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("new_title", new_title);
       formData.append("new_content", new_content);
       formData.append("new_categorySmall", new_categorySmall);
       formData.append("new_tags", JSON.stringify(tagsList));
       formData.append("status", status);
+      formData.append("users_id", user.id); // 添加 users_id
 
       if (new_coverImage) {
         formData.append("new_coverImage", new_coverImage);
