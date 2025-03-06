@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/cartContext";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
+
 export default function ProductCard({ product }) {
   const API_BASE_URL = "http://localhost:3005/api";
   const type = product.item_type === "bundle" ? "bundle" : "product";
