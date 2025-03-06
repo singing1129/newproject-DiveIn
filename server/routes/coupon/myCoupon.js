@@ -9,7 +9,7 @@ const router = express.Router();
  */
 router.get("/my-coupons", async (req, res) => {
   try {
-    const userId = req.user?.id || 1;
+    const userId = req.query.userId;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const offset = (page - 1) * limit;

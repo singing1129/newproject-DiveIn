@@ -8,10 +8,12 @@ import "./styles/MyCoupon.css";
 import Link from "next/link";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { LuTicketPlus } from "react-icons/lu";
+import { useAuth } from "@/hooks/useAuth"; // 引入 useAuth 钩子
 
 const API_BASE_URL = "http://localhost:3005/api/coupon";
 
 export default function Coupon() {
+  const { user, loading: authLoading } = useAuth(); // 使用 useAuth 钩子获取用户信息和加载状态
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,35 +26,37 @@ export default function Coupon() {
 
   // 讀取優惠券資料
   useEffect(() => {
-    const fetchCoupons = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_BASE_URL}/my-coupons`, {
-          params: {
-            page: currentPage,
-            search: searchTerm, // 加入搜尋條件
-            type: couponType, // 優惠券類型篩選
-            status: statusFilter, // 活動狀態篩選
-            sort: sortOrder, // 排序方式
-          },
-        });
+    if (!authLoading && user) {
+      const fetchCoupons = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.get(`${API_BASE_URL}/my-coupons`, {
+            params: {
+              page: currentPage,
+              search: searchTerm, // 加入搜尋條件
+              type: couponType, // 優惠券類型篩選
+              status: statusFilter, // 活動狀態篩選
+              sort: sortOrder, // 排序方式
+            },
+          });
 
-        if (response.data.success) {
-          setCoupons(response.data.coupons);
-          setTotalPages(response.data.totalPages); // 设置总页数
-        } else {
-          setError("獲取優惠券資料失敗");
+          if (response.data.success) {
+            setCoupons(response.data.coupons);
+            setTotalPages(response.data.totalPages); // 设置总页数
+          } else {
+            setError("獲取優惠券資料失敗");
+          }
+        } catch (err) {
+          console.error("Error fetching coupons:", err);
+          setError("獲取優惠券資料時發生錯誤");
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error("Error fetching coupons:", err);
-        setError("獲取優惠券資料時發生錯誤");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchCoupons();
-  }, [currentPage, searchTerm, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
+      fetchCoupons();
+    }
+  }, [authLoading, user, currentPage, searchTerm, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -78,7 +82,7 @@ export default function Coupon() {
     setSearchTerm(e.target.value);
   };
 
-  if (loading) return <div>載入中...</div>;
+  if (authLoading || loading) return <div>載入中...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
   // 優惠券列表（動態渲染）
@@ -126,8 +130,8 @@ export default function Coupon() {
                         value={searchTerm}
                         onChange={handleSearchChange} // 設定搜尋變更
                       />
-                      <span className="input-group-text d-flex justify-content-center">
-                        <LuTicketPlus  style={{ fontSize: "1.5rem", color: "white" }} />
+                      <span className="input-group-text d-flex justify-content-center" style={{ cursor: "pointer" }}>
+                        <LuTicketPlus  style={{ fontSize: "1.5rem", color: "white",cursor: "pointer" }}  />
                       </span>
                     </div>
                   </div>
@@ -247,7 +251,7 @@ export default function Coupon() {
                   <MyCouponList
                     coupons={coupons}
                     loading={loading}
-                    error={error}
+                    // error={error}
                     onClaim={handleClaim}
                   />
                 </div>

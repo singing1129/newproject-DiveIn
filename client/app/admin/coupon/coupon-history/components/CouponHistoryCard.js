@@ -26,16 +26,8 @@ export function CouponImage({ coupon }) {
 export default function CouponCard({ coupon }) {
   console.log("CouponCard received coupon:", coupon);
 
-  const now = new Date();
-  
-  // 透過後端回傳的 display_status 判斷狀態
-  const isExpired = coupon.display_status
-    ? coupon.display_status === '已過期'
-    : (coupon.end_date ? now > new Date(coupon.end_date) : false);
-    
-  const isUsed = coupon.display_status
-    ? coupon.display_status === '已使用'
-    : coupon.used || false; // 若沒有 display_status，則依據 coupon.used 判斷
+  const isExpired = coupon.display_status === '已過期';
+  const isUsed = coupon.display_status === '已使用';
 
   return (
     <div className="coupon-card" style={{ position: "relative", display: "flex" }}>
@@ -64,7 +56,7 @@ export default function CouponCard({ coupon }) {
             fontWeight: "bold"
           }}
         >
-          {isExpired ? "已過期" : "已使用"}
+          {isExpired ? '已過期' : '已使用'}
         </div>
       )}
 

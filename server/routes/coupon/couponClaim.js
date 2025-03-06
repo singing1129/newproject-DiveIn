@@ -1,123 +1,10 @@
 // 匯入 express 框架
 import express from "express";
 // 從設定檔中取得 MySQL 連線池
-import { pool } from "../../config/mysql.js";
+import { pool } from "../../config/mysql.js";;
 
 // 建立一個 express Router 物件
 const router = express.Router();
-/**
- * GET /available
- * 功能：查詢該使用者可領取的優惠券清單
- */
-router.get("/available", async (req, res) => {
-  try {
-    // 取得使用者 ID（若 req.user 不存在，預設為 1，僅供測試用）
-    const userId = req.user?.id || 1;
-
-    // 從 users 資料表查詢使用者基本資料（例如生日、會員等級）
-    const [userResults] = await pool.query(
-      "SELECT birthday, level_id FROM users WHERE id = ?",
-      [userId]
-    );
-    if (!userResults.length) {
-      return res.status(404).json({ error: "找不到使用者" });
-    }
-    const user = userResults[0];
-
-    // 取得所有未刪除的優惠券
-    const [couponResults] = await pool.query(
-      "SELECT * FROM coupon WHERE is_deleted = FALSE"
-    );
-
-    const availableCoupons = [];
-    const now = new Date();
-
-    // 遍歷每筆優惠券資料
-    for (let coupon of couponResults) {
-      // 檢查是否過期（若有設定 end_date）
-      if (coupon.end_date && now > new Date(coupon.end_date)) continue;
-
-      // 檢查該優惠券目前總領取量是否達上限
-      const [usageCountResults] = await pool.query(
-        "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND is_deleted = FALSE",
-        [coupon.id]
-      );
-      if (usageCountResults[0].count >= coupon.total_issued) continue;
-
-      // 計算使用者對該優惠券的領取記錄：
-      // totalUserClaimCount：狀態為「已領取」與「已使用」的總數
-      const [totalUserClaimResults] = await pool.query(
-        "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND users_id = ? AND status IN ('已領取','已使用') AND is_deleted = FALSE",
-        [coupon.id, userId]
-      );
-      const totalUserClaimCount = totalUserClaimResults[0].count;
-      
-      // usable：僅計算狀態為「已領取」的（還未使用）的記錄
-      const [usableResults] = await pool.query(
-        "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND users_id = ? AND status = '已領取' AND is_deleted = FALSE",
-        [coupon.id, userId]
-      );
-      const usable = usableResults[0].count;
-
-      // remaining：還可領取的數量（每人可領取數量減去使用者已領取總數）
-      const remaining = coupon.max_per_user - totalUserClaimCount;
-
-      /* 過濾邏輯：
-         - 如果使用者從未領取且 remaining 為 0，表示此優惠券無法領取，則不回傳
-         - 如果使用者已領取（totalUserClaimCount > 0），但可使用數（usable）為 0（全部已使用），則不回傳
-      */
-      if (totalUserClaimCount === 0 && remaining <= 0) continue;
-      if (totalUserClaimCount > 0 && usable === 0) continue;
-
-      // 加入 coupon_targets 條件判斷：若優惠券設定為 is_target 則需進一步檢查
-      let isEligible = true;
-      if (coupon.is_target) {
-        const [targetResults] = await pool.query(
-          "SELECT * FROM coupon_targets WHERE coupon_id = ?",
-          [coupon.id]
-        );
-        for (const target of targetResults) {
-          // 如果不適用於所有使用者，則必須滿足條件
-          if (!target.apply_to_users) {
-            if (target.condition_type && target.condition_value) {
-              if (target.condition_type === "生日月份") {
-                if (!user.birthday || user.birthday === "0000-00-00") {
-                  isEligible = false;
-                  break;
-                }
-                const userBirthdayMonth = new Date(user.birthday).getMonth() + 1;
-                if (userBirthdayMonth !== parseInt(target.condition_value)) {
-                  isEligible = false;
-                  break;
-                }
-              } else if (target.condition_type === "會員等級") {
-                if (user.level_id !== parseInt(target.condition_value)) {
-                  isEligible = false;
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-      if (!isEligible) continue;
-
-      // 回傳資料中加入 remaining、usable 與 claimed（若 totalUserClaimCount > 0 則 claimed 為 true）
-      availableCoupons.push({
-        ...coupon,
-        remaining,           // 還可以領取的數量
-        usable,              // 可使用（尚未使用）的數量
-        claimed: totalUserClaimCount > 0,
-      });
-    }
-
-    return res.json({ success: true, coupons: availableCoupons });
-  } catch (error) {
-    console.error("Error fetching available coupons:", error);
-    return res.status(500).json({ error: `伺服器錯誤: ${error.message}` });
-  }
-});
-
 
 /**
  * POST /claim
@@ -132,7 +19,8 @@ router.post("/claim", async (req, res) => {
     }
 
     // 取得使用者 ID，若 req.user 不存在則預設用 1（測試用）
-    const userId = req.user?.id || 1;
+    const userId = req.body.userId;
+    console.log("正在處理取得收藏清單的請求，userId:", userId);
 
     // 從 users 資料表查詢該使用者的基本資料（例如生日、會員等級）
     const [userResults] = await pool.query(
@@ -217,7 +105,8 @@ router.post("/claim", async (req, res) => {
 router.get("/claim", async (req, res) => {
   try {
     // 取得使用者 ID（若 req.user 不存在，預設為 1，僅供測試使用）
-    const userId = req.user?.id || 1;
+    const userId = req.query.userId;
+    console.log("正在處理取得收藏清單的請求，userId:", userId);
 
     // 取得 query string 中的篩選參數（請注意，這邊的參數名稱必須與前端一致）
     const { campaign_name, coupon_category, claim_status } = req.query;
@@ -386,7 +275,8 @@ router.get("/claim", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     // 測試用 userId，正式應根據登入狀態取得
-    const userId = req.user?.id || 1;
+    const userId = req.query.userId;
+    console.log("正在處理取得收藏清單的請求，userId:", userId);
     
     // 取得搜尋字串與分頁參數
     const { q } = req.query;
