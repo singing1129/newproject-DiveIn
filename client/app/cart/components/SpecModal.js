@@ -6,9 +6,10 @@ import axios from "axios";
 import { useCart } from "@/hooks/cartContext";
 import "./SpecModal.css";
 import { useAuth } from "@/hooks/useAuth";
-const SpecModal = ({ children, item }) => {
+
+const SpecModal = ({ children, item, onVariantChange }) => {
   const { user } = useAuth();
-  const { fetchCart } = useCart();
+  const { updateQuantity, fetchCart } = useCart();
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [productDetails, setProductDetails] = useState(null);
@@ -57,12 +58,21 @@ const SpecModal = ({ children, item }) => {
   }, [selectedColor, selectedSize, productDetails]);
 
   // 處理規格更新
-  const handleUpdate = async (close) => {
+  const handleUpdate = async (closeModal) => {
     if (!selectedVariant) return;
 
     setLoading(true);
     try {
-      console.log("Updating with data:", {
+      // 確保變體 ID 已更改再進行更新
+      if (selectedVariant.id === item.variant_id) {
+        console.log("選擇了同一個變體，不需更新");
+        if (typeof closeModal === "function") {
+          closeModal();
+        }
+        return;
+      }
+
+      console.log("更新變體，請求數據:", {
         userId: user.id,
         type: "product",
         itemId: item.id,
@@ -70,6 +80,7 @@ const SpecModal = ({ children, item }) => {
         quantity: item.quantity,
       });
 
+      // 直接發送更新請求
       const response = await axios.put(
         "http://localhost:3005/api/cart/update",
         {
@@ -81,16 +92,22 @@ const SpecModal = ({ children, item }) => {
         }
       );
 
+      console.log("更新響應:", response.data);
+
       if (response.data.success) {
-        await fetchCart(user.id);
-        if (typeof close === "function") {
-          close();
+        // 更新成功後重新獲取購物車數據
+        await fetchCart();
+        console.log("成功更新變體並重新獲取購物車數據");
+
+        // 關閉模態框
+        if (typeof closeModal === "function") {
+          closeModal();
         }
       } else {
         throw new Error(response.data.message || "更新失敗");
       }
     } catch (err) {
-      console.error("Update error:", err);
+      console.error("更新失敗:", err);
       setError(err.response?.data?.message || err.message || "更新規格失敗");
     } finally {
       setLoading(false);
@@ -194,24 +211,22 @@ const SpecModal = ({ children, item }) => {
                 取消
               </button>
             </Dialog.Close>
-            <Dialog.Close asChild>
-              <button
-                className="spec-btn-primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleUpdate(() => {
-                    const closeButton =
-                      document.querySelector(".spec-close-button");
-                    if (closeButton) {
-                      closeButton.click();
-                    }
-                  });
-                }}
-                disabled={loading || !selectedVariant}
-              >
-                {loading ? "更新中..." : "確定"}
-              </button>
-            </Dialog.Close>
+            <button
+              className="spec-btn-primary"
+              onClick={(e) => {
+                e.preventDefault();
+                handleUpdate(() => {
+                  const closeButton =
+                    document.querySelector(".spec-close-button");
+                  if (closeButton) {
+                    closeButton.click();
+                  }
+                });
+              }}
+              disabled={loading || !selectedVariant}
+            >
+              {loading ? "更新中..." : "確定"}
+            </button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

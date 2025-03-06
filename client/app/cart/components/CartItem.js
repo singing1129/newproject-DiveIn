@@ -226,13 +226,13 @@ const CartItem = ({ item, type = "products" }) => {
                 <div className="spec-row">
                   <span className="spec-label">尺碼：</span>
                   <span className="spec-value">
-                    {item?.size_name || "沒填"}
+                    {item?.size_name || "One Size"}
                   </span>
                 </div>
                 <div className="spec-row">
                   <span className="spec-label">顏色：</span>
                   <span className="spec-value">
-                    {item?.color_name || "沒填"}
+                    {item?.color_name || "One Color"}
                   </span>
                 </div>
               </div>
@@ -338,19 +338,16 @@ const CartItem = ({ item, type = "products" }) => {
               <div className="bundle-row">
                 <span className="bundle-label">套組內容：</span>
                 <div className="bundle-value">
-                  共 {Array.isArray(item.items) ? item.items.quantity : 1}{" "}
-                  件商品
+                  共 {item.items.length} 件商品
                   <div className="bundle-items">
-                    {Array.isArray(item.items) &&
-                      item.items.map((bundleItem, index) => (
-                        <div key={index} className="bundle-item">
-                          {bundleItem.product_name || "未知商品"}
-                          {bundleItem.color_name &&
-                            ` - ${bundleItem.color_name}`}
-                          {bundleItem.size_name && ` - ${bundleItem.size_name}`}
-                          {` x ${bundleItem.quantity || 1}`}
-                        </div>
-                      ))}
+                    {item.items.map((bundleItem, index) => (
+                      <div key={index} className="bundle-item">
+                        {bundleItem.product_name || "未知商品"}
+                        {bundleItem.color_name && ` - ${bundleItem.color_name}`}
+                        {bundleItem.size_name && ` - ${bundleItem.size_name}`}
+                        {` x ${bundleItem.quantity || 1}`}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
