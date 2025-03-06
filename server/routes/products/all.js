@@ -100,7 +100,18 @@ router.get("/", async (req, res) => {
           pb.description,
           b.name as brand_name,
           pb.discount_price AS price,
-          SUM(pv.price * pbi.quantity) AS original_price,
+           (
+          SELECT SUM(min_prices.min_price * pbi.quantity)
+          FROM product_bundle_items pbi
+          JOIN (
+            -- 為每個商品找到最低價格的變體
+            SELECT product_id, MIN(price) as min_price
+            FROM product_variant
+            WHERE isDeleted = 0
+            GROUP BY product_id
+          ) as min_prices ON pbi.product_id = min_prices.product_id
+          WHERE pbi.bundle_id = pb.id
+        ) as original_price,
           (SELECT pi.image_url FROM product_images pi 
            JOIN product_bundle_items pbi2 ON pi.product_id = pbi2.product_id
            WHERE pbi2.bundle_id = pb.id AND pi.is_main = 1 
@@ -153,33 +164,53 @@ router.get("/", async (req, res) => {
 
     // 計算總項目數和分頁
     // 在 all.js 文件的相關部分添加這行代碼，定義 colorIds 變量
-const colorIds = req.query.color_id ? req.query.color_id.split(",").map(Number) : [];
+    const colorIds = req.query.color_id
+      ? req.query.color_id.split(",").map(Number)
+      : [];
 
-// 然後修改 countSql 構建邏輯
-const countSql = `
+    // 然後修改 countSql 構建邏輯
+    const countSql = `
   SELECT COUNT(DISTINCT p.id) AS count
   FROM product p
   LEFT JOIN product_variant pv ON p.id = pv.product_id AND pv.isDeleted = 0
   LEFT JOIN color c ON pv.color_id = c.id
   WHERE 1=1
-  ${req.query.brand_id ? ' AND p.brand_id = ?' : ''}
-  ${req.query.category_id ? ' AND p.category_id = ?' : ''}
-  ${req.query.big_category_id ? ' AND p.category_id IN (SELECT id FROM category_small WHERE category_big_id = ?)' : ''}
-  ${colorIds.length > 0 ? ` AND p.id IN (SELECT pv.product_id FROM product_variant pv WHERE pv.color_id IN (${colorIds.map(() => "?").join(",")}) AND pv.isDeleted = 0)` : ''}
-  ${req.query.min_price ? ' AND EXISTS (SELECT 1 FROM product_variant pv2 WHERE pv2.product_id = p.id AND pv2.price >= ? AND pv2.isDeleted = 0)' : ''}
-  ${req.query.max_price ? ' AND EXISTS (SELECT 1 FROM product_variant pv3 WHERE pv3.product_id = p.id AND pv3.price <= ? AND pv3.isDeleted = 0)' : ''}
+  ${req.query.brand_id ? " AND p.brand_id = ?" : ""}
+  ${req.query.category_id ? " AND p.category_id = ?" : ""}
+  ${
+    req.query.big_category_id
+      ? " AND p.category_id IN (SELECT id FROM category_small WHERE category_big_id = ?)"
+      : ""
+  }
+  ${
+    colorIds.length > 0
+      ? ` AND p.id IN (SELECT pv.product_id FROM product_variant pv WHERE pv.color_id IN (${colorIds
+          .map(() => "?")
+          .join(",")}) AND pv.isDeleted = 0)`
+      : ""
+  }
+  ${
+    req.query.min_price
+      ? " AND EXISTS (SELECT 1 FROM product_variant pv2 WHERE pv2.product_id = p.id AND pv2.price >= ? AND pv2.isDeleted = 0)"
+      : ""
+  }
+  ${
+    req.query.max_price
+      ? " AND EXISTS (SELECT 1 FROM product_variant pv3 WHERE pv3.product_id = p.id AND pv3.price <= ? AND pv3.isDeleted = 0)"
+      : ""
+  }
 `;
 
-// 構建新的參數數組
-const countParams = [];
-if (req.query.brand_id) countParams.push(req.query.brand_id);
-if (req.query.category_id) countParams.push(req.query.category_id);
-if (req.query.big_category_id) countParams.push(req.query.big_category_id);
-if (colorIds.length > 0) countParams.push(...colorIds);
-if (req.query.min_price) countParams.push(parseFloat(req.query.min_price));
-if (req.query.max_price) countParams.push(parseFloat(req.query.max_price));
+    // 構建新的參數數組
+    const countParams = [];
+    if (req.query.brand_id) countParams.push(req.query.brand_id);
+    if (req.query.category_id) countParams.push(req.query.category_id);
+    if (req.query.big_category_id) countParams.push(req.query.big_category_id);
+    if (colorIds.length > 0) countParams.push(...colorIds);
+    if (req.query.min_price) countParams.push(parseFloat(req.query.min_price));
+    if (req.query.max_price) countParams.push(parseFloat(req.query.max_price));
 
-const [countResult] = await pool.execute(countSql, countParams);
+    const [countResult] = await pool.execute(countSql, countParams);
 
     const productCount = countResult[0].count;
     const totalPages = Math.ceil(

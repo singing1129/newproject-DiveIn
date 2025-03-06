@@ -69,16 +69,16 @@ const CartItem = ({ item, type = "products" }) => {
   };
 
   const favoriteId = getFavoriteId();
-  // 创建类型映射，将复数形式转换为单数形式
+  // 映射單數和複數
   const typeMapping = {
     products: "product",
     activities: "activity",
     rentals: "rental",
     bundles: "bundle",
   };
-  // 获取收藏功能需要的类型（单数形式）
+  // 獲取收藏功能需要的類型（單數形式）
   const favoriteType = typeMapping[type] || type;
-  // 使用单数形式类型
+  // 使用單數形式類型
   const { isFavorite, toggleFavorite } = useFavorite(favoriteId, favoriteType);
 
   // 檢查是否被選中
@@ -354,7 +354,8 @@ const CartItem = ({ item, type = "products" }) => {
               <div className="bundle-row">
                 <span className="bundle-label">節省：</span>
                 <span className="bundle-value text-success">
-                  NT$ {item.original_total - item.discount_price}
+                  NT${" "}
+                  {Number(item.original_total) - Number(item.discount_price)}
                 </span>
               </div>
             </div>

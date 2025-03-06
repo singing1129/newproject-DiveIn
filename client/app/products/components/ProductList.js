@@ -14,12 +14,12 @@ import ProductBanner from "./ProductBanner";
 const API_BASE_URL = "http://localhost:3005/api";
 
 // // 將 API 相關常數提取出來 (暫時)
-const SORT_OPTIONS = {
-  COMPREHENSIVE: { value: 1, text: "綜合" },
-  NEWEST: { value: 2, text: "最新上架" },
-  PRICE_ASC: { value: 3, text: "價格：由低到高" },
-  PRICE_DESC: { value: 4, text: "價格：由高到低" },
-};
+// const SORT_OPTIONS = {
+//   COMPREHENSIVE: { value: 1, text: "綜合" },
+//   NEWEST: { value: 2, text: "最新上架" },
+//   PRICE_ASC: { value: 3, text: "價格：由低到高" },
+//   PRICE_DESC: { value: 4, text: "價格：由高到低" },
+// };
 
 export default function ProductList() {
   const router = useRouter();

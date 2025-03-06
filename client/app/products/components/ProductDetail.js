@@ -161,6 +161,8 @@ export default function ProductDetail() {
   // };
   // 修改加入購物車函數
   const handleAddToCart = async () => {
+
+    
     // 檢查是否有顏色和尺寸選項
     const hasColors = product.colors && product.colors.length > 0;
     const hasSizes = product.sizes && product.sizes.length > 0;

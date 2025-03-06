@@ -17,7 +17,8 @@ export default function ProductCard({ product }) {
     toggleFavorite,
     loading: favoriteLoading,
   } = useFavorite(product.id, type);
-  console.log("product", product);
+  // console.log("product", product);
+  // console.log("product.id", product.id);
 
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -38,7 +39,6 @@ export default function ProductCard({ product }) {
       const isBundle = product.item_type === "bundle";
 
       // 獲取正確的變體ID (這是關鍵修正)
-
       let cartData;
       if (isBundle) {
         cartData = {
@@ -46,12 +46,14 @@ export default function ProductCard({ product }) {
           bundleId: product.id,
           quantity: 1,
         };
+        console.log("cartData", cartData);
       } else {
         const response = await axios.get(
           `${API_BASE_URL}/products/${product.id}`
         );
 
         const correctVariantId = response.data.data.variants[0].id;
+        console.log("response.data.data", response.data.data);
         console.log("correctVariantId", correctVariantId);
         cartData = {
           type: "product",

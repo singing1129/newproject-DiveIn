@@ -156,7 +156,7 @@ export default function Cart1() {
               <h5>購物車是空的</h5>
               <button
                 className="btn btn-primary mt-3"
-                onClick={() => router.push("/product")}
+                onClick={() => router.push("/products")}
               >
                 去購物
               </button>
