@@ -1,0 +1,37 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 隱藏外層滾動軸 */
+}
+
+.homePage {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100vh;
+}
+
+.homePage > div {
+  scroll-snap-align: start;
+  height: 100vh;
+}
+
+.nav {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 10px;
+}
+
+.nav a {
+  color: var(--primary-deep-color);
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.nav a:hover {
+  color: var(--secondary-color);
+}

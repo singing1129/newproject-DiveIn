@@ -10,7 +10,7 @@ export default function Register2() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState(0); // 假設密碼強度 (0-4)，再改就好
+  const [passwordStrength, setPasswordStrength] = useState(0); // 密碼強度 (0-4)
   const router = useRouter();
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function Register2() {
     }
   }, []);
 
-  // 密碼強度驗證，再改就好
+  // 密碼強度驗證
   const checkPasswordStrength = (password) => {
     let strength = 0;
     if (password.length >= 8) strength++;
@@ -65,40 +65,15 @@ export default function Register2() {
     setPasswordStrength(checkPasswordStrength(newPassword));
   };
 
-  // 根據密碼強度返回文字，再改就好
-  const getPasswordStrengthText = (strength) => {
-    switch (strength) {
-      case 0:
-        return "weak";
-      case 1:
-        return "weak";
-      case 2:
-        return "medium";
-      case 3:
-        return "strong";
-      case 4:
-        return "strong";
-      default:
-        return "";
-    }
-  };
-
-  // 根據密碼強度返回顏色，想做顏色是黃色到藍色
+  // 根據密碼強度返回漸層顏色
   const getPasswordStrengthColor = (strength) => {
-    switch (strength) {
-      case 0:
-        return "var(--secondary-deep-color)"; // 黃色
-      case 1:
-        return "var(--secondary-deep-color)"; // 黃色
-      case 2:
-        return "linear-gradient(to right, var(--secondary-deep-color), var(--primary-color))"; // 黃到藍漸層
-      case 3:
-        return "var(--primary-deep-color)"; // 藍色
-      case 4:
-        return "var(--primary-deep-color)"; // 藍色
-      default:
-        return "var(--secondary-deep-color)";
+    if (strength === 0) {
+      return 'rgba(255, 255, 255, 0.2)';
     }
+    const opacity = 0.3 + (strength / 4) * 0.7; // 從 0.3 到 1
+    return `linear-gradient(to right, 
+      rgba(33, 158, 188, ${opacity * 0.5}), 
+      rgba(33, 158, 188, ${opacity}))`;
   };
 
   const handleRegister = () => {
@@ -144,13 +119,9 @@ export default function Register2() {
             className="strength-indicator"
             style={{
               width: `${(passwordStrength / 4) * 100}%`,
-              background: `linear-gradient(to right, var(--secondary-deep-color), var(--primary-color))`,
+              background: getPasswordStrengthColor(passwordStrength),
             }}
           ></div>
-        </div>
-        {/* 密碼強度文字 */}
-        <div className="password-strength-text">
-          {getPasswordStrengthText(passwordStrength)}
         </div>
         {/* 確認密碼輸入 */}
         <input
