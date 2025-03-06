@@ -438,7 +438,9 @@ router.post("/get-user-id", async (req, res) => {
   const { provider, provider_id } = req.body;
 
   if (!provider || !provider_id) {
-    return res.status(400).json({ status: "error", message: "缺少 provider 或 provider_id" });
+    return res
+      .status(400)
+      .json({ status: "error", message: "缺少 provider 或 provider_id" });
   }
 
   try {
@@ -449,15 +451,16 @@ router.post("/get-user-id", async (req, res) => {
     );
 
     if (user.length === 0) {
-      return res.status(404).json({ status: "error", message: "找不到對應的 user_id" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "找不到對應的 user_id" });
     }
 
     res.json({ status: "success", data: { user_id: user[0].user_id } });
   } catch (error) {
-    console.error("❌ 查詢 user_id 錯誤:", error);
+    console.error(" 查詢 user_id 錯誤:", error);
     res.status(500).json({ status: "error", message: "伺服器錯誤" });
   }
 });
-
 
 export default router;
