@@ -636,14 +636,16 @@ export default function ProductList() {
 
   // 輔助函數：判斷顏色是否為淺色
   const isLightColor = (color) => {
-    // 移除 # 號
+    if (!color || typeof color !== "string" || !color.startsWith("#")) return false; 
     const hex = color.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    // 計算亮度
+    if (hex.length !== 6) return false; // HEX 碼應該是 6 個字元
+  
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
     return r * 0.299 + g * 0.587 + b * 0.114 > 186;
   };
+  
 
   const [newProducts, setNewProducts] = useState([]);
 
