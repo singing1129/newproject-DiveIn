@@ -177,6 +177,18 @@ export default function AccountForm() {
     }
   };
 
+
+  // 確定圖片來源
+  const getAvatarSrc = () => {
+    if (formData.avatarPreview) {
+      return formData.avatarPreview; // 本地預覽優先
+    }
+    if (formData.avatar && formData.avatar !== "") {
+      return `http://localhost:3005${formData.avatar}`; // 後端路徑
+    }
+    return "/image/default-memberimg.png"; // 預設圖片
+  };
+
   const handleCancel = () => {
     // 釋放本地預覽
     if (formData.avatarPreview) {
@@ -212,6 +224,41 @@ export default function AccountForm() {
     return names[provider] || provider;
   };
 
+  // 添加移除登入方式的處理函數
+  const handleRemoveProvider = async (provider) => {
+    if (providers.length <= 1) {
+      setMessage({ type: "error", text: "至少需要保留一種登入方式" });
+      return;
+    }
+
+    if (
+      window.confirm(`確定要移除「${getProviderName(provider)}」登入方式嗎？`)
+    ) {
+      try {
+        setIsLoading(true);
+        const response = await axios.delete(
+          `http://localhost:3005/api/admin/provider/${provider}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.status === 200) {
+          setProviders(response.data.data.providers);
+          setMessage({ type: "success", text: "登入方式已移除" });
+        }
+      } catch (error) {
+        console.error("移除登入方式失敗:", error);
+        setMessage({
+          type: "error",
+          text: error.response?.data.message || "移除失敗，請稍後再試",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   return (
     <div className={styles.container}>
       {message.text && (
@@ -227,14 +274,10 @@ export default function AccountForm() {
       <form className={styles.contentWrapper} onSubmit={handleSubmit}>
         {/* 大頭貼區塊 */}
         <div className={styles.avatarSection}>
-          <div className={styles.avatarPreview}>
+        <div className={styles.avatarPreview}>
             <Image
               // 幹救命這裡寫超久
-              src={
-                `http://localhost:3005${formData.avatar}` ||
-                formData.avatarPreview ||
-                "/image/default-memberimg.png"
-              }
+              src={getAvatarSrc()}
               alt="會員頭像"
               width={250}
               height={250}
@@ -253,7 +296,6 @@ export default function AccountForm() {
               className={styles.avatarInput}
             />
           </label>
-
           {/* 登入方式區塊 */}
           {providers.length > 0 && (
             <div className={styles.providersSection}>
@@ -262,6 +304,16 @@ export default function AccountForm() {
                 {providers.map((provider) => (
                   <li key={provider} className={styles.providerItem}>
                     {getProviderName(provider)}
+                    {/* 如果登入方式超過一種，才顯示移除按鈕 */}
+                    {providers.length > 1 && (
+                      <button
+                        className={styles.removeProviderBtn}
+                        onClick={() => handleRemoveProvider(provider)}
+                        disabled={isEmailReadOnly && provider === "email"}
+                      >
+                        移除
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -306,15 +358,29 @@ export default function AccountForm() {
               className={isEmailReadOnly ? styles.readonlyInput : ""}
             />
           </div>
+          {/*  修改密碼欄位區域 */}
           <div className={styles.formGroup}>
-            <label htmlFor="password">密碼</label>
+            <label htmlFor="password">
+              密碼
+              {/* 如果用戶沒有 email 登入方式，顯示設置密碼提示 */}
+              {!providers.includes("email") && (
+                <span className={styles.warningHint}>
+                  {" "}
+                  (設置密碼可啟用電子郵件登入)
+                </span>
+              )}
+            </label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password || ""}
               onChange={handleChange}
-              placeholder="如不修改密碼請留空"
+              placeholder={
+                providers.includes("email")
+                  ? "如不修改密碼請留空"
+                  : "設置新密碼以啟用電子郵件登入"
+              }
             />
           </div>
           <div className={styles.formGroup}>
@@ -327,7 +393,6 @@ export default function AccountForm() {
               onChange={handleChange}
             />
           </div>
-
           {/* 按鈕區塊 */}
           <div className={styles.buttonGroup}>
             <button

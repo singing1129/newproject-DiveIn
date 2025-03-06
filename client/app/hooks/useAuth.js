@@ -418,12 +418,12 @@ export function AuthProvider({ children }) {
             return { success: true, user: tempUser };
           }
         } catch (error) {
-          console.error("❌ OTP 驗證失敗:", error);
+          console.error(" OTP 驗證失敗:", error);
           return { success: false, error };
         }
       };
     } catch (error) {
-      console.error("❌ 手機登入錯誤:", error);
+      console.error(" 手機登入錯誤:", error);
       alert("手機登入初始化失敗: " + error.message);
       return null;
     }
