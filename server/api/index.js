@@ -6,6 +6,9 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import createError from "http-errors";
+import http from "http"
+import { WebSocketServer } from "ws";
+
 // 路由模組
 import homeRecommendationsRouter from "../routes/home/recommendations.js";
 import productRouter from "../routes/products/index.js";
@@ -25,7 +28,7 @@ import groupCreate from "../routes/group/create.js";
 import groupJoin from "../routes/group/join.js";
 import "../cron.js"; //    排程自動檢查並更新揪團狀態
 import groupUpdate from "../routes/group/update.js"
-import createWebsocketRomm from "../routes/webSocket/index.js"
+import createWebsocketRoom from "../routes/webSocket/index.js";
 // 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
@@ -64,7 +67,17 @@ import orderRouter from "../routes/order/index.js";
 import passwordResetRouter from "../routes/admin/passwordReset.js";
 // 建立 Express 應用程式
 const app = express();
-
+// websocket專用
+const server = http.createServer(app)
+const wss = new WebSocketServer({ noServer: true });
+// 將wss傳給WebSocket模組進行設置
+createWebsocketRoom(wss);
+// 處理WebSocket升級請求
+server.on("upgrade", (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit("connection", ws, request); // 觸發connection事件
+  });
+});
 // 獲取文章當前文件的目錄路徑
 // const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -152,7 +165,6 @@ apiRouter.use("/group", groupDetailRouter);
 apiRouter.use("/group", groupCreate);
 apiRouter.use("/group", groupJoin);
 apiRouter.use("/group", groupUpdate);
-apiRouter.use("/websocket", createWebsocketRomm);
 
 // 租借相關路由
 apiRouter.use("/rent", rentRouter); // 負責 `/api/rent`
@@ -194,9 +206,20 @@ app.use((err, req, res, next) => {
     message: err.message,
   });
 });
+
+
+// 錯誤處理
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    status: "error",
+    message: err.message,
+  });
+});
+
 // 啟動伺服器
 const port = process.env.PORT || 3005;
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`後端伺服器運行在 http://localhost:${port}`);
 });
+
 export default app;
