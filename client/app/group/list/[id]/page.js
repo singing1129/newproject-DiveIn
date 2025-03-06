@@ -138,7 +138,7 @@ export default function GroupDetailPage() {
       const res = await axios.post(api + "/group/join", joinInformation);
       if (res.data.status == "success") {
         alert("成功跟團");
-        window.location = `/member/group`;
+        window.location = `/admin/group`;
       } else {
         alert(res.data.message || "跟團失敗！請稍後再試");
       }
