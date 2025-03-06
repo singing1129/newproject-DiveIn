@@ -22,7 +22,6 @@ const API_BASE_URL = "http://localhost:3005/api";
 // };
 
 export default function ProductList() {
-  
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -438,6 +437,7 @@ export default function ProductList() {
     params.set("sort", value.toString());
 
     router.replace(`/products?${params.toString()}`);
+    await fetchProducts({ sort: value });
   };
 
   // 添加標題
@@ -636,16 +636,16 @@ export default function ProductList() {
 
   // 輔助函數：判斷顏色是否為淺色
   const isLightColor = (color) => {
-    if (!color || typeof color !== "string" || !color.startsWith("#")) return false; 
+    if (!color || typeof color !== "string" || !color.startsWith("#"))
+      return false;
     const hex = color.replace("#", "");
     if (hex.length !== 6) return false; // HEX 碼應該是 6 個字元
-  
+
     const r = parseInt(hex.slice(0, 2), 16);
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
     return r * 0.299 + g * 0.587 + b * 0.114 > 186;
   };
-  
 
   const [newProducts, setNewProducts] = useState([]);
 
