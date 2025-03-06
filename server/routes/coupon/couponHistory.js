@@ -29,7 +29,7 @@ router.get("/history", async (req, res) => {
     let baseQuery = `
       FROM coupon_usage
       JOIN coupon ON coupon_usage.coupon_id = coupon.id
-      WHERE coupon_usage.users_id = ? AND coupon_usage.is_deleted = FALSE
+      WHERE coupon_usage.users_id = ?
     `;
 
     if (status && status !== "全部") {
@@ -58,12 +58,14 @@ router.get("/history", async (req, res) => {
        coupon.is_exclusive, 
        coupon.is_target,
        CASE 
-         WHEN coupon.end_date < NOW() THEN '已過期' 
+         WHEN coupon_usage.status = '已領取' THEN '未使用'
          WHEN coupon_usage.status = '已使用' THEN '已使用'
+         WHEN coupon_usage.status = '已過期' THEN '已過期'
          ELSE coupon_usage.status 
        END AS display_status
       ${baseQuery}
     `;
+
 
     if (sort === "latest") query += " ORDER BY coupon_usage.used_at DESC";
     else if (sort === "expiry") query += " ORDER BY coupon.end_date ASC";

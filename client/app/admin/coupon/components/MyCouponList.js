@@ -13,7 +13,7 @@ export default function MyCouponList({ coupons, loading, error, onClaim }) {
           </div>
         ))
       ) : (
-        <div className="no-coupons">目前沒有可用的優惠券</div>
+        <div className="no-coupons">目前沒有優惠券</div>
       )}
     </>
   );

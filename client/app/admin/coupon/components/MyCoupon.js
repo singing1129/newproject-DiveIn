@@ -32,13 +32,16 @@ export default function Coupon() {
         try {
           const response = await axios.get(`${API_BASE_URL}/my-coupons`, {
             params: {
+              userId: user.id, // 確保傳遞了用戶ID
               page: currentPage,
-              search: searchTerm, // 加入搜尋條件
+              limit: 10,
               type: couponType, // 優惠券類型篩選
               status: statusFilter, // 活動狀態篩選
               sort: sortOrder, // 排序方式
             },
           });
+
+          console.log("API response:", response.data); // 添加日誌以檢查API返回的數據
 
           if (response.data.success) {
             setCoupons(response.data.coupons);
@@ -56,15 +59,20 @@ export default function Coupon() {
 
       fetchCoupons();
     }
-  }, [authLoading, user, currentPage, searchTerm, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
+  }, [authLoading, user, currentPage, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
   const handleClaim = async (couponId) => {
+    console.log("發送的 couponId:", searchTerm);
+    console.log("發送的 userId:", user.id);
     try {
-      const response = await axios.post(`${API_BASE_URL}/claim`, { couponId });
+      const response = await axios.post(`${API_BASE_URL}/code-claim`, {
+        couponId,
+        userId: user.id, // 傳遞用戶ID
+      });
       console.log("Claim response:", response.data);
       // 更新本地狀態，避免重新加載
       setCoupons((prevCoupons) =>
@@ -80,6 +88,25 @@ export default function Coupon() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handleSearchSubmit = async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/code-claim`, {
+        couponId: searchTerm,
+        userId: user.id, // 傳遞用戶ID
+      });
+      console.log("Claim response:", response.data);
+      // 更新本地狀態，避免重新加載
+      setCoupons((prevCoupons) => [
+        ...prevCoupons,
+        { ...response.data.coupon, status: "已領取" },
+      ]);
+      setSearchTerm(""); // 清空輸入框
+    } catch (error) {
+      console.error("Error claiming coupon:", error);
+      setError("領取優惠券時發生錯誤");
+    }
   };
 
   if (authLoading || loading) return <div>載入中...</div>;
@@ -130,8 +157,18 @@ export default function Coupon() {
                         value={searchTerm}
                         onChange={handleSearchChange} // 設定搜尋變更
                       />
-                      <span className="input-group-text d-flex justify-content-center" style={{ cursor: "pointer" }}>
-                        <LuTicketPlus  style={{ fontSize: "1.5rem", color: "white",cursor: "pointer" }}  />
+                      <span
+                        className="input-group-text d-flex justify-content-center"
+                        style={{ cursor: "pointer" }}
+                        onClick={handleSearchSubmit} // 添加點擊事件處理函數
+                      >
+                        <LuTicketPlus
+                          style={{
+                            fontSize: "1.5rem",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                        />
                       </span>
                     </div>
                   </div>

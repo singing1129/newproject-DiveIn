@@ -57,11 +57,11 @@ export default function CouponClaim() {
       });
       if (response.data.success) {
         setCoupons(response.data.coupons);
-        // setPagination({
-        //   total: response.data.total,
-        //   page: response.data.page,
-        //   totalPages: response.data.totalPages,
-        // });
+        setPagination({
+          total: response.data.total,
+          page: response.data.page,
+          totalPages: response.data.totalPages,
+        });
       } else {
         setCoupons([]);
         setError("取得優惠券資料失敗");

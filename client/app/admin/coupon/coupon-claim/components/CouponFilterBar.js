@@ -6,20 +6,24 @@ const CouponFilterBar = ({
   onFilterChange,
   filters = { campaign_name: "全部優惠", coupon_category: "全部", claim_status: "全部" },
   campaignOptions = [],
-  couponTypeOptions = ["全部", "全館優惠券", "商品優惠券", "租賃優惠券", "活動優惠券", "會員專屬優惠券"],
+  couponTypeOptions = ["全部", "全館", "商品", "租賃", "活動", "會員專屬"],
   claimStatusOptions = ["全部", "已領取", "未領取"],
   mapping = {
-    "新春優惠": {
-      couponTypes: ["全部", "全館優惠券", "商品優惠券"],
+    "全部優惠": {
+      couponTypes: ["全部", "全館", "商品", "租賃", "活動", "會員專屬"],
+      claimStatuses: ["全部", "已領取", "未領取"],
+    },
+    "優惠活動": {
+      couponTypes: ["全部", "全館", "商品"],
       claimStatuses: ["全部", "未領取"],
     },
   },
 }) => {
   const defaultCampaignOptions =
     campaignOptions && campaignOptions.length > 0
-      ? (campaignOptions.includes("全部優惠")
-          ? campaignOptions
-          : ["全部優惠", ...campaignOptions])
+      ? campaignOptions.includes("全部優惠")
+        ? campaignOptions
+        : ["全部優惠", ...campaignOptions]
       : ["全部優惠"];
 
   // 設定初始值
@@ -31,6 +35,7 @@ const CouponFilterBar = ({
   const [currentCouponTypeOptions, setCurrentCouponTypeOptions] = useState(couponTypeOptions);
   const [currentClaimStatusOptions, setCurrentClaimStatusOptions] = useState(claimStatusOptions);
 
+  // 當 selectedCampaign 改變時，依據 mapping 更新 couponType 與 claimStatus 的可選項，並檢查目前選取的值是否有效
   useEffect(() => {
     if (selectedCampaign in mapping) {
       setCurrentCouponTypeOptions(mapping[selectedCampaign].couponTypes);
@@ -45,20 +50,16 @@ const CouponFilterBar = ({
       setCurrentCouponTypeOptions(couponTypeOptions);
       setCurrentClaimStatusOptions(claimStatusOptions);
     }
-    onFilterChange({
-      campaign_name: selectedCampaign,
-      coupon_category: selectedCouponType,
-      claim_status: selectedClaimStatus,
-    });
   }, [selectedCampaign]);
 
+  // 每次 filter 狀態變更時，都呼叫 onFilterChange，送出最新篩選參數
   useEffect(() => {
     onFilterChange({
       campaign_name: selectedCampaign,
       coupon_category: selectedCouponType,
       claim_status: selectedClaimStatus,
     });
-  }, [selectedCouponType, selectedClaimStatus]);
+  }, [selectedCampaign, selectedCouponType, selectedClaimStatus]);
 
   const renderFilterButtons = (options, selectedValue, setSelected) => {
     return options.map((option) => (

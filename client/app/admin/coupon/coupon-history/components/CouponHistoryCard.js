@@ -2,7 +2,6 @@
 
 import "./styles/CouponHistoryCard.css";
 import Image from "next/image";
-import { useState, useEffect } from "react";
 
 /**
  * CouponImage 元件
@@ -31,10 +30,6 @@ export default function CouponCard({ coupon }) {
 
   return (
     <div className="coupon-card" style={{ position: "relative", display: "flex" }}>
-      {/* 右上角顯示可領取數量 */}
-      {coupon.max_per_user > 1 && (
-        <div className="coupon-max">x {coupon.remaining || coupon.max_per_user}</div>
-      )}
 
       {/* 遮罩顯示「已過期」或「已使用」 */}
       {(isExpired || isUsed) && (
