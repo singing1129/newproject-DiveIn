@@ -17,6 +17,7 @@ export default function ProductCard({ product }) {
     toggleFavorite,
     loading: favoriteLoading,
   } = useFavorite(product.id, type);
+  console.log("product", product);
 
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -82,7 +83,7 @@ export default function ProductCard({ product }) {
     }
 
     // 否則顯示價格範圍
-    return `NT$${minPrice} ~ NT$${maxPrice}`;
+    return `NT$${minPrice}~NT$${maxPrice}`;
   };
 
   return (
@@ -135,7 +136,10 @@ export default function ProductCard({ product }) {
             </button>
           </div>
         </div>
-        <div className={`d-flex justify-content-center gap-1 my-2`}>
+        <div className={`d-flex justify-content-center ${styles.brandName}`}>
+          {product.brand_name || "自由品牌"}
+        </div>
+        {/* <div className={`d-flex justify-content-center gap-1 my-2`}>
           {product.color && product.color.length > 0 ? (
             product.color.map((color, index) => (
               <div
@@ -152,15 +156,36 @@ export default function ProductCard({ product }) {
           ) : (
             <div className={styles.saleCircle} style={{ opacity: 0.3 }} />
           )}
-        </div>
+        </div> */}
         <div className={styles.productInfo}>
-          <div className={styles.brandName}>
+          {/* <div className={styles.brandName}>
             {product.brand_name || "自由品牌"}
+          </div> */}
+          <div className={styles.productName}>
+            {product.name || "時尚高級派對"}
           </div>
-          <div>{product.name || "商品名稱"}</div>
           <div className={styles.salePrice}>{renderPriceRange()}</div>
           <div className={styles.originalPrice}>
-            NT${product.original_price || (product.min_price || 0) * 1.5}
+            NT${product.original_price}
+          </div>
+          {/* 如果數量超過六個讓他顯示六個＋... */}
+          <div className={`d-flex justify-content-center gap-1 my-2`}>
+            {product.color && product.color.length > 0 ? (
+              product.color.slice(0, 6).map((color, index) => (
+                <div
+                  key={color.color_id}
+                  className={styles.saleCircle}
+                  style={{
+                    backgroundColor: color.color_code,
+                    border: "1px solid #e0e0e0",
+                    cursor: "pointer",
+                  }}
+                  title={color.color_name}
+                />
+              ))
+            ) : (
+              <div className={styles.saleCircle} style={{ opacity: 0.3 }} />
+            )}
           </div>
         </div>
       </Link>

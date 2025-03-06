@@ -84,6 +84,8 @@ export function buildProductQuery({
   const sql = `
  SELECT DISTINCT 
    p.*, 
+   pv.price AS price,
+   pv.original_price AS original_price,
    b.name AS brand_name,
    MIN(pv.price) AS min_price,
    MAX(pv.price) AS max_price,

@@ -278,9 +278,11 @@
   /* text-align: center; */
   color: #808080;
   font-size: 0.9rem;
-  margin-bottom: 4px;
+  /* margin-bottom: 4px; */
 }
-
+.productName {
+  height: 70px;
+}
 .salePrice {
   color: var(--primary-color);
   font-weight: bold;

@@ -13,9 +13,6 @@ import ProductBanner from "./ProductBanner";
 // API 基礎 URL
 const API_BASE_URL = "http://localhost:3005/api";
 
-// 在文件頂部添加預設圖片
-const DEFAULT_PRODUCT_IMAGE = "/images/default-product.jpg"; // 確保這個路徑指向一個實際存在的預設圖片
-
 // // 將 API 相關常數提取出來 (暫時)
 const SORT_OPTIONS = {
   COMPREHENSIVE: { value: 1, text: "綜合" },
@@ -90,7 +87,6 @@ export default function ProductList() {
       resetPageTitle();
     }
 
-    
     fetchProducts();
   }, [currentQuery]);
 
@@ -389,7 +385,7 @@ export default function ProductList() {
           )}`;
         }
       }
-      // 如果没有任何筛选条件，使用基础 URL 获取所有商品
+      // 如果没有任何篩選條件，使用基礎 URL 獲取所有商品
 
       console.log("🔍 Fetching products from:", url);
       console.log("🔍 With params:", queryParams);
