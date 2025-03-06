@@ -10,21 +10,21 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 gsap.registerPlugin(ScrollTrigger);
 
-const HeroSection = () => {
+const HeroSection = ({ scrollToSection }) => { // 恢復 scrollToSection 參數
   const textRef = useRef(null);
   const arrowRef = useRef(null);
   const jellyfishRef = useRef(null);
   const bottomTextRef = useRef(null);
+  const videoRef = useRef(null); // 添加 videoRef
   const [bubbles, setBubbles] = useState([]);
   const [bubbleAnimation, setBubbleAnimation] = useState(null);
   const [jellyfishAnimation, setJellyfishAnimation] = useState(null);
   const [jellyfishInfo, setJellyfishInfo] = useState(
     "歡迎來到DiveIn，深海旅程的第一站"
   );
-  const [isFollowing, setIsFollowing] = useState(false); // 控制水母是否跟隨滑鼠
-  const [isInfoActive, setIsInfoActive] = useState(false); // 控制資訊是否啟動
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isInfoActive, setIsInfoActive] = useState(false);
 
-  // 水母對話框文字
   const diveFacts = [
     "潛水時耳朵壓力變化是因為水壓增加，每下潛10公尺壓力增加1大氣壓。",
     "潛水時，你可以聽到自己的呼吸聲，這是與海洋親密對話的時刻。",
@@ -48,7 +48,7 @@ const HeroSection = () => {
     "藍鯨是地球上最大的動物，體重可達200噸。",
   ];
 
-  // 預載 json 動畫數據
+  // 預載動畫數據
   useEffect(() => {
     fetch("/json/bubble.json")
       .then((res) => res.json())
@@ -61,18 +61,26 @@ const HeroSection = () => {
       .catch((error) => console.error("載入水母動畫失敗:", error));
   }, []);
 
-  // 初始靜態時顯示預設水母資訊：歡迎來到DiveIn，深海旅程的第一站
+  // 初始顯示水母資訊
   useEffect(() => {
     gsap.set(`.${styles.jellyfishInfo}`, { opacity: 1 });
   }, []);
 
-  // 滑鼠啟動水母移動以後，每 10 秒自動更換水母對話框資訊
+  // 影片自動播放
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.play().catch((error) => console.error("影片自動播放失敗:", error));
+      video.addEventListener("error", (e) => console.error("影片載入錯誤:", e));
+    }
+  }, []);
+
+  // 每10秒自動更換水母資訊（啟動後）
   useEffect(() => {
     if (!isInfoActive) return;
 
     const interval = setInterval(() => {
-      const randomFact =
-        diveFacts[Math.floor(Math.random() * diveFacts.length)];
+      const randomFact = diveFacts[Math.floor(Math.random() * diveFacts.length)];
       setJellyfishInfo(randomFact);
       gsap.fromTo(
         `.${styles.jellyfishInfo}`,
@@ -95,7 +103,7 @@ const HeroSection = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // 水母初始位置在右下方，點擊後跟隨滑鼠移動
+  // 水母跟隨滑鼠與路徑氣泡
   useEffect(() => {
     if (!jellyfishRef.current || !jellyfishAnimation) return;
 
@@ -113,15 +121,8 @@ const HeroSection = () => {
     const handleMouseMove = (e) => {
       const targetX = e.clientX + offsetX;
       const targetY = e.clientY + offsetY;
-
-      const constrainedX = Math.max(
-        0,
-        Math.min(targetX, window.innerWidth - rect.width)
-      );
-      const constrainedY = Math.max(
-        0,
-        Math.min(targetY, window.innerHeight - rect.height)
-      );
+      const constrainedX = Math.max(0, Math.min(targetX, window.innerWidth - rect.width));
+      const constrainedY = Math.max(0, Math.min(targetY, window.innerHeight - rect.height));
 
       gsap.to(jellyfishEl, {
         x: constrainedX,
@@ -131,9 +132,7 @@ const HeroSection = () => {
       });
 
       if (bubbleAnimation && Math.random() > 0.7) {
-        const bubbleId = `bubble-path-${Date.now()}-${Math.floor(
-          Math.random() * 1000
-        )}`;
+        const bubbleId = `bubble-path-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const newBubble = {
           id: bubbleId,
           x: e.clientX + offsetX,
@@ -141,13 +140,17 @@ const HeroSection = () => {
           scale: Math.random() * 0.8 + 0.8,
         };
         setBubbles((prev) => [...prev, newBubble]);
-        gsap.to(`#${bubbleId}`, {
-          y: -window.innerHeight,
-          duration: 5,
-          ease: "power1.out",
-          onComplete: () =>
-            setBubbles((prev) => prev.filter((b) => b.id !== bubbleId)),
-        });
+        setTimeout(() => { // 延遲確保 DOM 更新
+          const bubbleEl = document.getElementById(bubbleId);
+          if (bubbleEl) {
+            gsap.to(bubbleEl, {
+              y: -window.innerHeight,
+              duration: 5,
+              ease: "power1.out",
+              onComplete: () => setBubbles((prev) => prev.filter((b) => b.id !== bubbleId)),
+            });
+          }
+        }, 50);
       }
     };
 
@@ -155,13 +158,11 @@ const HeroSection = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [jellyfishAnimation, bubbleAnimation, isFollowing]);
 
-  // 點擊螢幕手動切換資訊（僅在啟動後）
+  // 點擊螢幕手動切換水母資訊
   useEffect(() => {
     const handleClick = (e) => {
-      if (!isInfoActive) return; // 只有在啟動後才允許手動切換
-
-      const randomFact =
-        diveFacts[Math.floor(Math.random() * diveFacts.length)];
+      if (!isInfoActive) return; // 僅在啟動後生效
+      const randomFact = diveFacts[Math.floor(Math.random() * diveFacts.length)];
       setJellyfishInfo(randomFact);
       gsap.fromTo(
         `.${styles.jellyfishInfo}`,
@@ -170,7 +171,6 @@ const HeroSection = () => {
       );
     };
 
-    // 綁定到整個 heroSection，而不是 window，避免外部干擾
     const heroSection = document.querySelector(`.${styles.heroSection}`);
     if (heroSection) {
       heroSection.addEventListener("click", handleClick);
@@ -182,39 +182,6 @@ const HeroSection = () => {
       }
     };
   }, [isInfoActive]);
-
-  // 背景氣泡
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (bubbles.length > 10 || !bubbleAnimation) return;
-      const bubbleWidth = 40;
-      const x = Math.max(
-        bubbleWidth / 2,
-        Math.min(
-          Math.random() * window.innerWidth,
-          window.innerWidth - bubbleWidth / 2
-        )
-      );
-      const bubbleId = `bubble-bg-${Date.now()}-${Math.floor(
-        Math.random() * 1000
-      )}`;
-      const newBubble = {
-        id: bubbleId,
-        x,
-        y: window.innerHeight,
-        scale: Math.random() * 0.8 + 0.8,
-      };
-      setBubbles((prev) => [...prev, newBubble]);
-      gsap.to(`#${bubbleId}`, {
-        y: -window.innerHeight,
-        duration: 5,
-        ease: "power1.out",
-        onComplete: () =>
-          setBubbles((prev) => prev.filter((b) => b.id !== bubbleId)),
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [bubbles, bubbleAnimation]);
 
   // 箭頭與底部文字動畫
   useEffect(() => {
@@ -234,8 +201,6 @@ const HeroSection = () => {
     e.stopPropagation();
     setIsFollowing(true);
     setIsInfoActive(true);
-
-    // 添加資訊浮動動畫
     gsap.to(`.${styles.jellyfishInfo}`, {
       y: -5,
       repeat: -1,
@@ -248,7 +213,7 @@ const HeroSection = () => {
   return (
     <div className={styles.heroSection}>
       <div className={styles.videoBackground}>
-        <video autoPlay loop muted>
+        <video ref={videoRef} autoPlay loop muted playsInline>
           <source src="/mp4/home-sec1.mp4" type="video/mp4" />
           您的瀏覽器不支援影片播放。
         </video>
@@ -262,11 +227,7 @@ const HeroSection = () => {
           className={styles.jellyfish}
           onClick={handleJellyfishClick}
         >
-          <Lottie
-            animationData={jellyfishAnimation}
-            loop={true}
-            autoplay={true}
-          />
+          <Lottie animationData={jellyfishAnimation} loop={true} autoplay={true} />
           <div className={styles.jellyfishInfo}>{jellyfishInfo}</div>
         </div>
       )}
@@ -276,18 +237,14 @@ const HeroSection = () => {
           <div
             key={bubble.id}
             id={bubble.id}
-            className={styles.bubble}
+            className={styles.localBubble} // 更新為 localBubble 以匹配最新 CSS
             style={{
               left: `${bubble.x}px`,
               top: `${bubble.y}px`,
               transform: `scale(${bubble.scale})`,
             }}
           >
-            <Lottie
-              animationData={bubbleAnimation}
-              loop={true}
-              autoplay={true}
-            />
+            <Lottie animationData={bubbleAnimation} loop={true} autoplay={true} />
           </div>
         ))}
 
@@ -300,15 +257,12 @@ const HeroSection = () => {
         即刻啟程
       </div>
 
-      <div ref={arrowRef} className={styles.scrollArrow}>
-        <svg
-          width="30"
-          height="45"
-          viewBox="0 0 40 60"
-          fill="none"
-          stroke="white"
-          strokeWidth="2"
-        >
+      <div
+        ref={arrowRef}
+        className={styles.scrollArrow}
+        onClick={scrollToSection} // 恢復點擊箭頭滾動功能
+      >
+        <svg width="30" height="45" viewBox="0 0 40 60" fill="none" stroke="white" strokeWidth="2">
           <path d="M10 15 L20 25 L30 15" strokeWidth="3" />
           <path d="M12 30 L20 40 L28 30" strokeWidth="2" />
         </svg>

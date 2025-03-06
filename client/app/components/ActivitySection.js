@@ -6,28 +6,50 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { FaRegHeart, FaStar, FaRegStar } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
+import dynamic from "next/dynamic";
 import styles from "./ActivitySection.module.css";
+
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 gsap.registerPlugin(ScrollTrigger);
 
-const ActivitySection = () => {
+const ActivitySection = ({ scrollToSection }) => {
   const sectionRef = useRef(null);
-  const bgRef = useRef(null);
   const titleRef = useRef(null);
-  const cardsRef = useRef([]);
+  const explorePointsRef = useRef([]);
   const mapMarkersRef = useRef([]);
-  const linesRef = useRef([]);
+  const mapLinesRef = useRef([]);
   const [scrollCount, setScrollCount] = useState(0);
-  const [displayedCards, setDisplayedCards] = useState([]);
+  const [displayedPoints, setDisplayedPoints] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bubbleAnimation, setBubbleAnimation] = useState(null);
+  const [pointBubbles, setPointBubbles] = useState({});
 
-  // 隨機選取 5 筆資料
+  // 隨機選取 5 筆資料並分配地圖位置
   const getRandomActivities = (data, count) => {
     const shuffled = [...data].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
+    return shuffled.slice(0, count).map((item, index) => ({
+      ...item,
+      location: {
+        x: 20 + Math.random() * 60, // 地圖隨機分佈
+        y: 20 + index * 15,
+      },
+      screenPosition: {
+        x: 150 + index * 200, // 螢幕中分散位置
+        y: 100 + index * 120,
+      },
+    }));
   };
+
+  // 預載 bubble.json
+  useEffect(() => {
+    fetch("/json/bubble.json")
+      .then((res) => res.json())
+      .then((data) => setBubbleAnimation(data))
+      .catch((error) => console.error("載入氣泡動畫失敗:", error));
+  }, []);
 
   // 從後端獲取資料
   useEffect(() => {
@@ -36,56 +58,20 @@ const ActivitySection = () => {
     const fetchActivities = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/homeRecommendations?category=activity&type=all`);
-        console.log("Raw response:", response.data);
         if (response.data.status !== "success" || !Array.isArray(response.data.data)) {
           throw new Error("Invalid data format from backend");
         }
-        const allActivities = response.data.data;
-        const randomActivities = getRandomActivities(allActivities, 5).map((item, index) => ({
-          ...item,
-          location: { x: 50, y: 10 + index * 20 }, // 添加地圖位置
-        }));
+        const randomActivities = getRandomActivities(response.data.data, 5);
         setActivities(randomActivities);
       } catch (err) {
         console.error("Fetch error:", err);
         setError(err.message);
-        // 靜態備用資料
         setActivities([
-          {
-            id: 1,
-            name: "日本・沖繩｜輕鬆坐船去青洞浮潛・體驗潛水｜全中文服務｜當天無追加費用",
-            price: 1420,
-            main_image: "jpg (3).webp",
-            location: { x: 50, y: 10 },
-          },
-          {
-            id: 2,
-            name: "珊瑚探險 - 馬爾地夫",
-            price: 3000,
-            main_image: "coral.jpg",
-            location: { x: 50, y: 30 },
-          },
-          {
-            id: 3,
-            name: "海底派對 - 加勒比海",
-            price: 2000,
-            main_image: "party.jpg",
-            location: { x: 50, y: 50 },
-          },
-          {
-            id: 4,
-            name: "沉船探秘 - 百慕達",
-            price: 2800,
-            main_image: "wreck.jpg",
-            location: { x: 50, y: 70 },
-          },
-          {
-            id: 5,
-            name: "海底洞穴 - 沖繩",
-            price: 2600,
-            main_image: "cave.jpg",
-            location: { x: 50, y: 90 },
-          },
+          { id: 1, name: "日本・沖繩｜輕鬆坐船去青洞浮潛", price: 1420, main_image: "jpg (3).webp", location: { x: 30, y: 20 }, screenPosition: { x: 150, y: 100 } },
+          { id: 2, name: "珊瑚探險 - 馬爾地夫", price: 3000, main_image: "coral.jpg", location: { x: 50, y: 35 }, screenPosition: { x: 350, y: 220 } },
+          { id: 3, name: "海底派對 - 加勒比海", price: 2000, main_image: "party.jpg", location: { x: 40, y: 50 }, screenPosition: { x: 550, y: 340 } },
+          { id: 4, name: "沉船探秘 - 百慕達", price: 2800, main_image: "wreck.jpg", location: { x: 60, y: 65 }, screenPosition: { x: 750, y: 460 } },
+          { id: 5, name: "海底洞穴 - 沖繩", price: 2600, main_image: "cave.jpg", location: { x: 45, y: 80 }, screenPosition: { x: 950, y: 580 } },
         ]);
       } finally {
         setLoading(false);
@@ -94,17 +80,19 @@ const ActivitySection = () => {
     fetchActivities();
   }, []);
 
+  // 圖片路徑處理
   const getImagePath = (item) => {
     const defaultImage = "/image/rent/no-img.png";
     if (!item || !item.id || !item.main_image) return defaultImage;
     return `/image/activity/${item.id}/${encodeURIComponent(item.main_image)}`;
   };
 
-  const triggerAnimations = (count) => {
+  // 顯示探索點動畫
+  const triggerShowAnimation = (count) => {
     const index = count - 1;
     const tl = gsap.timeline();
 
-    if (count === 1 && !displayedCards.includes(0)) {
+    if (count === 1 && !displayedPoints.includes(0)) {
       tl.fromTo(
         titleRef.current,
         { y: 100, opacity: 0 },
@@ -112,200 +100,237 @@ const ActivitySection = () => {
       );
     }
 
-    if (index >= 0 && index < activities.length && !displayedCards.includes(index)) {
+    if (index >= 0 && index < activities.length && !displayedPoints.includes(index)) {
+      const point = explorePointsRef.current[index];
       tl.fromTo(
         mapMarkersRef.current[index],
         { scale: 0, opacity: 0 },
-        { scale: 1.5, opacity: 1, duration: 0.5, ease: "bounce.out" }
+        { scale: 1, opacity: 1, duration: 0.5, ease: "bounce.out" }
       )
         .fromTo(
-          cardsRef.current[index],
-          {
-            x: 700,
-            opacity: 0,
-            scale: 0.8,
-            rotation: (index % 2 === 0 ? -10 : 10) + Math.random() * 10,
-          },
-          {
-            x: Math.random() * 300 - 150,
-            y: Math.random() * 300 - 150,
-            opacity: 1,
-            scale: 1,
-            rotation: Math.random() * 5 - 2.5,
-            duration: 1.2,
-            ease: "power2.out",
-          }
+          point.querySelector(`.${styles.image}`),
+          { scale: 0, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 1, ease: "power2.out" }
         )
         .fromTo(
-          linesRef.current[index],
+          point.querySelector(`.${styles.label}`),
+          { y: 50, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" },
+          "-=0.5"
+        )
+        .fromTo(
+          mapLinesRef.current[index],
           { strokeDashoffset: 100, opacity: 0 },
-          { strokeDashoffset: 0, opacity: 1, duration: 0.5 }
+          { strokeDashoffset: 0, opacity: 1, duration: 1, ease: "power2.out" },
+          "-=1"
         );
 
-      setDisplayedCards((prev) => [...prev, index]);
+      setPointBubbles((prev) => ({
+        ...prev,
+        [index]: Array.from({ length: 8 }, () => ({
+          id: `bubble-point-${index}-${Date.now()}-${Math.random()}`,
+          x: Math.random() * 100,
+          size: 20 + Math.random() * 100,
+        })),
+      }));
+
+      setDisplayedPoints((prev) => [...prev, index]);
     }
   };
 
-  const handleMarkerHover = (index) => {
-    if (cardsRef.current[index]) {
-      gsap.to(cardsRef.current[index], {
-        scale: 1.05,
-        boxShadow: "0 15px 40px rgba(0, 0, 0, 0.5)",
-        duration: 0.3,
+  // 收回探索點動畫
+  const triggerHideAnimation = (count) => {
+    const index = count;
+    if (index >= 0 && index < activities.length && displayedPoints.includes(index)) {
+      const point = explorePointsRef.current[index];
+      const tl = gsap.timeline();
+      tl.to(point.querySelector(`.${styles.label}`), { y: 50, opacity: 0, duration: 0.5, ease: "power2.in" })
+        .to(point.querySelector(`.${styles.image}`), { scale: 0, opacity: 0, duration: 0.8, ease: "power2.in" }, "-=0.5")
+        .to(mapMarkersRef.current[index], { scale: 0, opacity: 0, duration: 0.5, ease: "power2.in" }, "-=0.5")
+        .to(mapLinesRef.current[index], { strokeDashoffset: 100, opacity: 0, duration: 0.5, ease: "power2.in" }, "-=0.5");
+
+      setDisplayedPoints((prev) => prev.filter((i) => i !== index));
+      setPointBubbles((prev) => {
+        const newBubbles = { ...prev };
+        delete newBubbles[index];
+        return newBubbles;
       });
-      gsap.to(mapMarkersRef.current[index], { scale: 2, duration: 0.3 });
+    }
+  };
+
+  // 懸停效果
+  const handleMarkerHover = (index) => {
+    const point = explorePointsRef.current[index];
+    if (point) {
+      gsap.to(point.querySelector(`.${styles.image}`), { scale: 1.1, boxShadow: "0 20px 50px rgba(0, 0, 0, 0.5)", duration: 0.3 });
+      gsap.to(mapMarkersRef.current[index], { scale: 1.2, duration: 0.3 });
     }
   };
 
   const handleMarkerLeave = (index) => {
-    if (cardsRef.current[index]) {
-      gsap.to(cardsRef.current[index], {
-        scale: 1,
-        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.4)",
-        duration: 0.3,
-      });
-      gsap.to(mapMarkersRef.current[index], { scale: 1.5, duration: 0.3 });
+    const point = explorePointsRef.current[index];
+    if (point) {
+      gsap.to(point.querySelector(`.${styles.image}`), { scale: 1, boxShadow: "0 10px 30px rgba(0, 0, 0, 0.3)", duration: 0.3 });
+      gsap.to(mapMarkersRef.current[index], { scale: 1, duration: 0.3 });
     }
   };
 
+  // 滾輪事件控制
   useEffect(() => {
-    if (!bgRef.current) return;
-
-    gsap.to(bgRef.current, {
-      background: `linear-gradient(to bottom, var(--primary-deep-color) 0%, var(--primary-deep-color) 60%, var(--primary-light-color) 100%)`,
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        scrub: true,
-        onUpdate: (self) => {
-          if (bgRef.current) {
-            const progress = self.progress;
-            const deepEnd = 60 - progress * 50;
-            bgRef.current.style.background = `linear-gradient(to bottom, var(--primary-deep-color) 0%, var(--primary-deep-color) ${deepEnd}%, var(--primary-light-color) 100%)`;
-          }
-        },
-      },
-    });
-
-    const handleMouseMove = (e) => {
-      if (!bgRef.current) return;
-      const { clientY } = e;
-      const { top, height } = sectionRef.current.getBoundingClientRect();
-      const y = (clientY - top) / height;
-      const deepEnd = 60 - y * 40;
-      gsap.to(bgRef.current, {
-        background: `linear-gradient(to bottom, var(--primary-deep-color) 0%, var(--primary-deep-color) ${deepEnd}%, var(--primary-light-color) 100%)`,
-        duration: 0.5,
-      });
-    };
-    sectionRef.current.addEventListener("mousemove", handleMouseMove);
+    if (loading || !sectionRef.current) return;
 
     const handleWheel = (e) => {
       const delta = e.deltaY;
       const direction = delta > 0 ? 1 : -1;
       const rect = sectionRef.current.getBoundingClientRect();
 
-      if (rect.top <= window.innerHeight && rect.bottom >= 0) {
-        if (direction > 0 && scrollCount < activities.length) {
-          e.preventDefault();
+      if (rect.top <= 0 && rect.bottom >= window.innerHeight) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (direction > 0) {
+          if (scrollCount < activities.length) {
+            setScrollCount((prev) => {
+              const newCount = prev + 1;
+              triggerShowAnimation(newCount);
+              return newCount;
+            });
+          } else {
+            scrollToSection();
+          }
+        } else if (direction < 0 && scrollCount > 0) {
           setScrollCount((prev) => {
-            const newCount = prev + 1;
-            triggerAnimations(newCount);
+            const newCount = prev - 1;
+            triggerHideAnimation(newCount);
             return newCount;
           });
-        } else if (scrollCount >= activities.length) {
-          const nextSection = sectionRef.current.nextElementSibling;
-          if (nextSection) nextSection.scrollIntoView({ behavior: "smooth" });
         }
       }
     };
-    window.addEventListener("wheel", handleWheel, { passive: false });
 
-    return () => {
-      sectionRef.current.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("wheel", handleWheel);
-    };
-  }, [scrollCount, activities]);
+    const section = sectionRef.current;
+    section.addEventListener("wheel", handleWheel, { passive: false });
+    return () => section.removeEventListener("wheel", handleWheel);
+  }, [scrollCount, activities, loading, scrollToSection]);
 
-  if (loading) return <div>加載中...</div>;
-  if (error) return <div>錯誤: {error}</div>;
+  // 氣泡動畫
+  useEffect(() => {
+    if (!bubbleAnimation) return;
+
+    Object.keys(pointBubbles).forEach((index) => {
+      pointBubbles[index].forEach((bubble) => {
+        const bubbleEl = document.getElementById(bubble.id);
+        if (bubbleEl) {
+          gsap.fromTo(
+            bubbleEl,
+            { y: 0, opacity: 0.8 },
+            {
+              y: -window.innerHeight,
+              opacity: 0,
+              duration: 4 + Math.random() * 4,
+              ease: "power1.out",
+              repeat: -1,
+              delay: Math.random() * 3,
+            }
+          );
+        }
+      });
+    });
+  }, [pointBubbles, bubbleAnimation]);
+
+  if (loading) return <div className={styles.loading}>加載中...</div>;
+  if (error) return <div className={styles.error}>錯誤: {error}</div>;
 
   return (
     <section ref={sectionRef} className={styles.activitySection}>
-      <div ref={bgRef} className={styles.background} />
       <svg className={styles.map} viewBox="0 0 100 100">
+        <g className={styles.mapOutline}>
+          <circle cx="10" cy="10" r="1" fill="white" />
+          <circle cx="90" cy="10" r="1" fill="white" />
+          <circle cx="90" cy="90" r="1" fill="white" />
+          <circle cx="10" cy="90" r="1" fill="white" />
+          <path d="M10 10 L90 10 L90 90 L10 90 Z" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2 2" />
+        </g>
         {activities.map((activity, index) => (
           <g key={index}>
             <circle
               ref={(el) => (mapMarkersRef.current[index] = el)}
               cx={activity.location.x}
               cy={activity.location.y}
-              r="5"
-              fill="var(--primary-light-color)"
+              r="3"
+              fill="#FFD700"
               opacity="0"
               onMouseEnter={() => handleMarkerHover(index)}
               onMouseLeave={() => handleMarkerLeave(index)}
             />
-            <line
-              ref={(el) => (linesRef.current[index] = el)}
-              x1={activity.location.x}
-              y1={activity.location.y}
-              x2="80"
-              y2="50"
-              stroke="var(--primary-light-color)"
-              strokeWidth="1"
-              strokeDasharray="100"
-              strokeDashoffset="100"
-              opacity="0"
-            />
+            {index > 0 && (
+              <line
+                ref={(el) => (mapLinesRef.current[index] = el)}
+                x1={activities[index - 1].location.x}
+                y1={activities[index - 1].location.y}
+                x2={activity.location.x}
+                y2={activity.location.y}
+                stroke="#FFD700"
+                strokeWidth="1"
+                strokeDasharray="4 4"
+                opacity="0"
+                strokeDashoffset="100"
+              />
+            )}
           </g>
         ))}
       </svg>
       <h2 ref={titleRef} className={styles.title}>
-        推薦深海活動
+        探索深海旅程
       </h2>
-      <div className={styles.cardContainer}>
+      <div className={styles.exploreContainer}>
         {activities.map((activity, index) => (
           <div
             key={activity.id}
-            ref={(el) => (cardsRef.current[index] = el)}
-            className={styles.card}
-            style={{ zIndex: index }}
+            ref={(el) => (explorePointsRef.current[index] = el)}
+            className={styles.explorePoint}
+            style={{ left: activity.screenPosition.x, top: activity.screenPosition.y }}
           >
-            <div className={styles.imgContainer}>
-              <img
-                src={getImagePath(activity)}
-                alt={activity.name}
-                className={styles.img}
-              />
-              <div className={styles.hoverActionContainer}>
-                <div className={styles.iconGroup}>
-                  <button className={styles.hoverActionBtn}>
-                    <FaRegHeart />
-                  </button>
-                  <button className={styles.hoverActionBtn}>
-                    <FiShoppingCart />
-                  </button>
-                </div>
+            <div className={styles.imageContainer}>
+              <img src={getImagePath(activity)} alt={activity.name} className={styles.image} />
+              <div className={styles.hoverActions}>
+                <button className={styles.hoverActionBtn}><FaRegHeart /></button>
+                <button className={styles.hoverActionBtn}><FiShoppingCart /></button>
               </div>
               <div className={styles.stars}>
-                {[...Array(5)].map((_, i) =>
-                  i < 4 ? <FaStar key={i} /> : <FaRegStar key={i} />
-                )}
+                {[...Array(5)].map((_, i) => (i < 4 ? <FaStar key={i} /> : <FaRegStar key={i} />))}
               </div>
             </div>
-            <div className={styles.cardOverlay}>
+            <div className={styles.label}>
               <h3>{activity.name}</h3>
               <p>NT ${activity.price}</p>
             </div>
-            <svg className={styles.bubbles} viewBox="0 0 100 100">
-              <circle cx="20" cy="80" r="5" fill="rgba(255, 255, 255, 0.3)" />
-              <circle cx="30" cy="70" r="3" fill="rgba(255, 255, 255, 0.3)" />
-              <circle cx="40" cy="60" r="4" fill="rgba(255, 255, 255, 0.3)" />
-            </svg>
+            {bubbleAnimation && pointBubbles[index] && (
+              <div className={styles.bubbles}>
+                {pointBubbles[index].map((bubble) => (
+                  <div
+                    key={bubble.id}
+                    id={bubble.id}
+                    className={styles.pointBubble}
+                    style={{
+                      left: `${bubble.x}%`,
+                      width: `${bubble.size}px`,
+                      height: `${bubble.size}px`,
+                    }}
+                  >
+                    <Lottie animationData={bubbleAnimation} loop={true} autoplay={true} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
+      </div>
+      <div className={styles.scrollArrow} onClick={scrollToSection}>
+        <svg width="30" height="45" viewBox="0 0 40 60" fill="none" stroke="white" strokeWidth="2">
+          <path d="M10 15 L20 25 L30 15" strokeWidth="3" />
+          <path d="M12 30 L20 40 L28 30" strokeWidth="2" />
+        </svg>
       </div>
     </section>
   );
