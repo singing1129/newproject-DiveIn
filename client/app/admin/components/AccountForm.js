@@ -87,26 +87,18 @@ export default function AccountForm() {
         return;
       }
 
-      // 確保這些值被設置
       localStorage.setItem("returnToAccountPage", "true");
       localStorage.setItem("linkToUserId", userId);
-      localStorage.setItem("isLinkingAccount", "true");
 
       const result = await confirmation(otp);
 
       if (result && result.success) {
-        setMessage({
-          type: "success",
-          text: result.message || "手機號碼已成功連結",
-        });
+        setMessage({ type: "success", text: "手機號碼已成功連結" });
         setShowPhoneModal(false);
         // 刷新提供者列表
         fetchMemberData();
       } else {
-        setMessage({
-          type: "error",
-          text: result.error || "驗證碼錯誤，請重新輸入",
-        });
+        setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
       }
     } catch (error) {
       console.error("驗證碼錯誤", error);
@@ -122,44 +114,6 @@ export default function AccountForm() {
     }
     return number;
   };
-
-  // LINE和google的連結// 處理連結 Line 帳號
-  // 在 AccountForm.js 中
-  const handleAddLineLogin = async () => {
-    try {
-      // 獲取當前用戶ID
-      const userId = getDecodedToken()?.id;
-      if (!userId) {
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-        return;
-      }
-
-      // 使用數字形式的 client_id
-      const lineClientId = 2006979613; // 直接使用數字，不用字串
-
-      // 構建自訂狀態參數 - 使用更簡單的格式
-      const stateParam = btoa(`link_${userId}_${Date.now()}`);
-
-      // 構建 LINE 登入 URL
-      const redirectUri = encodeURIComponent(
-        `${window.location.origin}/api/line-callback`
-      );
-      const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${lineClientId}&redirect_uri=${redirectUri}&state=${stateParam}&scope=profile%20openid%20email`;
-
-      console.log("重定向到 LINE 授權頁面:", lineAuthUrl);
-
-      // 將用戶重定向到 LINE 授權頁面
-      window.location.href = lineAuthUrl;
-    } catch (error) {
-      console.error("準備 LINE 連結流程時出錯:", error);
-      setMessage({
-        type: "error",
-        text: "連結 LINE 帳號失敗: " + error.message,
-      });
-    }
-  };
-
-  // 處理連結 Google 帳號
   const handleAddGoogleLogin = () => {
     // 獲取當前用戶ID
     const userId = getDecodedToken()?.id;
@@ -171,11 +125,27 @@ export default function AccountForm() {
     // 儲存到localStorage
     localStorage.setItem("returnToAccountPage", "true");
     localStorage.setItem("linkToUserId", userId);
-    localStorage.setItem("isLinkingAccount", "true"); // 明確標記為連結操作
+    localStorage.setItem("isLinkingAccount", "true"); // 新增這行，標記為連結操作
+
 
     loginWithGoogle();
   };
 
+  // 處理連結 Line 帳號
+  const handleAddLineLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 儲存到localStorage
+    localStorage.setItem("returnToAccountPage", "true");
+    localStorage.setItem("linkToUserId", userId);
+
+    loginWithLine();
+  };
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
     if (!token) return;
