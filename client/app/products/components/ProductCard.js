@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 
 export default function ProductCard({ product }) {
- 
   const API_BASE_URL = "http://localhost:3005/api";
   const type = product.item_type === "bundle" ? "bundle" : "product";
   const {
@@ -18,8 +17,7 @@ export default function ProductCard({ product }) {
     toggleFavorite,
     loading: favoriteLoading,
   } = useFavorite(product.id, type);
-  // console.log("product", product);
-  // console.log("product.id", product.id);
+
   useEffect(() => {
     console.log(`商品 ${product.id} 的收藏狀態: ${isFavorite}`);
   }, [isFavorite, product.id]);
@@ -53,22 +51,24 @@ export default function ProductCard({ product }) {
         console.log("cartData", cartData);
       } else {
         console.log("準備獲取產品詳情:", product.id);
-        const response = await axios.get(`${API_BASE_URL}/products/${product.id}`);
+        const response = await axios.get(
+          `${API_BASE_URL}/products/${product.id}`
+        );
         console.log("獲取產品詳情成功:", response.data);
-  
+
         const variants = response.data.data.variants || [];
         if (variants.length === 0) {
           alert("此產品沒有可用的變體");
           return;
         }
-  
+
         // 尋找合適的變體 - 優先取第一個非刪除的變體
-        const validVariant = variants.find(v => v.isDeleted === 0);
+        const validVariant = variants.find((v) => v.isDeleted === 0);
         if (!validVariant) {
           alert("此產品沒有可用的變體");
           return;
         }
-  
+
         console.log("使用的變體:", validVariant.id);
         cartData = {
           type: "product",
@@ -76,7 +76,7 @@ export default function ProductCard({ product }) {
           quantity: 1,
         };
       }
-  
+
       console.log("發送的購物車數據:", cartData);
       const success = await addToCart(cartData);
       if (!success) {
@@ -87,7 +87,6 @@ export default function ProductCard({ product }) {
       alert(`加入購物車失敗: ${error.message || "請稍後再試"}`);
     }
   };
-  
 
   // 顯示價格範圍的函數
   const renderPriceRange = () => {
@@ -157,24 +156,6 @@ export default function ProductCard({ product }) {
         <div className={`d-flex justify-content-center ${styles.brandName}`}>
           {product.brand_name || "自由品牌"}
         </div>
-        {/* <div className={`d-flex justify-content-center gap-1 my-2`}>
-          {product.color && product.color.length > 0 ? (
-            product.color.map((color, index) => (
-              <div
-                key={color.color_id}
-                className={styles.saleCircle}
-                style={{
-                  backgroundColor: color.color_code,
-                  border: "1px solid #e0e0e0",
-                  cursor: "pointer",
-                }}
-                title={color.color_name}
-              />
-            ))
-          ) : (
-            <div className={styles.saleCircle} style={{ opacity: 0.3 }} />
-          )}
-        </div> */}
         <div className={styles.productInfo}>
           {/* <div className={styles.brandName}>
             {product.brand_name || "自由品牌"}
@@ -186,21 +167,37 @@ export default function ProductCard({ product }) {
           <div className={styles.originalPrice}>
             NT${product.original_price}
           </div>
-          {/* 如果數量超過六個讓他顯示六個＋... */}
+          {/* 如果數量超過三個後面顯示... */}
           <div className={`d-flex justify-content-center gap-1 my-2`}>
             {product.color && product.color.length > 0 ? (
-              product.color.slice(0, 6).map((color, index) => (
-                <div
-                  key={color.color_id}
-                  className={styles.saleCircle}
-                  style={{
-                    backgroundColor: color.color_code,
-                    border: "1px solid #e0e0e0",
-                    cursor: "pointer",
-                  }}
-                  title={color.color_name}
-                />
-              ))
+              <>
+                {product.color.slice(0, 3).map((color, index) => (
+                  <div
+                    key={color.color_id}
+                    className={styles.saleCircle}
+                    style={{
+                      backgroundColor: color.color_code,
+                      border: "1px solid #e0e0e0",
+                      cursor: "pointer",
+                    }}
+                    title={color.color_name}
+                  />
+                ))}
+                {product.color.length > 3 && (
+                  <div
+                    style={{
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "12px",
+                    }}
+                    title={`還有 ${product.color.length - 3} 個顏色`}
+                  >
+                    ...
+                  </div>
+                )}
+              </>
             ) : (
               <div className={styles.saleCircle} style={{ opacity: 0.3 }} />
             )}

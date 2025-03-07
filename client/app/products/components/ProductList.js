@@ -668,6 +668,14 @@ export default function ProductList() {
     fetchSidebarProducts();
   }, []);
 
+  // 添加状态控制颜色选择器的展开/收起
+  const [isColorExpanded, setIsColorExpanded] = useState(false);
+
+  // 添加切换颜色展开状态的函数
+  const toggleColorExpansion = () => {
+    setIsColorExpanded(!isColorExpanded);
+  };
+
   if (error) return <div className="text-center py-4 text-danger">{error}</div>;
 
   return (
@@ -887,36 +895,50 @@ export default function ProductList() {
                   </Space>
                 </div>
 
-                <div className={styles.filterTitle}>顏色篩選</div>
+                <div className={styles.filterTitle}>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <span>顏色篩選</span>
+                    {colors.length > 12 && (
+                      <button
+                        className="btn btn-link p-0 text-decoration-none"
+                        onClick={toggleColorExpansion}
+                      >
+                        {isColorExpanded ? "收起" : "展開"}
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className={styles.colorGroup}>
-                  {colors.map((color) => {
-                    const isAvailable = availableColors.includes(color.id);
-                    return (
-                      <div
-                        key={`color-${color.id}`}
-                        className={`${styles.colorCircle} 
+                  {colors
+                    .slice(0, isColorExpanded ? colors.length : 12)
+                    .map((color) => {
+                      const isAvailable = availableColors.includes(color.id);
+                      return (
+                        <div
+                          key={`color-${color.id}`}
+                          className={`${styles.colorCircle} 
                           ${
                             tempFilters.colors.includes(color.id)
                               ? styles.selected
                               : ""
                           }
                           ${!isAvailable ? styles.disabled : ""}`}
-                        style={{
-                          backgroundColor: color.color_code,
-                          cursor: !isAvailable ? "not-allowed" : "pointer",
-                          opacity: isAvailable ? 1 : 0.5,
-                        }}
-                        onClick={() => {
-                          if (isAvailable) {
-                            handleColorClick(color.id);
-                          }
-                        }}
-                        title={`${color.name}${
-                          !isAvailable ? " (此分類無此顏色)" : ""
-                        }`}
-                      />
-                    );
-                  })}
+                          style={{
+                            backgroundColor: color.color_code,
+                            cursor: !isAvailable ? "not-allowed" : "pointer",
+                            opacity: isAvailable ? 1 : 0.5,
+                          }}
+                          onClick={() => {
+                            if (isAvailable) {
+                              handleColorClick(color.id);
+                            }
+                          }}
+                          title={`${color.name}${
+                            !isAvailable ? " (此分類無此顏色)" : ""
+                          }`}
+                        />
+                      );
+                    })}
                 </div>
               </div>
             </div>

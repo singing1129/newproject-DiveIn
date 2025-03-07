@@ -31,7 +31,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
-  const { addToCart, fetchCart } = useCart();
+  const { addToCart } = useCart();
   const {
     isFavorite,
     toggleFavorite,
@@ -79,27 +79,53 @@ export default function ProductDetail() {
     }
   }, [selectedColor, selectedSize]);
 
-  const getCurrentVariant = () => {
+  // 範例：改寫 getCurrentVariant
+const getCurrentVariant = () => {
   if (!product) return null;
-  
-  // 如果產品沒有顏色和尺寸，直接返回第一個變體
-  if ((!product.colors || product.colors.length === 0) && 
-      (!product.sizes || product.sizes.length === 0) && 
-      product.variants && product.variants.length > 0) {
-    console.log("產品沒有顏色和尺寸，使用第一個變體:", product.variants[0]);
+
+  // 如果既沒有顏色也沒有尺寸，就直接回傳唯一或第一個變體
+  if (
+    (!product.colors || product.colors.length === 0) &&
+    (!product.sizes || product.sizes.length === 0) &&
+    product.variants &&
+    product.variants.length > 0
+  ) {
     return product.variants[0];
   }
-  
-  // 否則尋找符合所選顏色和尺寸的變體
-  if (!selectedColor || !selectedSize) return null;
 
-  const variant = product.variants.find(
-    (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
-  );
-  
-  console.log("找到的變體:", variant);
-  return variant;
+  // 如果只有顏色，沒有尺寸
+  if (product.colors && product.colors.length > 0 && product.sizes.length === 0) {
+    // user 必須選了顏色之後才找得到
+    if (!selectedColor) return null;
+
+    // 只靠 color_id 來找
+    return product.variants.find((v) => v.color_id === selectedColor.id);
+  }
+
+  // 如果只有尺寸，沒有顏色
+  if (product.sizes && product.sizes.length > 0 && product.colors.length === 0) {
+    if (!selectedSize) return null;
+
+    return product.variants.find((v) => v.size_id === selectedSize.id);
+  }
+
+  // 如果既有顏色又有尺寸
+  if (
+    product.colors &&
+    product.colors.length > 0 &&
+    product.sizes &&
+    product.sizes.length > 0
+  ) {
+    if (!selectedColor || !selectedSize) return null;
+
+    return product.variants.find(
+      (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
+    );
+  }
+
+  return null; 
 };
+
 
   // 處理數量變更
   const handleQuantityChange = (value) => {
@@ -119,41 +145,8 @@ export default function ProductDetail() {
     });
   };
 
-  // 加入購物車
-  // const handleAddToCart = async () => {
-  //   if (!selectedColor || !selectedSize) {
-  //     alert("請選擇商品尺寸和顏色");
-  //     return;
-  //   }
-
-  //   const currentVariant = getCurrentVariant();
-  //   if (!currentVariant) {
-  //     alert("找不到對應的商品規格");
-  //     return;
-  //   }
-
-  //   try {
-  //     // 使用購物車上下文的 addToCart 函數
-  //     const cartData = {
-  //       type: "product",
-  //       variantId: currentVariant.id,
-  //       quantity: quantity,
-  //     };
-
-  //     const success = await addToCart(cartData);
-
-  //     if (!success) {
-  //       alert("加入購物車失敗，請稍後再試");
-  //     }
-  //   } catch (error) {
-  //     console.error("加入購物車失敗:", error);
-  //     alert("加入購物車失敗，請稍後再試");
-  //   }
-  // };
   // 修改加入購物車函數
   const handleAddToCart = async () => {
-
-    
     // 檢查是否有顏色和尺寸選項
     const hasColors = product.colors && product.colors.length > 0;
     const hasSizes = product.sizes && product.sizes.length > 0;
@@ -195,35 +188,6 @@ export default function ProductDetail() {
     }
   };
 
-  // 修改尺寸選擇的處理
-  // const handleSizeSelect = (size) => {
-  //   setSelectedSize(size);
-  //   setQuantity(1);
-
-  //   if (selectedColor) {
-  //     const variant = product.variants.find(
-  //       (v) => v.color_id === selectedColor.id && v.size_id === size.id
-  //     );
-  //     if (variant) {
-  //       setCurrentPrice(variant.price);
-  //       setCurrentOriginalPrice(variant.original_price);
-  //       setCurrentStock(variant.stock);
-
-  //       // 如果變體有圖片，切換到對應圖片
-  //       if (variant.images?.[0]) {
-  //         const imageIndex = allImages.findIndex(
-  //           (img) => img === variant.images[0]
-  //         );
-  //         if (imageIndex !== -1 && mainSwiperRef.current) {
-  //           mainSwiperRef.current.slideTo(imageIndex);
-  //           if (thumbsSwiper) {
-  //             thumbsSwiper.slideTo(imageIndex);
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // };
   // 修改 handleSizeSelect 函數以處理沒有顏色的情況
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
