@@ -1,92 +1,122 @@
 .activitySection {
-    padding: 60px 20px;
-    background: linear-gradient(
-      to bottom,
-      var(--primary-light-color),
-      var(--white)
-    );
-    text-align: center;
-  }
-  
-  .sectionTitle {
-    font-size: 2.5rem;
-    color: var(--primary-deep-color);
-    margin-bottom: 40px;
-    font-weight: bold;
-  }
-  
-  .activityCards {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-  
-  .card {
-    width: 300px;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    background: var(--white);
-  }
-  
-  .card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  }
-  
-  .imageContainer {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-  }
-  
-  .imageContainer img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(33, 158, 188, 0.8); /* primary-color with opacity */
-    color: var(--white);
-    padding: 20px;
-    text-align: left;
-    transform: translateY(100%);
-    transition: transform 0.3s;
-  }
-  
-  .card:hover .overlay {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--primary-deep-color);
+  color: var(--white);
+}
+
+.swiperContainer {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.parallaxBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 400%;
+  background-size: cover;
+  background-position: center top;
+  z-index: 1;
+  filter: contrast(1.2) brightness(1.1);
+  transition: transform 1.2s ease-out; /* 背景視差滾動效果 */
+}
+
+.slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.activityCard {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.8s ease, transform 0.8s ease, box-shadow 0.3s ease;
+  position: relative;
+  animation: float 3s infinite ease-in-out;
+}
+
+.activityCard.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.activityCard:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.activityCard:hover .price {
+  opacity: 1;
+}
+
+.activityImage {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  filter: contrast(1.2) brightness(1.1);
+}
+
+.activityCard h2 {
+  color: var(--primary-deep-color);
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.price {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--secondary-deep-color);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bubbleButton {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  border-radius: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 3;
+  animation: float 3s infinite ease-in-out;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.bubbleButton.visible {
+  opacity: 1;
+}
+
+.bubbleButton:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+
+
+@keyframes float {
+  0%, 100% {
     transform: translateY(0);
   }
-  
-  .overlay h3 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
+  50% {
+    transform: translateY(-10px);
   }
-  
-  .overlay p {
-    font-size: 1rem;
-    margin-bottom: 15px;
-  }
-  
-  .ctaButton {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 25px;
-    background: var(--secondary-color);
-    color: var(--primary-deep-color);
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s, color 0.3s;
-  }
-  
-  .ctaButton:hover {
-    background: var(--secondary-deep-color);
-    color: var(--white);
-  }
+}
