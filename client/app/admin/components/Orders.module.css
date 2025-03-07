@@ -39,7 +39,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin: 10 auto;
+  margin: 10px auto;
 }
 
 .orderCard {
@@ -142,7 +142,7 @@
   margin-top: 20px;
   padding-top: 20px;
   border-top: 1px solid var(--gray-20-color);
-  gap: 20;
+  gap: 20px;
 }
 
 .rateButtonContainer {
@@ -151,6 +151,7 @@
   align-items: flex-end;
 }
 
+/* 互動按鈕 */
 .orderButton {
   background-color: transparent;
   color: var(--gray-600-color);
@@ -201,7 +202,6 @@
   transition: opacity 0.3s;
 }
 
-/* 對話氣泡的箭頭 */
 .tooltipText::after {
   content: "";
   position: absolute;
@@ -216,4 +216,27 @@
 .tooltipContainer:hover .tooltipText {
   visibility: visible;
   opacity: 1;
+}
+
+/* 新增：展開區塊 */
+.orderExpanded {
+  margin-top: 20px;
+}
+
+/* 新增：評價輸入區 */
+.reviewWindow {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--gray-300-color);
+  border-radius: 5px;
+}
+
+.reviewTextarea {
+  width: 100%;
+  height: 80px;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 1px solid var(--gray-300-color);
+  border-radius: 3px;
+  font-size: 14px;
 }

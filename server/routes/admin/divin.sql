@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： localhost
--- 產生時間： 2025 年 03 月 01 日 07:15
+-- 產生時間： 2025 年 03 月 07 日 10:56
 -- 伺服器版本： 10.4.28-MariaDB
 -- PHP 版本： 8.2.4
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- 資料庫： `my_project_db`
+-- 資料庫： `divin`
 --
 
 -- --------------------------------------------------------
@@ -100,22 +100,35 @@ CREATE TABLE `activity_project` (
 -- --------------------------------------------------------
 
 --
+-- 資料表結構 `activity_reviews`
+--
+
+CREATE TABLE `activity_reviews` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `activity_id` int(10) UNSIGNED NOT NULL,
+  `activity_project_id` int(10) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- 資料表結構 `article`
 --
 
 CREATE TABLE `article` (
-  `id` int(11) NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
   `title` varchar(255) NOT NULL,
   `content` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `status` enum('draft','published') NOT NULL DEFAULT 'draft',
   `publish_at` timestamp NULL DEFAULT NULL,
-  `article_category_small_id` int(11) DEFAULT NULL,
-  `view_count` int(11) DEFAULT 0,
-  `users_id` int(11) DEFAULT NULL,
-  `reply_count` int(11) DEFAULT 0,
-  `is_deleted` tinyint(1) DEFAULT 0
+  `article_category_small_id` int(10) UNSIGNED DEFAULT NULL,
+  `view_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `users_id` int(10) UNSIGNED DEFAULT NULL,
+  `reply_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -150,9 +163,9 @@ CREATE TABLE `article_category_small` (
 CREATE TABLE `article_image` (
   `id` int(11) NOT NULL,
   `article_id` int(11) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
   `img_url` varchar(255) NOT NULL,
-  `is_main` tinyint(1) DEFAULT 0
+  `is_main` tinyint(1) DEFAULT 0,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -163,7 +176,7 @@ CREATE TABLE `article_image` (
 
 CREATE TABLE `article_likes_dislikes` (
   `article_id` int(11) NOT NULL,
-  `users_id` int(11) NOT NULL,
+  `users_id` int(10) UNSIGNED NOT NULL,
   `is_like` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -176,7 +189,7 @@ CREATE TABLE `article_likes_dislikes` (
 CREATE TABLE `article_reply` (
   `id` int(11) NOT NULL,
   `article_id` int(11) DEFAULT NULL,
-  `users_id` int(11) DEFAULT NULL,
+  `users_id` int(10) UNSIGNED DEFAULT NULL,
   `content` text NOT NULL,
   `floor_number` int(11) DEFAULT NULL,
   `reply_number` int(11) DEFAULT 0,
@@ -218,7 +231,20 @@ CREATE TABLE `brand` (
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `img_url` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `bundle_reviews`
+--
+
+CREATE TABLE `bundle_reviews` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `bundle_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -282,7 +308,8 @@ CREATE TABLE `cart_rental_items` (
   `end_date` date NOT NULL,
   `quantity` int(11) NOT NULL DEFAULT 1,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `color` varchar(255) DEFAULT NULL
+  `color` varchar(255) DEFAULT NULL,
+  `rentalBrand` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -317,7 +344,7 @@ CREATE TABLE `category_small` (
 CREATE TABLE `color` (
   `id` int(10) UNSIGNED NOT NULL,
   `name` varchar(50) NOT NULL,
-  `color_code` varchar(7) NOT NULL,
+  `color_code` varchar(7) DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -408,6 +435,7 @@ CREATE TABLE `favorites` (
   `product_id` int(11) NOT NULL,
   `activity_id` int(11) NOT NULL,
   `rental_id` int(11) NOT NULL,
+  `bundle_id` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -423,6 +451,7 @@ CREATE TABLE `groups` (
   `user_id` int(11) NOT NULL COMMENT '團主',
   `type` int(11) NOT NULL COMMENT '1:浮潛、2:自由潛水、3:水肺潛水、4:其他',
   `gender` int(11) NOT NULL COMMENT '1、不限性別，2、限男性，3、限女性',
+  `certificates` int(11) DEFAULT NULL COMMENT '1:無須證照,2:需OWD證照,3:需AOWD證照',
   `groups_city_id` int(11) NOT NULL,
   `description` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -444,19 +473,20 @@ CREATE TABLE `groups_image` (
   `groups_id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `img_url` varchar(20) NOT NULL,
-  `is_main` tinyint(1) NOT NULL
+  `is_main` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- 資料表結構 `groups_​​participants`
+-- 資料表結構 `groups_participants`
 --
 
-CREATE TABLE `groups_​​participants` (
+CREATE TABLE `groups_participants` (
   `id` int(11) NOT NULL,
   `groups_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL
+  `user_id` int(11) NOT NULL,
+  `create_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -468,7 +498,7 @@ CREATE TABLE `groups_​​participants` (
 CREATE TABLE `orders` (
   `id` int(10) UNSIGNED NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL,
-  `total_price` decimal(12,0) NOT NULL,
+  `total_price` decimal(10,0) NOT NULL,
   `status` enum('pending','paid','shipped','delivered','canceled') NOT NULL DEFAULT 'pending',
   `createdAt` datetime DEFAULT current_timestamp(),
   `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -476,8 +506,9 @@ CREATE TABLE `orders` (
   `transaction_id` varchar(255) DEFAULT NULL,
   `payment_time` datetime DEFAULT NULL,
   `payment_status` enum('pending','paid','failed','refunded') DEFAULT 'pending',
-  `coupon_id` int(11) DEFAULT NULL,
-  `points` int(11) DEFAULT NULL
+  `points` int(100) DEFAULT NULL,
+  `is_reviewed` tinyint(1) NOT NULL DEFAULT 0,
+  `reviewed_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -609,7 +640,8 @@ CREATE TABLE `product_bundle` (
   `id` int(10) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
-  `discount_price` decimal(10,2) DEFAULT NULL,
+  `brand_id` int(11) NOT NULL,
+  `discount_price` decimal(10,0) DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -667,21 +699,46 @@ CREATE TABLE `product_images` (
 -- --------------------------------------------------------
 
 --
+-- 資料表結構 `product_reviews`
+--
+
+CREATE TABLE `product_reviews` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `product_id` int(10) UNSIGNED NOT NULL,
+  `variant_id` int(10) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- 資料表結構 `product_variant`
 --
 
 CREATE TABLE `product_variant` (
   `id` int(10) UNSIGNED NOT NULL,
   `product_id` int(10) UNSIGNED NOT NULL,
-  `color_id` int(10) UNSIGNED NOT NULL,
-  `size_id` int(10) UNSIGNED NOT NULL,
-  `stock` int(11) NOT NULL DEFAULT 0,
+  `color_id` int(10) UNSIGNED DEFAULT NULL,
+  `size_id` int(10) UNSIGNED DEFAULT NULL,
+  `stock` int(11) NOT NULL DEFAULT 1000,
   `original_price` decimal(10,0) NOT NULL,
-  `price` decimal(10,0) NOT NULL,
+  `price` decimal(10,0) DEFAULT NULL,
   `isDeleted` tinyint(1) DEFAULT 0,
   `deletedAt` datetime DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `updatedAt` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `rental_reviews`
+--
+
+CREATE TABLE `rental_reviews` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `rental_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -785,36 +842,6 @@ CREATE TABLE `rent_material` (
 -- --------------------------------------------------------
 
 --
--- 資料表結構 `rent_order`
---
-
-CREATE TABLE `rent_order` (
-  `id` int(11) NOT NULL,
-  `member_id` int(11) NOT NULL COMMENT '連會員資料表'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租借訂單主表';
-
--- --------------------------------------------------------
-
---
--- 資料表結構 `rent_order_detail`
---
-
-CREATE TABLE `rent_order_detail` (
-  `id` int(11) NOT NULL,
-  `order_id` int(11) NOT NULL COMMENT '關聯訂單主表',
-  `rent_order_id` int(11) NOT NULL,
-  `rent_item_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL COMMENT '數量',
-  `start_date` date NOT NULL COMMENT '租借開始日',
-  `end_date` date NOT NULL COMMENT '預借歸還日',
-  `unit_price` decimal(10,0) NOT NULL COMMENT '租借時單價',
-  `unit_deposit` decimal(10,0) NOT NULL COMMENT '租借時押金',
-  `subtotal` decimal(10,0) NOT NULL COMMENT '小計 = (unit_price × quantity × rental_days)'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租借訂單明細表';
-
--- --------------------------------------------------------
-
---
 -- 資料表結構 `rent_size`
 --
 
@@ -860,10 +887,50 @@ CREATE TABLE `rent_thickness` (
 CREATE TABLE `reviews` (
   `id` int(10) UNSIGNED NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL,
-  `product_id` int(10) UNSIGNED NOT NULL,
   `order_id` int(10) UNSIGNED NOT NULL,
   `rating` tinyint(4) NOT NULL,
   `comment` text DEFAULT NULL,
+  `createdAt` datetime DEFAULT current_timestamp(),
+  `isDeleted` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `review_attributes`
+--
+
+CREATE TABLE `review_attributes` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `attribute_name` varchar(50) NOT NULL COMMENT '如：品質、配送速度、服務等',
+  `rating` tinyint(4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `review_helpfulness`
+--
+
+CREATE TABLE `review_helpfulness` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `is_helpful` tinyint(1) NOT NULL DEFAULT 1,
+  `createdAt` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `review_images`
+--
+
+CREATE TABLE `review_images` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `review_id` int(10) UNSIGNED NOT NULL,
+  `image_url` varchar(255) NOT NULL,
   `createdAt` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -892,18 +959,16 @@ CREATE TABLE `users` (
   `account` varchar(50) DEFAULT NULL,
   `password` varchar(250) DEFAULT NULL,
   `birthday` date DEFAULT NULL,
-  `address` varchar(255) DEFAULT NULL,
   `created_at` varchar(50) NOT NULL DEFAULT current_timestamp(),
   `updated_at` varchar(50) DEFAULT NULL,
-  `level_id` int(11) DEFAULT 0,
-  `emergency_contact` int(11) DEFAULT NULL,
-  `emergency_phone` int(11) DEFAULT NULL,
-  `is_deleted` int(11) DEFAULT 0,
+  `level_id` int(11) NOT NULL DEFAULT 0,
+  `is_deleted` int(11) NOT NULL DEFAULT 0,
   `head` varchar(250) DEFAULT NULL,
   `resetSecret` varchar(255) DEFAULT NULL,
   `resetExpires` datetime DEFAULT NULL,
   `otp` varchar(6) DEFAULT NULL,
-  `otp_expiration` datetime DEFAULT NULL
+  `otp_expiration` datetime DEFAULT NULL,
+  `is_custom_head` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -956,10 +1021,38 @@ ALTER TABLE `activity_project`
   ADD PRIMARY KEY (`id`);
 
 --
+-- 資料表索引 `activity_reviews`
+--
+ALTER TABLE `activity_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `review_id` (`review_id`),
+  ADD KEY `activity_id` (`activity_id`);
+
+--
+-- 資料表索引 `article`
+--
+ALTER TABLE `article`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- 資料表索引 `article_image`
+--
+ALTER TABLE `article_image`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- 資料表索引 `brand`
 --
 ALTER TABLE `brand`
   ADD PRIMARY KEY (`id`);
+
+--
+-- 資料表索引 `bundle_reviews`
+--
+ALTER TABLE `bundle_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `review_id` (`review_id`),
+  ADD KEY `bundle_id` (`bundle_id`);
 
 --
 -- 資料表索引 `carts`
@@ -1057,9 +1150,9 @@ ALTER TABLE `groups_image`
   ADD PRIMARY KEY (`id`);
 
 --
--- 資料表索引 `groups_​​participants`
+-- 資料表索引 `groups_participants`
 --
-ALTER TABLE `groups_​​participants`
+ALTER TABLE `groups_participants`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1152,6 +1245,15 @@ ALTER TABLE `product_images`
   ADD KEY `varient_id` (`variant_id`);
 
 --
+-- 資料表索引 `product_reviews`
+--
+ALTER TABLE `product_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `review_id` (`review_id`),
+  ADD KEY `product_id` (`product_id`),
+  ADD KEY `variant_id` (`variant_id`);
+
+--
 -- 資料表索引 `product_variant`
 --
 ALTER TABLE `product_variant`
@@ -1161,13 +1263,42 @@ ALTER TABLE `product_variant`
   ADD KEY `size_id` (`size_id`);
 
 --
+-- 資料表索引 `rental_reviews`
+--
+ALTER TABLE `rental_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `review_id` (`review_id`),
+  ADD KEY `rental_id` (`rental_id`);
+
+--
 -- 資料表索引 `reviews`
 --
 ALTER TABLE `reviews`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_review` (`user_id`,`product_id`,`order_id`),
-  ADD KEY `product_id` (`product_id`),
+  ADD KEY `user_id` (`user_id`),
   ADD KEY `order_id` (`order_id`);
+
+--
+-- 資料表索引 `review_attributes`
+--
+ALTER TABLE `review_attributes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `review_id` (`review_id`);
+
+--
+-- 資料表索引 `review_helpfulness`
+--
+ALTER TABLE `review_helpfulness`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_review` (`user_id`,`review_id`),
+  ADD KEY `review_id` (`review_id`);
+
+--
+-- 資料表索引 `review_images`
+--
+ALTER TABLE `review_images`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `review_id` (`review_id`);
 
 --
 -- 資料表索引 `size`
@@ -1186,7 +1317,7 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_providers`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `user_provider_unique` (`user_id`,`provider`);
+  ADD UNIQUE KEY `uniq_provider_providerId` (`provider`,`provider_id`);
 
 --
 -- 在傾印的資料表使用自動遞增(AUTO_INCREMENT)
@@ -1223,9 +1354,33 @@ ALTER TABLE `activity_project`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用資料表自動遞增(AUTO_INCREMENT) `activity_reviews`
+--
+ALTER TABLE `activity_reviews`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `article`
+--
+ALTER TABLE `article`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `article_image`
+--
+ALTER TABLE `article_image`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用資料表自動遞增(AUTO_INCREMENT) `brand`
 --
 ALTER TABLE `brand`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `bundle_reviews`
+--
+ALTER TABLE `bundle_reviews`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -1313,9 +1468,9 @@ ALTER TABLE `groups_image`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- 使用資料表自動遞增(AUTO_INCREMENT) `groups_​​participants`
+-- 使用資料表自動遞增(AUTO_INCREMENT) `groups_participants`
 --
-ALTER TABLE `groups_​​participants`
+ALTER TABLE `groups_participants`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1391,15 +1546,45 @@ ALTER TABLE `product_images`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用資料表自動遞增(AUTO_INCREMENT) `product_reviews`
+--
+ALTER TABLE `product_reviews`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用資料表自動遞增(AUTO_INCREMENT) `product_variant`
 --
 ALTER TABLE `product_variant`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用資料表自動遞增(AUTO_INCREMENT) `rental_reviews`
+--
+ALTER TABLE `rental_reviews`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用資料表自動遞增(AUTO_INCREMENT) `reviews`
 --
 ALTER TABLE `reviews`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `review_attributes`
+--
+ALTER TABLE `review_attributes`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `review_helpfulness`
+--
+ALTER TABLE `review_helpfulness`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `review_images`
+--
+ALTER TABLE `review_images`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -1423,6 +1608,20 @@ ALTER TABLE `user_providers`
 --
 -- 已傾印資料表的限制式
 --
+
+--
+-- 資料表的限制式 `activity_reviews`
+--
+ALTER TABLE `activity_reviews`
+  ADD CONSTRAINT `activity_reviews_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `activity_reviews_ibfk_2` FOREIGN KEY (`activity_id`) REFERENCES `activity` (`id`) ON DELETE CASCADE;
+
+--
+-- 資料表的限制式 `bundle_reviews`
+--
+ALTER TABLE `bundle_reviews`
+  ADD CONSTRAINT `bundle_reviews_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bundle_reviews_ibfk_2` FOREIGN KEY (`bundle_id`) REFERENCES `product_bundle` (`id`) ON DELETE CASCADE;
 
 --
 -- 資料表的限制式 `carts`
@@ -1483,12 +1682,6 @@ ALTER TABLE `order_items`
   ADD CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`variant_id`) REFERENCES `product_variant` (`id`) ON DELETE CASCADE;
 
 --
--- 資料表的限制式 `order_rental_items`
---
-ALTER TABLE `order_rental_items`
-  ADD CONSTRAINT `order_rental_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
-
---
 -- 資料表的限制式 `order_shipping_info`
 --
 ALTER TABLE `order_shipping_info`
@@ -1529,6 +1722,14 @@ ALTER TABLE `product_images`
   ADD CONSTRAINT `product_images_ibfk_2` FOREIGN KEY (`variant_id`) REFERENCES `product_variant` (`id`) ON DELETE CASCADE;
 
 --
+-- 資料表的限制式 `product_reviews`
+--
+ALTER TABLE `product_reviews`
+  ADD CONSTRAINT `product_reviews_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `product_reviews_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `product_reviews_ibfk_3` FOREIGN KEY (`variant_id`) REFERENCES `product_variant` (`id`) ON DELETE CASCADE;
+
+--
 -- 資料表的限制式 `product_variant`
 --
 ALTER TABLE `product_variant`
@@ -1541,14 +1742,26 @@ ALTER TABLE `product_variant`
 --
 ALTER TABLE `reviews`
   ADD CONSTRAINT `reviews_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `reviews_ibfk_3` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `reviews_ibfk_2` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
 
 --
--- 資料表的限制式 `user_providers`
+-- 資料表的限制式 `review_attributes`
 --
-ALTER TABLE `user_providers`
-  ADD CONSTRAINT `user_providers_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+ALTER TABLE `review_attributes`
+  ADD CONSTRAINT `review_attributes_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE;
+
+--
+-- 資料表的限制式 `review_helpfulness`
+--
+ALTER TABLE `review_helpfulness`
+  ADD CONSTRAINT `review_helpfulness_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `review_helpfulness_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- 資料表的限制式 `review_images`
+--
+ALTER TABLE `review_images`
+  ADD CONSTRAINT `review_images_ibfk_1` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

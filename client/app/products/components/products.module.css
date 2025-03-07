@@ -278,9 +278,11 @@
   /* text-align: center; */
   color: #808080;
   font-size: 0.9rem;
-  margin-bottom: 4px;
+  /* margin-bottom: 4px; */
 }
-
+.productName {
+  height: 70px;
+}
 .salePrice {
   color: var(--primary-color);
   font-weight: bold;
@@ -308,8 +310,8 @@
 }
 
 .filterTitle {
+  margin: 15px 0 10px;
   font-weight: 500;
-  color: #333;
 }
 
 .checkboxGroup {
@@ -333,34 +335,30 @@
 }
 
 .colorGroup {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 15px;
+  margin-top: 10px;
 }
 
 .colorCircle {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  cursor: pointer;
   border: 1px solid #e0e0e0;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
 }
 
 .colorCircle:hover {
   transform: scale(1.1);
 }
 
-.colorCircle.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
 .colorCircle.selected {
   border: 2px solid #000;
-  transform: scale(1.1);
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.colorCircle.disabled {
+  cursor: not-allowed;
 }
 
 /* 側邊欄商品樣式（新品上市和特惠商品） */
