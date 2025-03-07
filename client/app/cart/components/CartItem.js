@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 // import Image from "next/image";
 import axios from "axios";
 import "./CartItem.css";
@@ -51,20 +51,35 @@ const CartItem = ({ item, type = "products" }) => {
   // 根據類型獲取正確的 ID
   const getFavoriteId = () => {
     switch (type) {
+      case "product":
       case "products":
         return item.product_id;
+      case "activity":
       case "activities":
         return item.activity_id;
+      case "rental":
       case "rentals":
         return item.rental_id;
+      case "bundle":
+      case "bundles":
+        return item.bundle_id;
       default:
-        return null;
+        return item.id;
     }
   };
 
   const favoriteId = getFavoriteId();
-  // 不需要轉換 type，直接使用複數形式
-  const { isFavorite, toggleFavorite } = useFavorite(favoriteId, type);
+  // 映射單數和複數
+  const typeMapping = {
+    products: "product",
+    activities: "activity",
+    rentals: "rental",
+    bundles: "bundle",
+  };
+  // 獲取收藏功能需要的類型（單數形式）
+  const favoriteType = typeMapping[type] || type;
+  // 使用單數形式類型
+  const { isFavorite, toggleFavorite } = useFavorite(favoriteId, favoriteType);
 
   // 檢查是否被選中
   const isSelected = selectedItems[type]?.includes(item.id);
@@ -118,7 +133,7 @@ const CartItem = ({ item, type = "products" }) => {
       setIsUpdating(false);
     }
   };
-
+  console.log("items", item);
   // 處理刪除
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -142,7 +157,7 @@ const CartItem = ({ item, type = "products" }) => {
         await removeFromCart(type, item.id);
       }
     } catch (error) {
-      console.error("加入收藏失敗:", error);
+      console.error("移入收藏失敗:", error);
     }
   };
 
@@ -211,13 +226,13 @@ const CartItem = ({ item, type = "products" }) => {
                 <div className="spec-row">
                   <span className="spec-label">尺碼：</span>
                   <span className="spec-value">
-                    {item?.size_name || "沒填"}
+                    {item?.size_name || "One Size"}
                   </span>
                 </div>
                 <div className="spec-row">
                   <span className="spec-label">顏色：</span>
                   <span className="spec-value">
-                    {item?.color_name || "沒填"}
+                    {item?.color_name || "One Color"}
                   </span>
                 </div>
               </div>
@@ -253,7 +268,6 @@ const CartItem = ({ item, type = "products" }) => {
             )}
           </>
         );
-       
 
       case "rentals":
         return (
@@ -324,14 +338,14 @@ const CartItem = ({ item, type = "products" }) => {
               <div className="bundle-row">
                 <span className="bundle-label">套組內容：</span>
                 <div className="bundle-value">
-                  共 {item.items?.length || 0} 件商品
+                  共 {item.items.length} 件商品
                   <div className="bundle-items">
-                    {(item.items || []).map((bundleItem, index) => (
+                    {item.items.map((bundleItem, index) => (
                       <div key={index} className="bundle-item">
-                        {bundleItem.product_name}
+                        {bundleItem.product_name || "未知商品"}
                         {bundleItem.color_name && ` - ${bundleItem.color_name}`}
                         {bundleItem.size_name && ` - ${bundleItem.size_name}`}
-                        {` x ${bundleItem.quantity}`}
+                        {` x ${bundleItem.quantity || 1}`}
                       </div>
                     ))}
                   </div>
@@ -340,7 +354,8 @@ const CartItem = ({ item, type = "products" }) => {
               <div className="bundle-row">
                 <span className="bundle-label">節省：</span>
                 <span className="bundle-value text-success">
-                  NT$ {item.original_total - item.discount_price}
+                  NT${" "}
+                  {Number(item.original_total) - Number(item.discount_price)}
                 </span>
               </div>
             </div>
@@ -441,9 +456,9 @@ const CartItem = ({ item, type = "products" }) => {
             className="btn p-0 text-muted"
             onClick={handleAddToFavorites}
             disabled={isFavorite}
-            title={isFavorite ? "商品已在收藏中" : "加入收藏"}
+            title={isFavorite ? "商品已在收藏中" : "移入收藏"}
           >
-            {isFavorite ? "已在收藏中" : "加入收藏"}
+            {isFavorite ? "已在收藏中" : "移入收藏"}
           </button>
           <button
             className="btn p-0 text-muted"

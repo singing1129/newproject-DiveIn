@@ -91,7 +91,7 @@ router.post("/add", async (req, res) => {
       }
 
       case "bundle": {
-        // 检查bundle是否存在
+        // 檢查 bundle 是否存在
         const [bundle] = await pool.execute(
           "SELECT * FROM product_bundle WHERE id = ?",
           [bundleId]
@@ -100,11 +100,11 @@ router.post("/add", async (req, res) => {
         if (bundle.length === 0) {
           return res.status(400).json({
             success: false,
-            message: "找不到指定套组",
+            message: "找不到指定套組",
           });
         }
 
-        // 获取套组中的所有商品
+        // 獲取套組中的所有商品
         const [bundleItems] = await pool.execute(
           "SELECT * FROM product_bundle_items WHERE bundle_id = ?",
           [bundleId]
@@ -117,22 +117,56 @@ router.post("/add", async (req, res) => {
           });
         }
 
-        // 对于每个套组商品，添加到购物车
-        for (const bundleItem of bundleItems) {
-          // 检查该商品的默认变体
-          const [defaultVariant] = await pool.execute(
-            `SELECT pv.id 
-             FROM product_variant pv 
-             WHERE pv.product_id = ? AND pv.isDeleted = 0
-             LIMIT 1`,
-            [bundleItem.product_id]
-          );
+        // 從請求中獲取變體選擇（如果有）
+        const userSelectedVariants = req.body.variants || [];
+        // 創建產品ID到變體ID的映射
+        const variantMap = {};
 
-          if (defaultVariant.length === 0) {
-            continue; // 如果沒有有效變體，則跳過此產品
+        if (Array.isArray(userSelectedVariants)) {
+          for (const item of userSelectedVariants) {
+            if (item.productId && item.variantId) {
+              variantMap[item.productId] = item.variantId;
+            }
+          }
+        }
+
+        // 對於每個套組商品，添加到購物車
+        for (const bundleItem of bundleItems) {
+          let variantId;
+
+          // 首先檢查用戶是否為這個產品指定了變體
+          if (variantMap[bundleItem.product_id]) {
+            // 驗證這個變體確實存在並且屬於這個產品
+            const [selectedVariant] = await pool.execute(
+              `SELECT pv.id 
+               FROM product_variant pv 
+               WHERE pv.id = ? AND pv.product_id = ? AND pv.isDeleted = 0`,
+              [variantMap[bundleItem.product_id], bundleItem.product_id]
+            );
+
+            if (selectedVariant.length > 0) {
+              variantId = selectedVariant[0].id;
+            }
           }
 
-          const variantId = defaultVariant[0].id;
+          // 如果用戶沒有指定變體或指定的變體無效，使用默認變體（最低價格）
+          if (!variantId) {
+            const [defaultVariant] = await pool.execute(
+              `SELECT pv.id 
+               FROM product_variant pv 
+               WHERE pv.product_id = ? AND pv.isDeleted = 0
+               ORDER BY pv.price ASC
+               LIMIT 1`,
+              [bundleItem.product_id]
+            );
+
+            if (defaultVariant.length === 0) {
+              continue; // 如果沒有有效變體，則跳過此產品
+            }
+
+            variantId = defaultVariant[0].id;
+          }
+
           // 計算實際數量：bundle項數量 * 添加的bundle數量
           const itemQuantity = bundleItem.quantity * quantity;
 
@@ -348,7 +382,6 @@ router.post("/add", async (req, res) => {
   }
 });
 
-// 查詢特定user的購物車內容 購物車專用api
 router.get("/:userId", async (req, res) => {
   const { userId } = req.params;
 
@@ -366,7 +399,7 @@ router.get("/:userId", async (req, res) => {
           products: [],
           activities: [],
           rentals: [],
-          bundles: [], // 新增空的bundles陣列
+          bundles: [],
           total: {
             products: 0,
             activities: 0,
@@ -374,7 +407,7 @@ router.get("/:userId", async (req, res) => {
               rental_fee: 0,
               deposit: 0,
             },
-            bundles: 0, // 新增bundles總金額
+            bundles: 0,
             final: 0,
           },
         },
@@ -393,14 +426,14 @@ router.get("/:userId", async (req, res) => {
         pv.original_price,
         p.name AS product_name,
         p.id AS product_id,
-        c.name AS color_name,
-        s.name AS size_name,
+        COALESCE(c.name, 'One Color') AS color_name,
+        COALESCE(s.name, 'One Size') AS size_name,
         pi.image_url
       FROM cart_items ci
       JOIN product_variant pv ON ci.variant_id = pv.id
       JOIN product p ON pv.product_id = p.id
-      JOIN color c ON pv.color_id = c.id
-      JOIN size s ON pv.size_id = s.id
+      LEFT JOIN color c ON pv.color_id = c.id
+      LEFT JOIN size s ON pv.size_id = s.id
       LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
       WHERE ci.cart_id = ? AND ci.bundle_id IS NULL`,
       [cartId]
@@ -454,66 +487,117 @@ router.get("/:userId", async (req, res) => {
       [cartId]
     );
 
-    // 5. 新增: 獲取套組商品
-    const [bundleGroups] = await pool.execute(
-      `SELECT DISTINCT 
-        ci.bundle_id,
-        pb.name AS bundle_name,
-        pb.description AS bundle_description,
-        pb.discount_price,
-        COUNT(DISTINCT ci.id) as item_count,
-        MIN(ci.quantity / pbi.quantity) as bundle_quantity
-      FROM cart_items ci
-      JOIN product_bundle pb ON ci.bundle_id = pb.id
-      JOIN product_bundle_items pbi ON pb.id = pbi.bundle_id AND pbi.product_id = (
-        SELECT product_id FROM product_variant WHERE id = ci.variant_id
-      )
-      WHERE ci.cart_id = ? AND ci.bundle_id IS NOT NULL
-      GROUP BY ci.bundle_id`,
+    // 5. 獲取所有bundle_id
+    const [bundleIds] = await pool.execute(
+      `SELECT DISTINCT bundle_id 
+       FROM cart_items 
+       WHERE cart_id = ? AND bundle_id IS NOT NULL`,
       [cartId]
     );
 
-    // 6. 獲取每個套組中的所有商品
     const bundles = [];
-    for (const bundle of bundleGroups) {
-      const [bundleItems] = await pool.execute(
+
+    // 處理每個bundle
+    for (const { bundle_id } of bundleIds) {
+      // 獲取bundle基本信息
+      const [bundleInfo] = await pool.execute(
         `SELECT 
-      ci.id,
-      ci.quantity,
-      pv.id AS variant_id,
-      pv.price,
-      pv.original_price,
-      p.name AS product_name,
-      p.id AS product_id,
-      c.name AS color_name,
-      s.name AS size_name,
-      pi.image_url,
-      pbi.quantity AS bundle_item_quantity
-    FROM cart_items ci
-    JOIN product_variant pv ON ci.variant_id = pv.id
-    JOIN product p ON pv.product_id = p.id
-    JOIN color c ON pv.color_id = c.id
-    JOIN size s ON pv.size_id = s.id
-    JOIN product_bundle_items pbi ON ci.bundle_id = pbi.bundle_id AND pbi.product_id = p.id
-    LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_main = 1
-    WHERE ci.cart_id = ? AND ci.bundle_id = ?`,
-        [cartId, bundle.bundle_id]
+          pb.id, 
+          pb.name, 
+          pb.description, 
+          pb.discount_price,
+          b.name as brand_name,
+          (
+            SELECT pi.image_url 
+            FROM product_images pi 
+            JOIN product_bundle_items pbi ON pi.product_id = pbi.product_id
+            WHERE pbi.bundle_id = pb.id AND pi.is_main = 1 
+            LIMIT 1
+          ) as main_image
+        FROM product_bundle pb
+        JOIN brand b ON pb.brand_id = b.id
+        WHERE pb.id = ?`,
+        [bundle_id]
       );
 
-      // 計算套組總價
-      const originalTotal = bundleItems.reduce(
-        (sum, item) => sum + item.price * (item.bundle_item_quantity || 1),
-        0
+      if (bundleInfo.length === 0) continue;
+
+      // 計算原始總價 - 使用和bundle端點一致的計算方式
+      const [originalTotalResult] = await pool.execute(
+        `SELECT SUM(min_prices.min_price * pbi.quantity) as original_total
+         FROM product_bundle_items pbi
+         JOIN (
+           SELECT product_id, MIN(price) as min_price
+           FROM product_variant
+           WHERE isDeleted = 0
+           GROUP BY product_id
+         ) as min_prices ON pbi.product_id = min_prices.product_id
+         WHERE pbi.bundle_id = ?`,
+        [bundle_id]
       );
+
+      const originalTotal =
+        originalTotalResult.length > 0
+          ? Number(originalTotalResult[0].original_total)
+          : 0;
+
+      // 獲取購物車中這個bundle的所有項目 (包含實際選擇的變體)
+      // Get bundle items
+      const [bundleCartItems] = await pool.execute(
+        `SELECT 
+          ci.id as cart_item_id,
+          ci.quantity,
+          ci.variant_id,
+          pv.price,
+          pv.original_price,
+          p.id as product_id,
+          p.name as product_name,
+          COALESCE(c.name, 'One Color') as color_name,
+          COALESCE(s.name, 'One Size') as size_name,
+          pi.image_url,
+          pbi.quantity as bundle_item_quantity
+        FROM cart_items ci
+        JOIN product_variant pv ON ci.variant_id = pv.id
+        JOIN product p ON pv.product_id = p.id
+        LEFT JOIN color c ON pv.color_id = c.id
+        LEFT JOIN size s ON pv.size_id = s.id
+        JOIN product_bundle_items pbi ON pbi.bundle_id = ? AND pbi.product_id = p.id
+        LEFT JOIN product_images pi ON pv.id = pi.variant_id AND pi.is_main = 1
+        WHERE ci.cart_id = ? AND ci.bundle_id = ?`,
+        [bundle_id, cartId, bundle_id]
+      );
+
+      // 計算bundle數量
+      let bundleQuantity = 1;
+      if (bundleCartItems.length > 0) {
+        // 從第一個項目的數量和bundle項目數量計算
+        bundleQuantity = Math.floor(
+          bundleCartItems[0].quantity / bundleCartItems[0].bundle_item_quantity
+        );
+      }
 
       bundles.push({
-        id: bundle.bundle_id,
-        name: bundle.bundle_name,
-        description: bundle.bundle_description,
-        items: bundleItems,
+        id: bundle_id,
+        name: bundleInfo[0].name,
+        description: bundleInfo[0].description,
+        discount_price: Number(bundleInfo[0].discount_price),
+        brand_name: bundleInfo[0].brand_name,
+        quantity: bundleQuantity,
         original_total: originalTotal,
-        discount_price: Number(bundle.discount_price),
-        quantity: Number(bundle.bundle_quantity || 1), // 使用計算出的套組數量
+        image_url: bundleInfo[0].main_image,
+        items: bundleCartItems.map((item) => ({
+          cart_item_id: item.cart_item_id,
+          variant_id: item.variant_id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          price: item.price,
+          original_price: item.original_price,
+          color_name: item.color_name,
+          size_name: item.size_name,
+          quantity: item.quantity,
+          bundle_item_quantity: item.bundle_item_quantity,
+          image_url: item.image_url,
+        })),
       });
     }
 
@@ -541,13 +625,16 @@ router.get("/:userId", async (req, res) => {
       };
     });
 
-    // 7. 計算各類總價
+    // 計算各類總價
     const calculateProductTotal = (items) => {
       return items.reduce((acc, curr) => acc + curr.price * curr.quantity, 0);
     };
 
     const calculateBundleTotal = (items) => {
-      return items.reduce((acc, curr) => acc + curr.discount_price, 0);
+      return items.reduce(
+        (acc, curr) => acc + curr.discount_price * curr.quantity,
+        0
+      );
     };
 
     const calculateRentalTotals = (items) => {
@@ -576,13 +663,12 @@ router.get("/:userId", async (req, res) => {
         subtotal: item.price * item.quantity,
       })),
       rentals: processedRentals,
-      bundles: bundles, // 新增bundles數組
+      bundles: bundles,
       total: {
         products: productTotal,
         activities: activityTotal,
-        bundles: Number(bundleTotal), // 確保是數字
+        bundles: Number(bundleTotal),
         rentals: rentalTotals,
-        // 最終總金額（包含套組價格和租借費用但不包含押金）
         final:
           Number(productTotal) +
           Number(activityTotal) +
@@ -600,6 +686,7 @@ router.get("/:userId", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "獲取購物車內容失敗",
+      error: error.message,
     });
   }
 });

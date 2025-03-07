@@ -5,7 +5,7 @@ import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import styles from "./products.module.css";
 import useFavorite from "@/hooks/useFavorite";
 import { useCart } from "@/hooks/cartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 
@@ -17,6 +17,10 @@ export default function ProductCard({ product }) {
     toggleFavorite,
     loading: favoriteLoading,
   } = useFavorite(product.id, type);
+
+  useEffect(() => {
+    console.log(`商品 ${product.id} 的收藏狀態: ${isFavorite}`);
+  }, [isFavorite, product.id]);
 
   const { addToCart } = useCart();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -37,7 +41,6 @@ export default function ProductCard({ product }) {
       const isBundle = product.item_type === "bundle";
 
       // 獲取正確的變體ID (這是關鍵修正)
-
       let cartData;
       if (isBundle) {
         cartData = {
@@ -45,21 +48,36 @@ export default function ProductCard({ product }) {
           bundleId: product.id,
           quantity: 1,
         };
+        console.log("cartData", cartData);
       } else {
+        console.log("準備獲取產品詳情:", product.id);
         const response = await axios.get(
           `${API_BASE_URL}/products/${product.id}`
         );
+        console.log("獲取產品詳情成功:", response.data);
 
-        const correctVariantId = response.data.data.variants[0].id;
-        console.log("correctVariantId", correctVariantId);
+        const variants = response.data.data.variants || [];
+        if (variants.length === 0) {
+          alert("此產品沒有可用的變體");
+          return;
+        }
+
+        // 尋找合適的變體 - 優先取第一個非刪除的變體
+        const validVariant = variants.find((v) => v.isDeleted === 0);
+        if (!validVariant) {
+          alert("此產品沒有可用的變體");
+          return;
+        }
+
+        console.log("使用的變體:", validVariant.id);
         cartData = {
           type: "product",
-          variantId: correctVariantId, // 使用正確的變體ID
+          variantId: validVariant.id,
           quantity: 1,
         };
-        console.log("cartData", cartData);
       }
 
+      console.log("發送的購物車數據:", cartData);
       const success = await addToCart(cartData);
       if (!success) {
         alert("加入購物車失敗，請稍後再試");
@@ -82,7 +100,7 @@ export default function ProductCard({ product }) {
     }
 
     // 否則顯示價格範圍
-    return `NT$${minPrice} ~ NT$${maxPrice}`;
+    return `NT$${minPrice}~NT$${maxPrice}`;
   };
 
   return (
@@ -92,7 +110,11 @@ export default function ProductCard({ product }) {
       <Link href={`/products/${product.id}`} className={styles.productLink}>
         <div className={styles.productImg}>
           <Image
-            src={`/image/product/${product.main_image}`}
+            src={
+              product.main_image
+                ? `/image/product/${product.main_image}`
+                : "/image/product/no-img.png"
+            }
             alt={product.name || "商品圖片"}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -131,32 +153,54 @@ export default function ProductCard({ product }) {
             </button>
           </div>
         </div>
-        <div className={`d-flex justify-content-center gap-1 my-2`}>
-          {product.color && product.color.length > 0 ? (
-            product.color.map((color, index) => (
-              <div
-                key={color.color_id}
-                className={styles.saleCircle}
-                style={{
-                  backgroundColor: color.color_code,
-                  border: "1px solid #e0e0e0",
-                  cursor: "pointer",
-                }}
-                title={color.color_name}
-              />
-            ))
-          ) : (
-            <div className={styles.saleCircle} style={{ opacity: 0.3 }} />
-          )}
+        <div className={`d-flex justify-content-center ${styles.brandName}`}>
+          {product.brand_name || "自由品牌"}
         </div>
         <div className={styles.productInfo}>
-          <div className={styles.brandName}>
+          {/* <div className={styles.brandName}>
             {product.brand_name || "自由品牌"}
+          </div> */}
+          <div className={styles.productName}>
+            {product.name || "時尚高級派對"}
           </div>
-          <div>{product.name || "商品名稱"}</div>
           <div className={styles.salePrice}>{renderPriceRange()}</div>
           <div className={styles.originalPrice}>
-            NT${product.original_price || (product.min_price || 0) * 1.5}
+            NT${product.original_price}
+          </div>
+          {/* 如果數量超過三個後面顯示... */}
+          <div className={`d-flex justify-content-center gap-1 my-2`}>
+            {product.color && product.color.length > 0 ? (
+              <>
+                {product.color.slice(0, 3).map((color, index) => (
+                  <div
+                    key={color.color_id}
+                    className={styles.saleCircle}
+                    style={{
+                      backgroundColor: color.color_code,
+                      border: "1px solid #e0e0e0",
+                      cursor: "pointer",
+                    }}
+                    title={color.color_name}
+                  />
+                ))}
+                {product.color.length > 3 && (
+                  <div
+                    style={{
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "12px",
+                    }}
+                    title={`還有 ${product.color.length - 3} 個顏色`}
+                  >
+                    ...
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.saleCircle} style={{ opacity: 0.3 }} />
+            )}
           </div>
         </div>
       </Link>

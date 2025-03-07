@@ -7,23 +7,24 @@ router.get("/:id", async (req, res) => {
   const productId = req.params.id;
   try {
     const productSql = `
-      SELECT 
-        p.*, 
-        b.name AS brand_name,
-        (
-          SELECT COUNT(*) 
-          FROM reviews pr 
-          WHERE pr.product_id = p.id
-        ) AS review_count,
-        (
-          SELECT COALESCE(AVG(rating), 0)
-          FROM reviews pr
-          WHERE pr.product_id = p.id
-        ) AS rating
-      FROM product p
-      LEFT JOIN brand b ON p.brand_id = b.id
-      WHERE p.id = ?
-    `;
+    SELECT 
+      p.*, 
+      b.name AS brand_name,
+      (
+        SELECT COUNT(*) 
+        FROM product_reviews pr 
+        WHERE pr.product_id = p.id
+      ) AS review_count,
+      (
+        SELECT COALESCE(AVG(r.rating), 0)
+        FROM reviews r
+        JOIN product_reviews pr ON r.id = pr.review_id
+        WHERE pr.product_id = p.id
+      ) AS rating
+    FROM product p
+    LEFT JOIN brand b ON p.brand_id = b.id
+    WHERE p.id = ?
+  `;
     const [productRows] = await pool.execute(productSql, [productId]);
     if (productRows.length === 0) {
       return res.status(404).json({ status: "error", message: "目前無此商品" });
@@ -127,7 +128,7 @@ router.get("/:id", async (req, res) => {
       GROUP BY pb.id
     `;
     const [bundles] = await pool.execute(bundlesSql, [productId]);
-    
+
     // 為每個組合查詢詳細項目
     for (const bundle of bundles) {
       const bundleItemsSql = `
