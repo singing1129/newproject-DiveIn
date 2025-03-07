@@ -18,7 +18,8 @@ export default function AccountForm() {
     level: 100, // 會員等級
   });
   console.log("formData", formData);
-  const { getToken, getDecodedToken, user } = useAuth();
+  const { getToken, getDecodedToken, user, loginWithGoogle, loginWithLine } =
+    useAuth();
   const token = getToken();
   const decodedToken = getDecodedToken();
   console.log("user", user);
@@ -29,6 +30,122 @@ export default function AccountForm() {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [originalEmail, setOriginalEmail] = useState(""); // 儲存原始 email 值
 
+  // 連結電話登入
+  // 在 AccountForm.js 中添加狀態管理電話連結模態視窗
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [confirmation, setConfirmation] = useState(null);
+  const { loginWithPhone } = useAuth();
+
+  // 處理連結手機號碼
+  const handleAddPhoneLogin = () => {
+    setShowPhoneModal(true);
+  };
+
+  // 發送 OTP
+  const sendOTP = async () => {
+    try {
+      // 格式化手機號碼
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log("發送 OTP 給:", formattedPhone);
+
+      if (!formattedPhone.startsWith("+")) {
+        setMessage({
+          type: "error",
+          text: "請輸入完整的國際格式，例如：+886912345678",
+        });
+        return;
+      }
+
+      const confirmationFunc = await loginWithPhone(formattedPhone);
+      if (confirmationFunc) {
+        console.log("OTP 發送成功，等待用戶輸入驗證碼");
+        setConfirmation(() => confirmationFunc);
+        setMessage({ type: "success", text: "驗證碼已發送至您的手機" });
+      } else {
+        setMessage({ type: "error", text: "OTP 發送失敗，請稍後再試" });
+      }
+    } catch (error) {
+      console.error("發送 OTP 失敗:", error);
+      setMessage({ type: "error", text: "發送 OTP 失敗，請稍後再試" });
+    }
+  };
+
+  // 驗證 OTP
+  const verifyOTP = async () => {
+    try {
+      if (!confirmation) {
+        setMessage({ type: "error", text: "請先發送驗證碼！" });
+        return;
+      }
+
+      // 獲取當前用戶ID
+      const userId = getDecodedToken()?.id;
+      if (!userId) {
+        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        return;
+      }
+
+      localStorage.setItem("returnToAccountPage", "true");
+      localStorage.setItem("linkToUserId", userId);
+
+      const result = await confirmation(otp);
+
+      if (result && result.success) {
+        setMessage({ type: "success", text: "手機號碼已成功連結" });
+        setShowPhoneModal(false);
+        // 刷新提供者列表
+        fetchMemberData();
+      } else {
+        setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
+      }
+    } catch (error) {
+      console.error("驗證碼錯誤", error);
+      setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
+    }
+  };
+
+  // 格式化手機號碼函數
+  const formatPhoneNumber = (number) => {
+    // 如果用戶輸入的是台灣號碼，幫他補 `+886`
+    if (number.startsWith("0") && number.length === 10) {
+      return "+886" + number.slice(1); // 移除 `0`，加上 `+886`
+    }
+    return number;
+  };
+  const handleAddGoogleLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 儲存到localStorage
+    localStorage.setItem("returnToAccountPage", "true");
+    localStorage.setItem("linkToUserId", userId);
+    localStorage.setItem("isLinkingAccount", "true"); // 新增這行，標記為連結操作
+
+
+    loginWithGoogle();
+  };
+
+  // 處理連結 Line 帳號
+  const handleAddLineLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 儲存到localStorage
+    localStorage.setItem("returnToAccountPage", "true");
+    localStorage.setItem("linkToUserId", userId);
+
+    loginWithLine();
+  };
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
     if (!token) return;
@@ -177,15 +294,16 @@ export default function AccountForm() {
     }
   };
 
-
   // 確定圖片來源
   const getAvatarSrc = () => {
     if (formData.avatarPreview) {
       return formData.avatarPreview; // 本地預覽優先
     }
-    if (formData.avatar && formData.avatar !== "") {
-      return `http://localhost:3005${formData.avatar}`; // 後端路徑
-    }
+    // "/uploads/avatars/https://lh3.googleusercontent.com/a/ACg8ocKEE0ObKSmGWxM11lx3160U3XbXBWfk83iT1i57A8h_YG7z=s96-c"
+    // if (formData.avatar && formData.avatar !== "" ) {
+    //   return `http://localhost:3005${formData.avatar}`; // 後端路徑
+    // }
+
     return "/image/default-memberimg.png"; // 預設圖片
   };
 
@@ -274,7 +392,7 @@ export default function AccountForm() {
       <form className={styles.contentWrapper} onSubmit={handleSubmit}>
         {/* 大頭貼區塊 */}
         <div className={styles.avatarSection}>
-        <div className={styles.avatarPreview}>
+          <div className={styles.avatarPreview}>
             <Image
               // 幹救命這裡寫超久
               src={getAvatarSrc()}
@@ -298,13 +416,13 @@ export default function AccountForm() {
           </label>
           {/* 登入方式區塊 */}
           {providers.length > 0 && (
+            // 添加到 AccountForm.js 的 providersSection 區域
             <div className={styles.providersSection}>
               <h3>已連結的登入方式</h3>
               <ul className={styles.providerList}>
                 {providers.map((provider) => (
                   <li key={provider} className={styles.providerItem}>
                     {getProviderName(provider)}
-                    {/* 如果登入方式超過一種，才顯示移除按鈕 */}
                     {providers.length > 1 && (
                       <button
                         className={styles.removeProviderBtn}
@@ -317,6 +435,43 @@ export default function AccountForm() {
                   </li>
                 ))}
               </ul>
+
+              {/* 添加連結新登入方式的區域 */}
+              <div className={styles.addProviderSection}>
+                <h4>連結更多登入方式</h4>
+                <div className={styles.addProviderButtons}>
+                  {!providers.includes("google") && (
+                    <button
+                      className={styles.addGoogleBtn}
+                      onClick={handleAddGoogleLogin}
+                      disabled={isLoading}
+                    >
+                      <img src="/img/ic_google.svg" alt="Google logo" />
+                      連結 Google 帳號
+                    </button>
+                  )}
+                  {!providers.includes("line") && (
+                    <button
+                      className={styles.addLineBtn}
+                      onClick={handleAddLineLogin}
+                      disabled={isLoading}
+                    >
+                      <img src="/img/line.png" alt="Line logo" />
+                      連結 Line 帳號
+                    </button>
+                  )}
+                  {!providers.includes("phone") && (
+                    <button
+                      className={styles.addPhoneBtn}
+                      onClick={handleAddPhoneLogin}
+                      disabled={isLoading}
+                    >
+                      <img src="/img/phone.svg" alt="Phone logo" />
+                      連結手機號碼
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -383,6 +538,7 @@ export default function AccountForm() {
               }
             />
           </div>
+
           <div className={styles.formGroup}>
             <label htmlFor="phone">電話號碼</label>
             <input
@@ -413,6 +569,78 @@ export default function AccountForm() {
           </div>
         </div>
       </form>
+      {/* 電話連結模態視窗 */}
+      {showPhoneModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3>連結手機號碼</h3>
+            {!confirmation ? (
+              <>
+                <div className={styles.formGroup}>
+                  <label htmlFor="phone">手機號碼</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+886912345678"
+                  />
+                </div>
+                <div className={styles.modalButtons}>
+                  <button
+                    type="button"
+                    className={styles.primaryBtn}
+                    onClick={sendOTP}
+                    disabled={isLoading}
+                  >
+                    發送驗證碼
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => setShowPhoneModal(false)}
+                  >
+                    取消
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.formGroup}>
+                  <label htmlFor="otp">驗證碼</label>
+                  <input
+                    type="text"
+                    id="otp"
+                    name="otp"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="請輸入驗證碼"
+                  />
+                </div>
+                <div className={styles.modalButtons}>
+                  <button
+                    type="button"
+                    className={styles.primaryBtn}
+                    onClick={verifyOTP}
+                    disabled={isLoading}
+                  >
+                    驗證
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => setShowPhoneModal(false)}
+                  >
+                    取消
+                  </button>
+                </div>
+              </>
+            )}
+            <div id="recaptcha-container"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
