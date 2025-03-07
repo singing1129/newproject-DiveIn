@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import styles from "./AccountForm.module.css";
+
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
+import "../../rent/components/flatpickr.css"
+
+// 登入方式 icon
+import { AiFillGoogleSquare } from "react-icons/ai"; // Google
+import { FaLine } from "react-icons/fa"; // Line
+import { FaSquarePhone } from "react-icons/fa6"; // 手機
+import { IoMdMail } from "react-icons/io";
 
 export default function AccountForm() {
   const [formData, setFormData] = useState({
@@ -12,6 +22,7 @@ export default function AccountForm() {
     email: "",
     password: "",
     phone: "",
+    birthday: "", // 新增生日欄位優惠券用
     avatar: "",
     avatarFile: null, // 新增：儲存上傳的檔案物件
     avatarPreview: null, // 新增：用於本地預覽
@@ -28,6 +39,12 @@ export default function AccountForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [originalEmail, setOriginalEmail] = useState(""); // 儲存原始 email 值
+  const birthdayInputRef = useRef(null); // 用來綁定 flatpickr
+
+
+  // 是否顯示修改密碼欄位
+  const [showChangePassword, setShowChangePassword] = useState(false); // 控制是否顯示修改密碼欄位
+
 
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
@@ -71,6 +88,58 @@ export default function AccountForm() {
   useEffect(() => {
     fetchMemberData();
   }, [fetchMemberData]);
+
+  // 初始化 Flatpickr
+  useEffect(() => {
+    if (birthdayInputRef.current) {
+      flatpickr(birthdayInputRef.current, {
+        dateFormat: "Y年m月d日", // 日期格式
+        minDate: "today", // 限制選擇日期不能早於今天
+        locale: {
+          firstDayOfWeek: 1, // 每週的第一天是週一
+          weekdays: {
+            shorthand: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+            longhand: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+          },
+          months: {
+            shorthand: [
+              "1月",
+              "2月",
+              "3月",
+              "4月",
+              "5月",
+              "6月",
+              "7月",
+              "8月",
+              "9月",
+              "10月",
+              "11月",
+              "12月",
+            ],
+            longhand: [
+              "一月",
+              "二月",
+              "三月",
+              "四月",
+              "五月",
+              "六月",
+              "七月",
+              "八月",
+              "九月",
+              "十月",
+              "十一月",
+              "十二月",
+            ],
+          },
+        },
+        disableMobile: true, // 禁用移動設備的默認行為
+        onChange: (selectedDates, dateStr) => {
+          // 當用戶選擇日期時，更新 formData.birthday
+          setFormData((prev) => ({ ...prev, birthday: dateStr }));
+        },
+      });
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -269,6 +338,31 @@ export default function AccountForm() {
           )}
         </div>
 
+        {/* {provider === "email" && (
+            <>
+              <IoMdMail className={styles.providerIcon} />
+              <span className={styles.providerName}>電子郵件</span>
+            </>
+          )}
+          {provider === "phone" && (
+          <>
+            <FaSquarePhone className={styles.providerIcon} />
+            <span className={styles.providerName}>手機號碼</span>
+          </>
+        )}
+          {provider === "line" && (
+            <>
+              <FaLine className={styles.providerIcon} />
+              <span className={styles.providerName}>LINE</span>
+            </>
+          )}
+          {provider === "google" && (
+            <>
+              <AiFillGoogleSquare className={styles.providerIcon} />
+              <span className={styles.providerName}>Google</span>
+            </>
+          )} */}
+
         {/* 個人資訊區塊 */}
         <div className={styles.accountForm}>
           <div className={styles.formGroup}>
@@ -307,7 +401,15 @@ export default function AccountForm() {
             />
           </div>
           <div className={styles.formGroup}>
-            <label htmlFor="password">密碼</label>
+            <label htmlFor="password">密碼
+            <button
+                type="button"
+                className={styles.changePasswordLink}
+                onClick={() => setShowChangePassword(!showChangePassword)}
+              >
+                {showChangePassword ? "隱藏修改密碼" : "修改密碼?"}
+              </button>
+            </label>
             <input
               type="password"
               id="password"
@@ -317,6 +419,32 @@ export default function AccountForm() {
               placeholder="如不修改密碼請留空"
             />
           </div>
+
+
+            {/* 修改密碼欄位 */}
+            {showChangePassword && (
+            <>
+              <div className={styles.formGroup}>
+                <label htmlFor="newPassword">新密碼</label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  name="newPassword"
+                  placeholder="請輸入新密碼"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="confirmPassword">再次輸入新密碼</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  placeholder="請再次輸入新密碼"
+                />
+              </div>
+            </>
+          )}
+
           <div className={styles.formGroup}>
             <label htmlFor="phone">電話號碼</label>
             <input
@@ -327,6 +455,21 @@ export default function AccountForm() {
               onChange={handleChange}
             />
           </div>
+          {/* 生日新增在這邊，日曆用租借那個 */}
+          <div className={styles.formGroup}>
+            <label htmlFor="birthday">生日</label>
+            <input
+              type="text"
+              id="birthday"
+              name="birthday"
+              ref={birthdayInputRef} // 綁定 Flatpickr
+              value={formData.birthday || ""}
+              onChange={handleChange}
+              placeholder="選擇生日"
+            />
+          </div>
+
+        
 
           {/* 按鈕區塊 */}
           <div className={styles.buttonGroup}>

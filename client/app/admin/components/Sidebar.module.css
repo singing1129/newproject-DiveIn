@@ -31,14 +31,12 @@
 }
 
 .sidebar {
-  width: 100%;
-  /* gap: 20px; */
-  border: 1px solid var(--gray-200-color);
+  width: 80%;
 }
 
 .sidebarTop {
   width: 100%;
-  background-color: var(--gray-200-color);
+  border-bottom: 1px solid var(--gray-100-color);
 }
 .sidebarTop h6 {
   font-size: 18px;
@@ -46,33 +44,49 @@
   text-align: center;
 }
 
+/* 側邊欄列表 */
 .sidebarList {
   list-style: none;
   padding: 0;
-  margin: 10px 0;
-
+  margin: 0;
 }
 
 .sidebarList li {
-  margin: 20px;
-}
-
-.iconSpacing {
-  margin-right: 10px;
+  margin: 10px 0;
 }
 
 .sidebarList li a {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  color: var(--gray-900-color);
   text-decoration: none;
-  color: var(--black);
-  font-size: 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  transform: translateX(-10px);
+  opacity: 0;
+  animation: slideIn 0.3s ease forwards;
 }
+
+@keyframes slideIn {
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .sidebarList li a:hover {
-  text-decoration: none;
-  color: var(--gray-600-color);
-  font-size: 1rem;
+  background-color: var(--gray-20-color);
+  color: var(--primary-color);
 }
 
 .sidebarList li a.active {
-  color: var(--primary-color);
-  font-weight: bold;
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+/* 圖示間距 */
+.iconSpacing {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
 }

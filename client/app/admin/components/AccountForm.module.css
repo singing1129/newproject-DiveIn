@@ -114,6 +114,22 @@
   display: none; /* 隱藏文件輸入框 */
 }
 
+
+.providersSection h3 {
+  font-size: 16px;
+  color: var(--gray-600-color);
+}
+
+.providerIcon {
+  font-size: 16px;
+  color: var(--primary-color);
+}
+
+.providerName {
+  font-size: 16px;
+  color: var(--gray-600-color);
+}
+
 /* 個人資訊區塊 */
 .accountForm {
   flex: 2; /* 佔 2 份 */
@@ -145,6 +161,23 @@
 .formGroup input:focus {
   border-color: var(--primary-color);
   outline: none;
+}
+
+
+/* 修改密碼 */
+.changePasswordLink {
+  background: none;
+  border: none;
+  color: var(--primary-color); 
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.changePasswordLink:hover {
+  color: var(--primary-deep-color);
 }
 
 .buttonGroup {
