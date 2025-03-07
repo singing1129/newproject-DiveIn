@@ -173,8 +173,8 @@ export default function AccountForm() {
         return;
       }
 
-      // 這裡確保在驗證前設置連結標記
-      console.log(`準備連結手機號碼到用戶ID: ${userId}`);
+      localStorage.setItem("returnToAccountPage", "true");
+      localStorage.setItem("linkToUserId", userId);
 
       // 執行 OTP 驗證
       const result = await confirmation(otp);
@@ -195,16 +195,11 @@ export default function AccountForm() {
           }
         );
 
-        const linkResult = await linkResponse.json();
-
-        if (linkResult.status === "success") {
-          setMessage({ type: "success", text: "手機號碼已成功綁定到您的帳號" });
-          setShowPhoneModal(false);
-          // 刷新提供者列表
-          fetchMemberData();
-        } else {
-          setMessage({ type: "error", text: linkResult.message || "綁定失敗" });
-        }
+      if (result && result.success) {
+        setMessage({ type: "success", text: "手機號碼已成功連結" });
+        setShowPhoneModal(false);
+        // 刷新提供者列表
+        fetchMemberData();
       } else {
         setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
       }
@@ -222,7 +217,38 @@ export default function AccountForm() {
     }
     return number;
   };
+  const handleAddGoogleLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
 
+    // 儲存到localStorage
+    localStorage.setItem("returnToAccountPage", "true");
+    localStorage.setItem("linkToUserId", userId);
+    localStorage.setItem("isLinkingAccount", "true"); // 新增這行，標記為連結操作
+
+
+    loginWithGoogle();
+  };
+
+  // 處理連結 Line 帳號
+  const handleAddLineLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 儲存到localStorage
+    localStorage.setItem("returnToAccountPage", "true");
+    localStorage.setItem("linkToUserId", userId);
+
+    loginWithLine();
+  };
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
     if (!token) return;
