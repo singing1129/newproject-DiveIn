@@ -18,6 +18,8 @@ router.get("/", async (req, res) => {
     // 價格區間
     const minPrice = req.query.minPrice || 1;
     const maxPrice = req.query.maxPrice || 10000000;
+    // 活動類型
+    const type = req.query.type
 
     // 設定當頁第一項資料
     const firstActivity = (page - 1) * limit;
@@ -34,16 +36,16 @@ router.get("/", async (req, res) => {
 
     try {
         let sql = `SELECT 
-                activity.*, 
-                activity_country.name AS country,
-                activity_city.name AS city_name, 
-                activity_image.img_url AS main_image
-            FROM activity
-            LEFT JOIN activity_city ON activity.activity_city_id = activity_city.id
-            LEFT JOIN activity_image ON activity.id = activity_image.activity_id AND activity_image.is_main = 1
-            LEFT JOIN activity_country ON activity_city.activity_country_id = activity_country.id
-            LEFT JOIN activity_project ON activity_project.activity_id = activity.id
-            WHERE activity.price BETWEEN ${minPrice} AND ${maxPrice} `
+                    activity.*, 
+                    activity_country.name AS country,
+                    activity_city.name AS city_name, 
+                    activity_image.img_url AS main_image
+                FROM activity
+                LEFT JOIN activity_city ON activity.activity_city_id = activity_city.id
+                LEFT JOIN activity_image ON activity.id = activity_image.activity_id AND activity_image.is_main = 1
+                LEFT JOIN activity_country ON activity_city.activity_country_id = activity_country.id
+                LEFT JOIN activity_project ON activity_project.activity_id = activity.id
+                WHERE activity.price BETWEEN ${minPrice} AND ${maxPrice} `
 
         if (location) {
             sql += ` AND activity.activity_city_id = ${location} `
@@ -107,6 +109,9 @@ router.get("/", async (req, res) => {
                     .join(" OR ");
                 sql += ` AND (${durationCondition}) `;
             }
+        }
+        if(type){
+            sql += ` AND activity.type = ${type} `
         }
         sql += ` GROUP BY activity.id
         ORDER BY ${orderBy}

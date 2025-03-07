@@ -11,6 +11,7 @@ router.get("/list/:id", async (req, res) => {
         groups_image.img_url AS group_img, 
         activity_country.name AS country_name, 
         users.name AS user_name,
+        activity_country.id AS country_id,
         COUNT(groups_participants.id) AS participant_number
         FROM groups 
         LEFT JOIN activity_city ON groups.groups_city_id = activity_city.id

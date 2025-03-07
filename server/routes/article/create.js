@@ -129,6 +129,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
     new_tags,
     status = "draft",
     ckeditor_images,
+    users_id,
   } = req.body;
 
   // 解析 CKEditor 圖片 URL
@@ -154,20 +155,28 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
   const currentDate = new Date();
   const publishAt = status === "published" ? currentDate : null;
 
-  if (!new_title || !new_content || !new_categorySmall || !new_tags) {
-    return res.status(400).json({ message: "所有字段都是必需的！" });
+  // 檢查所有必填欄位，包括 users_id
+  if (
+    !new_title ||
+    !new_content ||
+    !new_categorySmall ||
+    !new_tags ||
+    !users_id
+  ) {
+    return res
+      .status(400)
+      .json({ message: "所有字段都是必需的，包括 users_id！" });
   }
 
   try {
     // 插入文章資料
-    const userId = 1; // 假設用戶 ID 為 1
     const { results: articleResult } = await db.query(
       "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
         new_content, // 先使用原始的 content
         new_categorySmall,
-        userId,
+        users_id,
         status,
         new Date(),
         status === "published" ? new Date() : null,

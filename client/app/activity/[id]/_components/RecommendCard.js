@@ -11,8 +11,15 @@ import {
 import Image from "next/image";
 import styles from "../detail.module.css"
 import Link from "next/link";
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
+import useFavorite from "@/hooks/useFavorite";
 
-export default function RecommendCard({activity}) {
+export default function RecommendCard({ activity }) {
+    // 收藏
+    const { isFavorite, toggleFavorite, loading } = useFavorite(
+        activity.id,
+        "activity"
+    );
     return (
         <Link className={styles.recommendCardA} href={`/activity/${activity.id}`}>
             <div className={`${styles.recommendCard}`}>
@@ -20,17 +27,32 @@ export default function RecommendCard({activity}) {
                     <Image
                         className={`${styles.img}`}
                         src={`/image/activity/${activity.id}/${activity.img_url}`}
-                        
-                        alt=""  
+
+                        alt=""
                         layout="fill"  // 使用 layout="fill"
-            objectFit="cover" // 確保圖片保持填滿但不會變形
+                        objectFit="cover" // 確保圖片保持填滿但不會變形
                     />
                     <div className={`${styles.mapMarker}`}>
                         <FaMapMarkerAlt />
                         {activity?.recommedCity ? activity.recommedCity : "屏東"}
                     </div>
                     <div>
-                        <FaRegHeart className={`${styles.heart}`} />
+                        <button
+                            className={styles.heart}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleFavorite();
+                            }}
+                            disabled={loading}
+                            style={{ border: "none", background: "none" }}
+                        >
+                            {isFavorite ? (
+                                <AiFillHeart color="red" size={24} />
+                            ) : (
+                                <AiOutlineHeart size={24} />
+                            )}
+                        </button>
                     </div>
                 </div>
                 <div className={`${styles.recommendCardText}`}>
@@ -41,7 +63,7 @@ export default function RecommendCard({activity}) {
                     <FaStar />
                     4.8(999) | 9K+個已訂購
                 </div>
-                <div className={`fw-bold`}>{activity?.price ? "NT."+activity.price : "NT$360起"}</div>
+                <div className={`fw-bold`}>{activity?.price ? "NT." + activity.price : "NT$360起"}</div>
             </div>
         </Link>
     );

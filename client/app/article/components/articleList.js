@@ -5,7 +5,7 @@ import "./articleList.css";
 import "./articleAside.css";
 import Sidebar from "./sidebar";
 import ArticleCard from "./articleCard";
-import useLocalStorage from "../../hooks/use-localstorage.js"; // 用戶登入
+import { useAuth } from "../../hooks/useAuth"; // 引入 useAuth
 
 const API_BASE_URL = "http://localhost:3005/api";
 
@@ -19,94 +19,87 @@ const ArticleListPage = () => {
   });
 
   // 搜尋
-  const [searchQuery, setSearchQuery] = useState(""); // 搜尋框的輸入值
-  const [filteredArticles, setFilteredArticles] = useState([]); // 篩選後的文章
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredArticles, setFilteredArticles] = useState([]);
 
   const handleSearch = () => {
     if (!searchQuery) {
-      // 如果搜尋框為空，顯示所有文章
       setFilteredArticles(articles);
       return;
     }
-
-    // 篩選出 title 或 content 包含搜尋文字的文章
     const filtered = articles.filter(
       (article) =>
         article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         article.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
     setFilteredArticles(filtered);
   };
 
   const handleClearSearch = () => {
-    setSearchQuery(""); // 清空搜尋框
-    setFilteredArticles(articles); // 重置搜尋結果為所有文章
+    setSearchQuery("");
+    setFilteredArticles(articles);
   };
 
   // 文章篩選選項
-  const [sortOption, setSortOption] = useState("all"); // 初始值為 all，表示顯示所有文章
-  const [isMyArticles, setIsMyArticles] = useState(false); // 控制是否顯示「我的文章」
-  const [statusOption, setStatusOption] = useState("all"); // 新增狀態篩選的狀態
+  const [sortOption, setSortOption] = useState("all");
+  const [isMyArticles, setIsMyArticles] = useState(false);
+  const [statusOption, setStatusOption] = useState("all");
 
-  // 獲取用戶的 ID
-  const [usersId, setUsersId] = useState(54); // 改為固定值 54
-  const [loading, setLoading] = useState(true); // 新增 loading 狀態，防止渲染前頁面顯示不一致
+  // 使用 useAuth 獲取用戶資訊
+  const { user } = useAuth(); // 從 useAuth 獲取 user
+  const [usersId, setUsersId] = useState(null); // 初始設為 null
+  const [loading, setLoading] = useState(true);
 
-  // 當 userId 改變時才會進行更新
+  // 當 user 改變時更新 usersId
   useEffect(() => {
-    if (usersId !== null) {
-      setLoading(false);
+    if (user === -1) {
+      // 未初始化完成，保持 loading
+      setUsersId(null);
+    } else if (user && user.id) {
+      // 已登入，設置 usersId
+      setUsersId(user.id);
+    } else {
+      // 未登入，設置為 null
+      setUsersId(null);
     }
-  }, [usersId]);
+    setLoading(false);
+  }, [user]);
 
-  //刷新页面后保持我的文章选择
+  // 刷新頁面後保持「我的文章」選擇
   useEffect(() => {
     setIsMyArticles(searchParams.get("myArticles") === "true");
   }, [searchParams]);
 
-  // 修正依賴陣列，保持一致性
+  // 獲取文章
   useEffect(() => {
     const fetchArticles = async () => {
       const page = parseInt(searchParams.get("page")) || 1;
       const category = searchParams.get("category");
       const tag = searchParams.get("tag");
       const sort = searchParams.get("sort");
-      const status = searchParams.get("status"); // 新增狀態篩選
+      const status = searchParams.get("status");
 
-      let url = `${API_BASE_URL}/article`; // 基礎 URL
-      const params = new URLSearchParams(); // 使用 URLSearchParams 來管理查詢參數
+      let url = `${API_BASE_URL}/article`;
+      const params = new URLSearchParams();
 
-      // 添加分頁參數
+      // 未登入或主頁時，預設只顯示已發布文章
+      if (!status && !isMyArticles) {
+        params.set("status", "published");
+      }
+
       params.set("page", page);
       params.set("limit", 10);
 
-      // 添加分類參數
-      if (category) {
-        params.set("category", category);
-      }
+      if (category) params.set("category", category);
+      if (tag) params.set("tag", tag);
+      if (sort) params.set("sort", sort);
+      if (status) params.set("status", status);
 
-      // 添加標籤參數
-      if (tag) {
-        params.set("tag", tag);
-      }
-
-      // 添加排序參數
-      if (sort) {
-        params.set("sort", sort);
-      }
-
-      // 添加文章發表狀態參數
-      if (status) {
-        params.set("status", status);
-      }
-
-      // 如果是「我的文章」，添加 users_id 參數
+      // 如果是「我的文章」且已登入，添加 users_id
       if (isMyArticles && usersId) {
         params.set("users_id", usersId);
       }
 
-      // 將查詢參數附加到 URL
       url += `?${params.toString()}`;
 
       const res = await fetch(url);
@@ -124,79 +117,88 @@ const ArticleListPage = () => {
       });
     };
 
-    // 確保用戶已經登入或載入完成
     if (!loading) {
       fetchArticles();
     }
-  }, [searchParams, sortOption, isMyArticles, usersId, loading]); // 確保依賴陣列正確
+  }, [searchParams, sortOption, isMyArticles, usersId, loading]);
 
   // 切換頁面
   const goToPage = (page) => {
     if (page < 1 || page > pagination.totalPages) return;
     const params = new URLSearchParams(searchParams);
-    params.set("page", page); // 更新 URL 的 page 參數
-    router.push(`?${params.toString()}`); // 更新網址，觸發 useEffect
+    params.set("page", page);
+    router.push(`?${params.toString()}`);
   };
 
-  // 處理篩選條件變更
+  // 處理排序變更
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortOption(newSort);
-
     const params = new URLSearchParams(searchParams);
-
-    // 更新排序條件
     if (newSort === "all") {
       params.delete("sort");
+      params.delete("category");
+      params.delete("tag");
+      params.delete("status");
+      router.push("/article");
     } else {
       params.set("sort", newSort);
+      router.push(`/article?${params.toString()}`);
     }
-
-    // 更新網址
-    router.push(`/article?${params.toString()}`);
   };
 
+  // 處理狀態篩選
   const handleStatusChange = (e) => {
     const newStatus = e.target.value;
     setStatusOption(newStatus);
-
     const params = new URLSearchParams(searchParams);
-
-    // 更新狀態條件
     if (newStatus === "all") {
       params.delete("status");
+      params.delete("category");
+      params.delete("tag");
+      router.push("/article");
     } else {
       params.set("status", newStatus);
+      router.push(`/article?${params.toString()}`);
     }
+  };
 
-    // 更新網址
+  const handleCategoryClick = (categorySmallName) => {
+    const params = new URLSearchParams();
+    params.set("category", categorySmallName);
     router.push(`/article?${params.toString()}`);
   };
 
   const [showStatusFilter, setShowStatusFilter] = useState(false);
-  // 我的文章 按鈕點擊
+
+  // 處理「我的文章」按鈕點擊
   const handleMyArticlesClick = () => {
     if (!usersId) {
-      alert("請先登入才能查看我的文章");
+      // 未登入，顯示彈窗
+      const choice = window.confirm(
+        "您尚未登入！\n[確定] 前往登入\n[取消] 返回文章列表"
+      );
+      if (choice) {
+        router.push("/admin/login"); // 前往登入頁面
+      }
       return;
     }
 
+    // 已登入，切換「我的文章」狀態
     setIsMyArticles(!isMyArticles);
-    setShowStatusFilter(!isMyArticles); // 顯示或隱藏狀態篩選器
+    setShowStatusFilter(!isMyArticles);
 
     const params = new URLSearchParams(searchParams);
-
     if (!isMyArticles) {
-      params.set("myArticles", "true"); // 如果是我的文章，加入參數
+      params.set("myArticles", "true");
     } else {
-      params.delete("myArticles"); // 如果取消我的文章，移除參數
-      router.push("/article"); // 返回文章列表首頁
+      params.delete("myArticles");
+      router.push("/article");
     }
-
-    router.push(`?${params.toString()}`); // 更新網址
+    router.push(`?${params.toString()}`);
   };
 
-  //新增文章 按鈕跳轉
+  // 新增文章按鈕跳轉
   const handleButtonClick = (path) => {
     router.push(path);
   };
@@ -209,10 +211,8 @@ const ArticleListPage = () => {
     <div className="container mt-4">
       <div className="row">
         <Sidebar />
-
         <div className="article-list col-9">
           <div className="article-controls">
-            {/* 篩選 */}
             <div className="filter">
               <select
                 value={sortOption}
@@ -236,7 +236,6 @@ const ArticleListPage = () => {
                 </select>
               )}
             </div>
-            {/* 搜尋框 */}
             <div className="article-search-box">
               <input
                 type="text"
@@ -244,8 +243,6 @@ const ArticleListPage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-
-              {/* 清空按鈕 */}
               {searchQuery && (
                 <button className="clear-button" onClick={handleClearSearch}>
                   <i className="fa-solid fa-times"></i>
@@ -255,14 +252,11 @@ const ArticleListPage = () => {
                 搜尋
               </button>
             </div>
-
-            {/* 跳頁面btn */}
             <div className="article-controls-btn">
               <button
                 className="btn"
                 onClick={() => handleButtonClick("/article/create")}
               >
-                {" "}
                 <span className="btn-icon">
                   <i className="fa-solid fa-pen"></i>
                 </span>
@@ -276,15 +270,12 @@ const ArticleListPage = () => {
               </button>
             </div>
           </div>
-
-          {/* 文章card */}
           {(searchQuery ? filteredArticles : articles).map((article) => (
             <ArticleCard
               key={article.id}
               article={article}
-              isMyArticles={isMyArticles} // 傳遞 isMyArticles
+              isMyArticles={isMyArticles}
               onDeleteSuccess={() => {
-                // 刪除成功後，重新載入文章
                 setArticles((prevArticles) =>
                   prevArticles.filter((a) => a.id !== article.id)
                 );
@@ -294,7 +285,6 @@ const ArticleListPage = () => {
               }}
             />
           ))}
-          {/* 分頁 */}
           <div className="custom-pagination">
             <div className="page-item">
               <button
@@ -303,7 +293,7 @@ const ArticleListPage = () => {
                 onClick={() => goToPage(1)}
                 disabled={pagination.currentPage === 1}
               >
-                &laquo;&laquo;
+                ««
               </button>
             </div>
             <div className="page-item">
@@ -313,10 +303,9 @@ const ArticleListPage = () => {
                 onClick={() => goToPage(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
               >
-                &laquo;
+                «
               </button>
             </div>
-
             {pagination.currentPage > 1 && (
               <div className="page-item">
                 <button
@@ -340,7 +329,6 @@ const ArticleListPage = () => {
                 </button>
               </div>
             )}
-
             <div className="page-item">
               <button
                 className="page-link"
@@ -348,7 +336,7 @@ const ArticleListPage = () => {
                 onClick={() => goToPage(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination.totalPages}
               >
-                &raquo;
+                »
               </button>
             </div>
             <div className="page-item">
@@ -358,7 +346,7 @@ const ArticleListPage = () => {
                 onClick={() => goToPage(pagination.totalPages)}
                 disabled={pagination.currentPage === pagination.totalPages}
               >
-                &raquo;&raquo;
+                »»
               </button>
             </div>
           </div>

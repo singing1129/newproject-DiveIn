@@ -4,6 +4,7 @@ import { useState } from "react";
 //推薦組件
 import RecommendationSection from "./components/RecommendationSection";
 import Card from "./components/Card";
+import ActivitySection from "./components/ActivitySection";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +20,6 @@ import {
 } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
 import Carousel from "./components/Swiper/Carousel";
-
 
 // core version + navigation, pagination modules:
 import Swiper from "swiper";
@@ -75,7 +75,7 @@ export default function Home() {
               <FaAngleRight />
             </button>
           </div>
-        </div> 
+        </div>
 
         {/* section start */}
         <div className={`container ${styles.sectionStart}`}>
@@ -425,7 +425,9 @@ export default function Home() {
         <div className={`container ${styles.section} ${styles.sectionCourse}`}>
           <h3 className={styles.h3}>零基礎學習，輕鬆進入深藍</h3>
           <div className={styles.cardsAndDots}>
-            <div className={`d-flex justify-content-sm-between justify-content-around`}>
+            <div
+              className={`d-flex justify-content-sm-between justify-content-around`}
+            >
               <div className={`${styles.card}`}>
                 <div className={styles.imgContainer}>
                   <img
@@ -762,3 +764,4 @@ export default function Home() {
     </>
   );
 }
+
