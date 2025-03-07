@@ -87,18 +87,26 @@ export default function AccountForm() {
         return;
       }
 
+      // 確保這些值被設置
       localStorage.setItem("returnToAccountPage", "true");
       localStorage.setItem("linkToUserId", userId);
+      localStorage.setItem("isLinkingAccount", "true");
 
       const result = await confirmation(otp);
 
       if (result && result.success) {
-        setMessage({ type: "success", text: "手機號碼已成功連結" });
+        setMessage({
+          type: "success",
+          text: result.message || "手機號碼已成功連結",
+        });
         setShowPhoneModal(false);
         // 刷新提供者列表
         fetchMemberData();
       } else {
-        setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
+        setMessage({
+          type: "error",
+          text: result.error || "驗證碼錯誤，請重新輸入",
+        });
       }
     } catch (error) {
       console.error("驗證碼錯誤", error);
@@ -114,24 +122,8 @@ export default function AccountForm() {
     }
     return number;
   };
-  const handleAddGoogleLogin = () => {
-    // 獲取當前用戶ID
-    const userId = getDecodedToken()?.id;
-    if (!userId) {
-      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-      return;
-    }
 
-    // 儲存到localStorage
-    localStorage.setItem("returnToAccountPage", "true");
-    localStorage.setItem("linkToUserId", userId);
-    localStorage.setItem("isLinkingAccount", "true"); // 新增這行，標記為連結操作
-
-
-    loginWithGoogle();
-  };
-
-  // 處理連結 Line 帳號
+  // LINE和google的連結// 處理連結 Line 帳號
   const handleAddLineLogin = () => {
     // 獲取當前用戶ID
     const userId = getDecodedToken()?.id;
@@ -143,9 +135,28 @@ export default function AccountForm() {
     // 儲存到localStorage
     localStorage.setItem("returnToAccountPage", "true");
     localStorage.setItem("linkToUserId", userId);
+    localStorage.setItem("isLinkingAccount", "true"); // 明確標記為連結操作
 
     loginWithLine();
   };
+
+  // 處理連結 Google 帳號
+  const handleAddGoogleLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 儲存到localStorage
+    localStorage.setItem("returnToAccountPage", "true");
+    localStorage.setItem("linkToUserId", userId);
+    localStorage.setItem("isLinkingAccount", "true"); // 明確標記為連結操作
+
+    loginWithGoogle();
+  };
+
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
     if (!token) return;
