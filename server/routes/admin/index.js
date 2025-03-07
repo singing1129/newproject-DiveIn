@@ -125,17 +125,27 @@ router.post("/social-login", upload.none(), async (req, res) => {
 
   console.log("社交登錄請求數據:", req.body);
 
+  // 對line特殊處理
+  // 對 LINE 特殊處理
+  let normalizedProviderId = provider_id;
+  let normalizedProvider = provider;
+
+  // 確保 LINE 的 provider_id 不為空
+  if (provider === "line" && (!provider_id || provider_id === "undefined")) {
+    console.warn("LINE provider_id 為空，使用替代 ID");
+    normalizedProviderId = Date.now().toString(); // 使用時間戳作為臨時 ID
+  }
+
   // 處理連結帳號請求
   if (link_to_user_id) {
     console.log(
-      `收到連結請求，將 ${provider} 連結到用戶 ID: ${link_to_user_id}`
+      `收到連結請求，將 ${normalizedProvider} 連結到用戶 ID: ${link_to_user_id}`
     );
-
     try {
       // 先檢查該提供者是否已被其他用戶使用
       const [existingProvider] = await pool.execute(
         "SELECT user_id FROM user_providers WHERE provider = ? AND provider_id = ?",
-        [provider, provider_id]
+        [normalizedProvider, normalizedProviderId]
       );
 
       if (existingProvider.length > 0) {
@@ -247,7 +257,9 @@ router.post("/social-login", upload.none(), async (req, res) => {
 
       if (orphanedProviders.length > 0) {
         // 發現孤立記錄，嘗試清理
-        console.log(`發現孤立的提供者記錄，user_id=${orphanedProviders[0].user_id}，將清理該記錄`);
+        console.log(
+          `發現孤立的提供者記錄，user_id=${orphanedProviders[0].user_id}，將清理該記錄`
+        );
         await pool.execute(
           "DELETE FROM user_providers WHERE provider = ? AND provider_id = ?",
           [provider, normalizedProviderId]
@@ -315,40 +327,39 @@ router.post("/social-login", upload.none(), async (req, res) => {
     // 驗證用戶存在
     if (userDetails.length === 0) {
       console.error(`嚴重錯誤：user_id=${userId} 的用戶在數據庫中不存在`);
-      
+
       // 清理孤立的提供者記錄
-      await pool.execute(
-        "DELETE FROM user_providers WHERE user_id = ?",
-        [userId]
-      );
-      
+      await pool.execute("DELETE FROM user_providers WHERE user_id = ?", [
+        userId,
+      ]);
+
       // 創建新用戶作為補救措施
       console.log("創建替代用戶");
       const [newUser] = await pool.execute(
         "INSERT INTO users (email, name, head) VALUES (?, ?, ?)",
         [email || null, name || `${provider}用戶`, image || null]
       );
-      
+
       userId = newUser.insertId;
-      
+
       // 添加新的提供者關聯
       await pool.execute(
         "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, ?, ?, NOW())",
         [userId, provider, normalizedProviderId]
       );
-      
+
       // 重新獲取用戶詳情
       [userDetails] = await pool.execute(
         "SELECT id, email, name, head FROM users WHERE id = ?",
         [userId]
       );
-      
+
       // 重新獲取提供者信息
       [userProviders] = await pool.execute(
         "SELECT provider FROM user_providers WHERE user_id = ?",
         [userId]
       );
-      
+
       isNewUser = true;
     }
 
@@ -384,7 +395,7 @@ router.post("/social-login", upload.none(), async (req, res) => {
     console.error("錯誤詳情:", {
       code: err.code,
       message: err.message,
-      stack: err.stack
+      stack: err.stack,
     });
     res.status(500).json({
       status: "error",
@@ -569,21 +580,28 @@ router.delete("/provider/:provider", checkToken, async (req, res) => {
   }
 });
 
+// 在 index.js 中確保這個路由設置正確
 router.post("/get-user-id", async (req, res) => {
+  console.log("收到 get-user-id 請求:", req.body);
   const { provider, provider_id } = req.body;
 
   if (!provider || !provider_id) {
+    console.log("缺少必要參數:", { provider, provider_id });
     return res
       .status(400)
       .json({ status: "error", message: "缺少 provider 或 provider_id" });
   }
 
   try {
-    // **查詢 `user_providers` 表，找出對應的 `user_id`**
+    console.log("查詢參數:", { provider, provider_id });
+
+    // 確保 SQL 查詢正確
     const [user] = await pool.execute(
       "SELECT user_id FROM user_providers WHERE provider = ? AND provider_id = ?",
       [provider, provider_id]
     );
+
+    console.log("查詢結果:", user);
 
     if (user.length === 0) {
       return res
@@ -591,11 +609,134 @@ router.post("/get-user-id", async (req, res) => {
         .json({ status: "error", message: "找不到對應的 user_id" });
     }
 
-    res.json({ status: "success", data: { user_id: user[0].user_id } });
+    console.log("返回 user_id:", user[0].user_id);
+    return res.json({ status: "success", data: { user_id: user[0].user_id } });
   } catch (error) {
-    console.error(" 查詢 user_id 錯誤:", error);
-    res.status(500).json({ status: "error", message: "伺服器錯誤" });
+    console.error("查詢 user_id 錯誤:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "伺服器錯誤",
+      details: error.message,
+    });
   }
 });
 
+// 在 index.js 中添加
+router.post("/line-link", async (req, res) => {
+  const { code, redirect_uri, user_id } = req.body;
+
+  console.log("收到 LINE 連結請求:", {
+    code: code ? "存在" : "不存在",
+    redirect_uri,
+    user_id,
+  });
+
+  if (!code || !redirect_uri || !user_id) {
+    return res.status(400).json({
+      status: "error",
+      message: "缺少必要參數",
+    });
+  }
+
+  try {
+    // 步驟 1: 使用授權碼獲取 LINE Access Token
+    const tokenResponse = await axios.post(
+      "https://api.line.me/oauth2/v2.1/token",
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: redirect_uri,
+        client_id: process.env.LINE_CLIENT_ID,
+        client_secret: process.env.LINE_CLIENT_SECRET,
+      }).toString(),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const { access_token, id_token } = tokenResponse.data;
+
+    if (!access_token || !id_token) {
+      console.error("獲取 LINE token 失敗:", tokenResponse.data);
+      return res.status(400).json({
+        status: "error",
+        message: "無法獲取 LINE 使用者資訊",
+      });
+    }
+
+    // 步驟 2: 解析 ID Token 獲取用戶資訊
+    const userInfoResponse = await axios.post(
+      "https://api.line.me/oauth2/v2.1/verify",
+      new URLSearchParams({
+        id_token: id_token,
+        client_id: process.env.LINE_CLIENT_ID,
+      }).toString(),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const lineUserInfo = userInfoResponse.data;
+    console.log("LINE 用戶資訊:", lineUserInfo);
+
+    // 步驟 3: 檢查是否已有此 LINE 帳號連結到其他使用者
+    const [existingProvider] = await pool.execute(
+      "SELECT user_id FROM user_providers WHERE provider = 'line' AND provider_id = ?",
+      [lineUserInfo.sub]
+    );
+
+    if (existingProvider.length > 0) {
+      // 檢查是否連結到當前使用者
+      if (existingProvider[0].user_id == user_id) {
+        return res.status(200).json({
+          status: "success",
+          message: "此 LINE 帳號已經連結到您的帳戶",
+        });
+      } else {
+        return res.status(409).json({
+          status: "error",
+          message: "此 LINE 帳號已連結到其他使用者",
+        });
+      }
+    }
+
+    // 步驟 4: 將 LINE 帳號連結到使用者
+    await pool.execute(
+      "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, 'line', ?, NOW())",
+      [user_id, lineUserInfo.sub]
+    );
+
+    // 步驟 5: 更新使用者資料 (可選)
+    // 如果使用者沒有頭像或名稱，可以使用 LINE 提供的資訊更新
+    if (lineUserInfo.picture) {
+      const [user] = await pool.execute("SELECT head FROM users WHERE id = ?", [
+        user_id,
+      ]);
+
+      if (user.length > 0 && (!user[0].head || user[0].head === "null")) {
+        await pool.execute("UPDATE users SET head = ? WHERE id = ?", [
+          lineUserInfo.picture,
+          user_id,
+        ]);
+      }
+    }
+
+    return res.status(200).json({
+      status: "success",
+      message: "LINE 帳號連結成功",
+    });
+  } catch (error) {
+    console.error("LINE 連結處理錯誤:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "連結 LINE 帳號時發生錯誤",
+      details: error.message,
+    });
+  }
+});
+// 確保這個路由被導出和掛載
 export default router;

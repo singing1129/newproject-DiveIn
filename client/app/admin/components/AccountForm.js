@@ -124,20 +124,39 @@ export default function AccountForm() {
   };
 
   // LINE和google的連結// 處理連結 Line 帳號
-  const handleAddLineLogin = () => {
-    // 獲取當前用戶ID
-    const userId = getDecodedToken()?.id;
-    if (!userId) {
-      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-      return;
+  // 在 AccountForm.js 中
+  const handleAddLineLogin = async () => {
+    try {
+      // 獲取當前用戶ID
+      const userId = getDecodedToken()?.id;
+      if (!userId) {
+        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        return;
+      }
+
+      // 使用數字形式的 client_id
+      const lineClientId = 2006979613; // 直接使用數字，不用字串
+
+      // 構建自訂狀態參數 - 使用更簡單的格式
+      const stateParam = btoa(`link_${userId}_${Date.now()}`);
+
+      // 構建 LINE 登入 URL
+      const redirectUri = encodeURIComponent(
+        `${window.location.origin}/api/line-callback`
+      );
+      const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${lineClientId}&redirect_uri=${redirectUri}&state=${stateParam}&scope=profile%20openid%20email`;
+
+      console.log("重定向到 LINE 授權頁面:", lineAuthUrl);
+
+      // 將用戶重定向到 LINE 授權頁面
+      window.location.href = lineAuthUrl;
+    } catch (error) {
+      console.error("準備 LINE 連結流程時出錯:", error);
+      setMessage({
+        type: "error",
+        text: "連結 LINE 帳號失敗: " + error.message,
+      });
     }
-
-    // 儲存到localStorage
-    localStorage.setItem("returnToAccountPage", "true");
-    localStorage.setItem("linkToUserId", userId);
-    localStorage.setItem("isLinkingAccount", "true"); // 明確標記為連結操作
-
-    loginWithLine();
   };
 
   // 處理連結 Google 帳號
@@ -195,9 +214,41 @@ export default function AccountForm() {
     }
   }, [token]);
 
-  // 初始載入資料
+  // 在 AccountForm.js 中的 useEffect 中添加
   useEffect(() => {
+    // 初始載入資料
     fetchMemberData();
+
+    // 處理 URL 查詢參數
+    const queryParams = new URLSearchParams(window.location.search);
+    const error = queryParams.get("error");
+    const success = queryParams.get("success");
+
+    if (error) {
+      setMessage({
+        type: "error",
+        text:
+          error === "missing_params"
+            ? "參數不完整"
+            : error === "invalid_state"
+            ? "無效的請求狀態"
+            : error === "invalid_state_format"
+            ? "請求格式錯誤"
+            : error === "callback_error"
+            ? "回調處理錯誤"
+            : `連結失敗: ${error}`,
+      });
+
+      // 清除 URL 參數
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (success === "line_linked") {
+      setMessage({ type: "success", text: "LINE 帳號連結成功！" });
+      // 重新獲取會員資料以更新登入方式
+      fetchMemberData();
+
+      // 清除 URL 參數
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, [fetchMemberData]);
 
   const handleChange = (e) => {
