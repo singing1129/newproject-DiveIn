@@ -2,9 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import HeroSection from "../components/HeroSection";
-import ActivitySection from "../components/ActivitySection";
-import ProductSection from "../components/ProductSection";
-import FooterSection from "../components/FooterSection";
+import MainSection from "../components/MainSection"; // 改名為 MainSection
+import WelcomeSection from "../components/WelcomeSection"; // 新增 WelcomeSection
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
@@ -95,34 +94,34 @@ const HomePage = () => {
   }, [bubbleAnimation]);
 
   // 處理滾輪事件（確保子層優先）
-useEffect(() => {
-  const handleWheel = (event) => {
-    if (event.defaultPrevented) return; // 如果子層已阻止，則不處理
-    if (isScrolling) return;
+  useEffect(() => {
+    const handleWheel = (event) => {
+      if (event.defaultPrevented) return; // 如果子層已阻止，則不處理
+      if (isScrolling) return;
 
-    const delta = event.deltaY;
-    let nextSection = currentSection;
+      const delta = event.deltaY;
+      let nextSection = currentSection;
 
-    if (delta > 0) {
-      nextSection = currentSection + 1;
-    } else if (delta < 0) {
-      nextSection = currentSection - 1;
-    }
+      if (delta > 0) {
+        nextSection = currentSection + 1;
+      } else if (delta < 0) {
+        nextSection = currentSection - 1;
+      }
 
-    scrollToSection(nextSection);
-  };
+      scrollToSection(nextSection);
+    };
 
-  const homePage = homePageRef.current;
-  if (homePage) {
-    homePage.addEventListener("wheel", handleWheel, { passive: false });
-  }
-
-  return () => {
+    const homePage = homePageRef.current;
     if (homePage) {
-      homePage.removeEventListener("wheel", handleWheel);
+      homePage.addEventListener("wheel", handleWheel, { passive: false });
     }
-  };
-}, [currentSection, isScrolling]);
+
+    return () => {
+      if (homePage) {
+        homePage.removeEventListener("wheel", handleWheel);
+      }
+    };
+  }, [currentSection, isScrolling]);
 
   // 初始化區塊動畫
   useEffect(() => {
@@ -162,19 +161,14 @@ useEffect(() => {
         <HeroSection scrollToSection={() => scrollToSection(1)} />
       </div>
 
-      {/* 活動推薦區 */}
+      {/* 主要內容區 */}
       <div ref={(el) => (sectionsRef.current[1] = el)} className={styles.section}>
-        <ActivitySection scrollToSection={() => scrollToSection(2)} />
+        <MainSection scrollToSection={() => scrollToSection(2)} />
       </div>
 
-      {/* 商品推薦區 */}
+      {/* 歡迎區 */}
       <div ref={(el) => (sectionsRef.current[2] = el)} className={styles.section}>
-        <ProductSection scrollToSection={() => scrollToSection(3)} />
-      </div>
-
-      {/* 底部區塊 */}
-      <div ref={(el) => (sectionsRef.current[3] = el)} className={styles.section}>
-        <FooterSection />
+        <WelcomeSection />
       </div>
     </div>
   );

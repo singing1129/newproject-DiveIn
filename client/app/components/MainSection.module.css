@@ -1,0 +1,153 @@
+.mainSection {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--primary-deep-color);
+  color: var(--white);
+}
+
+.swiperContainer {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  position: relative;
+  z-index: 1; /* 確保 Swiper 在正確的層級 */
+}
+
+.parallaxBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 400%;
+  background-size: cover;
+  background-position: center top;
+  z-index: 1;
+  filter: contrast(1.2) brightness(1.1);
+  transition: transform 1.2s ease-out; /* 背景視差滾動效果 */
+}
+
+.slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  position: relative;
+  z-index: 2; /* 確保內容在背景之上 */
+}
+
+.content {
+  text-align: center;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  opacity: 1; /* 確保透明度為 1 */
+  transform: translateY(0); /* 確保位置正確 */
+  position: relative;
+  z-index: 3; /* 確保內容在 Swiper 之上 */
+}
+
+.bubbleContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.bubble {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* 發光效果 */
+}
+
+.bubble:hover {
+  width: 250px; /* 放大後的寬度 */
+  height: 250px; /* 放大後的高度 */
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); /* 發光效果增強 */
+  z-index: 10; /* 確保放大氣泡在最上層 */
+  transform: scale(1.5) translate(-50%, -50%); /* 從中間放大 */
+}
+
+.bubbleContent {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.bubble:hover .bubbleContent {
+  opacity: 1;
+}
+
+.activityImage {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.bubbleContent h3 {
+  font-size: 1.2rem;
+  color: var(--primary-deep-color);
+  margin-bottom: 5px;
+}
+
+.bubbleContent .location {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.8);
+  font-style: italic;
+}
+
+.welcomeContent {
+  text-align: center;
+  color: var(--white);
+  z-index: 2;
+}
+
+.welcomeContent h2 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.moreButton {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  border-radius: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.moreButton.visible {
+  opacity: 1;
+}
+
+.moreButton:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
