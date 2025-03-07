@@ -23,6 +23,7 @@ export default function Coupon() {
   const [couponType, setCouponType] = useState("all"); // 優惠券類型篩選
   const [statusFilter, setStatusFilter] = useState("all"); // 活動狀態篩選
   const [sortOrder, setSortOrder] = useState("latest"); // 排序方式
+  const [showAlert, setShowAlert] = useState(false); // 控制彈出提醒的顯示
 
   // 讀取優惠券資料
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function Coupon() {
 
           if (response.data.success) {
             setCoupons(response.data.coupons);
-            setTotalPages(response.data.totalPages); // 设置总页数
+            setTotalPages(response.data.totalPages); // 設置總頁數
           } else {
             setError("獲取優惠券資料失敗");
           }
@@ -66,7 +67,7 @@ export default function Coupon() {
   };
 
   const handleClaim = async (couponId) => {
-    console.log("發送的 couponId:", searchTerm);
+    console.log("發送的 couponId:", couponId);
     console.log("發送的 userId:", user.id);
     try {
       const response = await axios.post(`${API_BASE_URL}/code-claim`, {
@@ -74,15 +75,17 @@ export default function Coupon() {
         userId: user.id, // 傳遞用戶ID
       });
       console.log("Claim response:", response.data);
+
       // 更新本地狀態，避免重新加載
+      const claimedCoupon = response.data.coupon;
       setCoupons((prevCoupons) =>
         prevCoupons.map((coupon) =>
-          coupon.id === couponId ? { ...coupon, status: "已領取" } : coupon
+          coupon.id === couponId ? { ...coupon, ...claimedCoupon, status: "已領取" } : coupon
         )
       );
     } catch (error) {
       console.error("Error claiming coupon:", error);
-      setError("領取優惠券時發生錯誤");
+      setShowAlert(true); // 顯示彈出提醒
     }
   };
 
@@ -97,16 +100,22 @@ export default function Coupon() {
         userId: user.id, // 傳遞用戶ID
       });
       console.log("Claim response:", response.data);
+
       // 更新本地狀態，避免重新加載
+      const claimedCoupon = response.data.coupon;
       setCoupons((prevCoupons) => [
         ...prevCoupons,
-        { ...response.data.coupon, status: "已領取" },
+        { ...claimedCoupon, status: "已領取" },
       ]);
       setSearchTerm(""); // 清空輸入框
     } catch (error) {
       console.error("Error claiming coupon:", error);
-      setError("領取優惠券時發生錯誤");
+      setShowAlert(true); // 顯示彈出提醒
     }
+  };
+
+  const handleCloseAlert = () => {
+    setShowAlert(false); // 隱藏彈出提醒
   };
 
   if (authLoading || loading) return <div>載入中...</div>;
@@ -186,36 +195,36 @@ export default function Coupon() {
                     </button>
                     <button
                       type="button"
-                      className={couponType === "store" ? "active" : ""}
-                      onClick={() => setCouponType("store")}
+                      className={couponType === "全館" ? "active" : ""}
+                      onClick={() => setCouponType("全館")}
                     >
                       全館優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "product" ? "active" : ""}
-                      onClick={() => setCouponType("product")}
+                      className={couponType === "商品" ? "active" : ""}
+                      onClick={() => setCouponType("商品")}
                     >
                       商品優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "rental" ? "active" : ""}
-                      onClick={() => setCouponType("rental")}
+                      className={couponType === "租賃" ? "active" : ""}
+                      onClick={() => setCouponType("租賃")}
                     >
                       租賃優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "event" ? "active" : ""}
-                      onClick={() => setCouponType("event")}
+                      className={couponType === "活動" ? "active" : ""}
+                      onClick={() => setCouponType("活動")}
                     >
                       活動優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "membership" ? "active" : ""}
-                      onClick={() => setCouponType("membership")}
+                      className={couponType === "會員專屬" ? "active" : ""}
+                      onClick={() => setCouponType("會員專屬")}
                     >
                       會員專屬優惠券
                     </button>
@@ -303,6 +312,16 @@ export default function Coupon() {
           </main>
         </div>
       </div>
+
+      {/* 彈出提醒 */}
+      {showAlert && (
+        <div className="alert-popup">
+          <div className="alert-content">
+            <p>不符合領取資格</p>
+            <button onClick={handleCloseAlert}>關閉</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

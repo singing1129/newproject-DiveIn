@@ -24,6 +24,8 @@ export default function CouponClaim() {
     page: 1,
     totalPages: 1,
   });
+  // 儲存所有優惠券的檔期活動
+  const [campaignOptions, setCampaignOptions] = useState([]);
   // 載入狀態與錯誤訊息
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -74,15 +76,33 @@ export default function CouponClaim() {
     }
   };
 
-  // 初次載入或篩選條件改變時從第一頁取得資料
+  // 初次載入時取得所有優惠券的檔期活動
+  const fetchCampaignOptions = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/campaignOptions`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // 在請求標頭中加入認證 token
+        },
+      });
+      if (response.data.success) {
+        setCampaignOptions(response.data.campaignOptions);
+      } else {
+        setCampaignOptions([]);
+      }
+    } catch (err) {
+      setCampaignOptions([]);
+      console.error("取得檔期活動失敗:", err.message);
+    }
+  };
+
   useEffect(() => {
     fetchCoupons(1, filters);
+    fetchCampaignOptions();
   }, [filters]);
 
   // 當篩選條件改變時，更新 filters 狀態並重新呼叫 API（從第一頁開始）
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    fetchCoupons(1, newFilters);
   };
 
   // 當分頁切換時呼叫此回呼
@@ -123,9 +143,6 @@ export default function CouponClaim() {
   // 新增 handleClaim 函式：處理使用者領取優惠券的動作
   const handleClaim = async (couponId) => {
     try {
-      // if (!token) {
-      //   throw new Error("請先登入再領取優惠券");
-      // }
       const requestBody = { couponId, userId: user.id }; // 使用實際登入的 userId
       const res = await fetch(`${API_BASE_URL}/claim`, {
         method: "POST",
@@ -147,15 +164,6 @@ export default function CouponClaim() {
       return { success: false, error: error.message };
     }
   };
-
-  // 根據目前的 coupons 資料計算出獨特的 campaign 選項
-  const campaignOptions = Array.from(
-    new Set(
-      coupons
-        .map((coupon) => coupon.campaign_name)
-        .filter((c) => c && c.trim() !== "")
-    )
-  );
 
   return (
     <div>

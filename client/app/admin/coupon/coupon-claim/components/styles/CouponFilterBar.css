@@ -113,3 +113,10 @@
 .filter-group button.active {
   color: var(--primary-color);
 }
+
+/* 調整檔期活動篩選按鈕選中狀態樣式 */
+.horizontal-scroll .btn.active {
+  background-color: var(--primary-color);
+  color: var(--white-color);
+  border-color: var(--primary-color);
+}

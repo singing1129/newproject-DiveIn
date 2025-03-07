@@ -1,9 +1,6 @@
-// 匯入 express 框架
 import express from "express";
-// 從設定檔中取得 MySQL 連線池
 import { pool } from "../../config/mysql.js";
 
-// 建立一個 express Router 物件
 const router = express.Router();
 
 /**
@@ -12,7 +9,6 @@ const router = express.Router();
  */
 router.post("/claim", async (req, res) => {
   try {
-    // 從請求主體取得 couponId 與 userId
     const { couponId, userId } = req.body;
     if (!couponId) {
       return res.status(400).json({ error: "缺少優惠券代碼" });
@@ -20,7 +16,6 @@ router.post("/claim", async (req, res) => {
 
     console.log("正在處理取得收藏清單的請求，userId:", userId);
 
-    // 從 users 資料表查詢該使用者的基本資料（例如生日、會員等級）
     const [userResults] = await pool.query(
       "SELECT birthday, level_id FROM users WHERE id = ?",
       [userId]
@@ -30,7 +25,6 @@ router.post("/claim", async (req, res) => {
     }
     const user = userResults[0];
 
-    // 根據 couponId 查詢該優惠券資料（且確認未被刪除）
     const [couponResults] = await pool.query(
       "SELECT * FROM coupon WHERE id = ? AND is_deleted = FALSE",
       [couponId]
@@ -40,12 +34,10 @@ router.post("/claim", async (req, res) => {
     }
     const coupon = couponResults[0];
 
-    // 驗證優惠券是否已過期
     if (new Date() > new Date(coupon.end_date)) {
       return res.status(400).json({ error: "該優惠券已過期" });
     }
 
-    // 檢查該優惠券目前總領取量是否達上限
     const [usageCountResults] = await pool.query(
       "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND is_deleted = FALSE",
       [coupon.id]
@@ -55,7 +47,6 @@ router.post("/claim", async (req, res) => {
       return res.status(400).json({ error: "優惠券已全數領取" });
     }
 
-    // 查詢該使用者已領取此優惠券的次數（不論狀態為「已領取」或「已使用」）
     const [userUsageResults] = await pool.query(
       "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND users_id = ? AND is_deleted = FALSE",
       [coupon.id, userId]
@@ -65,15 +56,12 @@ router.post("/claim", async (req, res) => {
       return res.status(400).json({ error: "您已達到領取上限" });
     }
 
-    // 計算使用者還可領取的張數
     const remainingToClaim = coupon.max_per_user - userClaimed;
 
-    // 檢查剩餘優惠券數量是否足夠
     if (totalClaimed + remainingToClaim > coupon.total_issued) {
       return res.status(400).json({ error: "剩餘優惠券數量不足" });
     }
 
-    // 依據 remainingToClaim 次數，逐筆寫入領取記錄（狀態預設為「已領取」）
     for (let i = 0; i < remainingToClaim; i++) {
       await pool.query(
         "INSERT INTO coupon_usage (coupon_id, users_id, status, used_at, is_deleted) VALUES (?, ?, ?, NULL, FALSE)",
@@ -105,12 +93,10 @@ router.get("/claim", async (req, res) => {
     const userId = req.query.userId;
     console.log("正在處理取得收藏清單的請求，userId:", userId);
 
-    // 取得 query string 中的篩選參數
     const { campaign_name, coupon_category, claim_status } = req.query;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
 
-    // 從 users 資料表中查詢使用者的基本資料
     const [userResults] = await pool.query(
       "SELECT birthday, level_id FROM users WHERE id = ?",
       [userId]
@@ -120,7 +106,6 @@ router.get("/claim", async (req, res) => {
     }
     const user = userResults[0];
 
-    // 從 coupon 資料表中取得所有未被邏輯刪除的優惠券
     const [couponResults] = await pool.query(
       "SELECT * FROM coupon WHERE is_deleted = FALSE"
     );
@@ -129,24 +114,20 @@ router.get("/claim", async (req, res) => {
     const now = new Date();
 
     for (let coupon of couponResults) {
-      // 排除已過期的優惠券
       if (coupon.end_date && now > new Date(coupon.end_date)) continue;
 
-      // 排除已全數領取的優惠券
       const [usageCountResults] = await pool.query(
         "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND is_deleted = FALSE",
         [coupon.id]
       );
       if (usageCountResults[0].count >= coupon.total_issued) continue;
 
-      // 查詢使用者已領取此優惠券的次數
       const [totalUserClaimResults] = await pool.query(
         "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND users_id = ? AND status IN ('已領取','已使用') AND is_deleted = FALSE",
         [coupon.id, userId]
       );
       const totalUserClaimCount = totalUserClaimResults[0].count;
-      
-      // 查詢使用者尚可使用的次數
+
       const [usableResults] = await pool.query(
         "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND users_id = ? AND status = '已領取' AND is_deleted = FALSE",
         [coupon.id, userId]
@@ -155,16 +136,13 @@ router.get("/claim", async (req, res) => {
 
       const remaining = coupon.max_per_user - totalUserClaimCount;
 
-      // 若使用者尚未領取但剩餘可領取數量不足，或已領取後無可使用紀錄，則跳過
       if (totalUserClaimCount === 0 && remaining <= 0) continue;
       if (totalUserClaimCount > 0 && usable === 0) continue;
 
-      // 根據檔期活動篩選
       if (campaign_name && campaign_name !== "全部" && coupon.campaign_name !== campaign_name) {
         continue;
       }
 
-      // 根據優惠分類篩選（注意：資料庫欄位為 applicable_type）
       if (coupon_category && coupon_category !== "全部") {
         const [couponTypeResults] = await pool.query(
           "SELECT * FROM coupon_type WHERE coupon_id = ? AND applicable_type = ?",
@@ -173,7 +151,6 @@ router.get("/claim", async (req, res) => {
         if (!couponTypeResults.length) continue;
       }
 
-      // 根據領取狀態篩選
       if (claim_status && claim_status !== "全部") {
         if (claim_status === "未領取" && totalUserClaimCount > 0) {
           continue;
@@ -183,7 +160,6 @@ router.get("/claim", async (req, res) => {
         }
       }
 
-      // 若優惠券有設定特定適用範圍，則進一步檢查使用者是否符合條件
       let isEligible = true;
       if (coupon.is_target) {
         const [targetResults] = await pool.query(
@@ -359,5 +335,24 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// 匯出 router 模組，供其他檔案引入
+/**
+ * GET /campaignOptions
+ * 功能：取得所有優惠券的檔期活動
+ */
+router.get("/campaignOptions", async (req, res) => {
+  try {
+    const [campaignResults] = await pool.query(
+      "SELECT DISTINCT campaign_name FROM coupon WHERE is_deleted = FALSE"
+    );
+    const campaignOptions = campaignResults.map(c => c.campaign_name).filter(c => c && c.trim() !== "");
+    return res.json({
+      success: true,
+      campaignOptions,
+    });
+  } catch (error) {
+    console.error("Error fetching campaign options:", error);
+    return res.status(500).json({ error: `伺服器錯誤: ${error.message}` });
+  }
+});
+
 export default router;
