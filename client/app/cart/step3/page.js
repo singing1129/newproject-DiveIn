@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./step3.css";
 import CartFlow from "../components/cartFlow";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,6 +11,145 @@ import axios from "axios";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 const API_BASE_URL = "http://localhost:3005/api";
+
+// 將 HomeDeliveryForm 提取為獨立組件
+const HomeDeliveryForm = React.memo(({ shippingInfo, onInputChange }) => {
+  HomeDeliveryForm.displayName = "HomeDeliveryForm";
+  return (
+    <div className="mt-3">
+      <div className="form-check mb-3">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          id="sameAsCustomer"
+          defaultChecked
+        />
+        <label className="form-check-label" htmlFor="sameAsCustomer">
+          收件人資料與會員資料相同
+        </label>
+      </div>
+      <div className="row g-3">
+        <div className="col-6">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="收件人姓名"
+            name="name"
+            value={shippingInfo.name}
+            onChange={onInputChange}
+          />
+        </div>
+        <div className="col-6">
+          <input
+            type="tel"
+            className="form-control"
+            placeholder="手機號碼"
+            name="phone"
+            value={shippingInfo.phone}
+            onChange={onInputChange}
+          />
+        </div>
+        <div className="col-12">
+          <select
+            className="form-select mb-2"
+            name="city"
+            value={shippingInfo.city}
+            onChange={onInputChange}
+          >
+            <option value="">選擇縣市</option>
+            <option value="台北市">台北市</option>
+            <option value="新北市">新北市</option>
+            <option value="桃園市">桃園市</option>
+            <option value="台中市">台中市</option>
+            <option value="台南市">台南市</option>
+            <option value="高雄市">高雄市</option>
+          </select>
+        </div>
+        <div className="col-12">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="詳細地址"
+            name="address"
+            value={shippingInfo.address}
+            onChange={onInputChange}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// 將 StorePickupForm 也提取為獨立組件
+const StorePickupForm = React.memo(
+  ({ shippingInfo, onInputChange, store711, openWindow }) => {
+    StorePickupForm.displayName = "StorePickupForm";
+    return (
+      <div className="mt-3">
+        <div className="form-check mb-3">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="sameAsCustomer2"
+            defaultChecked
+          />
+          <label className="form-check-label" htmlFor="sameAsCustomer2">
+            收件人資料與會員資料相同
+          </label>
+        </div>
+        <div className="row g-3">
+          <div className="col-6">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="收件人姓名"
+              name="name"
+              value={shippingInfo.name}
+              onChange={onInputChange}
+            />
+          </div>
+          <div className="col-6">
+            <input
+              type="tel"
+              className="form-control"
+              placeholder="手機號碼"
+              name="phone"
+              value={shippingInfo.phone}
+              onChange={onInputChange}
+            />
+          </div>
+          <div className="col-12">
+            <button
+              className="btn btn-outline-primary w-100"
+              onClick={openWindow}
+            >
+              選擇 7-11 門市
+            </button>
+          </div>
+          <div className="col-12">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="門市名稱"
+              value={store711.storename}
+              readOnly
+            />
+          </div>
+          <div className="col-12">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="門市地址"
+              value={store711.storeaddress}
+              readOnly
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
 const Cart2 = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -102,151 +241,14 @@ const Cart2 = () => {
     method: "",
   });
 
-  // 處理表單輸入變化
-  const handleShippingInfoChange = (e) => {
+  const handleShippingInfoChange = useCallback((e) => {
     const { name, value } = e.target;
     setShippingInfo((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
-  // 修改宅配表單
-  const HomeDeliveryForm = () => (
-    <div className="mt-3">
-      <div className="form-check mb-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="sameAsCustomer"
-          defaultChecked
-        />
-        <label className="form-check-label" htmlFor="sameAsCustomer">
-          收件人資料與會員資料相同
-        </label>
-      </div>
-      <div className="row g-3">
-        <div className="col-6">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="收件人姓名"
-            name="name"
-            value={shippingInfo.name}
-            onChange={handleShippingInfoChange}
-          />
-        </div>
-        <div className="col-6">
-          <input
-            type="tel"
-            className="form-control"
-            placeholder="手機號碼"
-            name="phone"
-            value={shippingInfo.phone}
-            onChange={handleShippingInfoChange}
-          />
-        </div>
-        <div className="col-12">
-          <select
-            className="form-select mb-2"
-            name="city"
-            value={shippingInfo.city}
-            onChange={handleShippingInfoChange}
-          >
-            <option value="">選擇縣市</option>
-            <option value="台北市">台北市</option>
-            <option value="新北市">新北市</option>
-            <option value="桃園市">桃園市</option>
-            <option value="台中市">台中市</option>
-            <option value="台南市">台南市</option>
-            <option value="高雄市">高雄市</option>
-          </select>
-        </div>
-        <div className="col-12">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="詳細地址"
-            name="address"
-            value={shippingInfo.address}
-            onChange={handleShippingInfoChange}
-          />
-        </div>
-      </div>
-    </div>
-  );
+  }, []);
 
-  // 超商取貨表單
-  const StorePickupForm = () => (
-    <div className="mt-3">
-      <div className="form-check mb-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="sameAsCustomer2"
-          defaultChecked
-        />
-        <label className="form-check-label" htmlFor="sameAsCustomer2">
-          收件人資料與會員資料相同
-        </label>
-      </div>
-      <div className="row g-3">
-        <div className="col-6">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="收件人姓名"
-            name="name"
-            value={shippingInfo.name}
-            onChange={handleShippingInfoChange}
-          />
-        </div>
-        <div className="col-6">
-          <input
-            type="tel"
-            className="form-control"
-            placeholder="手機號碼"
-            name="phone"
-            value={shippingInfo.phone}
-            onChange={handleShippingInfoChange}
-          />
-        </div>
-        <div className="col-12">
-          <button
-            className="btn btn-outline-primary w-100"
-            onClick={() => {
-              // 調用 7-11 門市選擇
-              openWindow();
-            }}
-          >
-            選擇 7-11 門市
-          </button>
-        </div>
-        <div className="col-12">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="門市名稱"
-            value={store711.storename}
-            readOnly
-          />
-        </div>
-        <div className="col-12">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="門市地址"
-            value={store711.storeaddress}
-            readOnly
-          />
-        </div>
-      </div>
-    </div>
-  );
-  console.log("cartData組件＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿", cartData.bundles);
-  console.log(
-    "cartData組件＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿",
-    cartData.cartData
-  );
   // 處理商品名稱
   const itemNames = [
     ...cartData.products.map(
@@ -832,9 +834,17 @@ const Cart2 = () => {
                       </div>
                       {/* 根據選擇的配送方式顯示對應的表單 */}
                       {shippingMethod === "homeDelivery" ? (
-                        <HomeDeliveryForm />
+                        <HomeDeliveryForm
+                          shippingInfo={shippingInfo}
+                          onInputChange={handleShippingInfoChange}
+                        />
                       ) : (
-                        <StorePickupForm />
+                        <StorePickupForm
+                          shippingInfo={shippingInfo}
+                          onInputChange={handleShippingInfoChange}
+                          store711={store711}
+                          openWindow={openWindow}
+                        />
                       )}
                     </div>
                   </div>
@@ -862,7 +872,6 @@ const Cart2 = () => {
                   </div>
                   {/* 可領取的優惠券列表 */}
                   <div>
-                    <label className="form-label">可領取的優惠券</label>
                     <div className="vstack gap-2">
                       {/* 優惠券項目 */}
                       <div className="border rounded p-3 position-relative">
@@ -960,34 +969,36 @@ const Cart2 = () => {
                     </div>
                     <div className="d-flex justify-content-between text-danger">
                       <span>優惠折抵</span>
+                      {/* 優惠折抵的金額 */}
                       <span>-NT$ 100</span>
                     </div>
                     <hr />
                     <div className="d-flex justify-content-between fw-bold">
                       <span>總計金額</span>
                       <span className="text-danger fs-5">
+                        {/* 優惠折抵後的金額 */}
                         NT$ {calculateTotal() - 100}
                       </span>
                     </div>
                     <button
-                      className="btn btn-primary w-100 mt-3 p-3 fw-bold shadow-lg"
+                      className="btn btn-primary w-100 mt-3 p-3 fw-bold shadow-lg rounded-pill"
                       onClick={handleEcpayCheckout}
                     >
                       <i className="bi bi-credit-card me-2"></i>
-                      綠界付款
+                      信用卡
                     </button>
                     <button
-                      className="btn btn-success w-100 mt-3 p-3 fw-bold shadow-lg"
+                      className="btn btn-success w-100 mt-3 p-3 fw-bold shadow-lg rounded-pill text-white fw-100"
                       onClick={handleLinePayCheckout}
                     >
-                      Line Pay
+                      <div>Line Pay</div>
                     </button>
-                    <button
+                    {/* <button
                       className="btn btn-warning w-100 mt-3 p-3 fw-bold shadow-lg"
                       onClick={handleOpenModal}
                     >
                       信用卡支付
-                    </button>
+                    </button> */}
                     {/* <div className="text-center mt-2">
                       <small className="text-muted">
                         完成訂單可獲得 18 點購物金

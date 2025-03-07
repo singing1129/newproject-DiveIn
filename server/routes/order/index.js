@@ -130,19 +130,22 @@ router.get("/:orderId", async (req, res) => {
         [orderId, bundle_id]
       );
 
-      // 计算套装中产品的总原价
+      // 計算套裝價格
       const originalTotal = bundleItems.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
       );
 
-      // 获取套装数量（基于其中一个商品的数量计算）
-      const bundleQuantity =
-        bundleItems.length > 0
-          ? Math.floor(bundleItems[0].quantity / bundleItems.length)
-          : 0;
+      // 獲取套裝數量
+      const bundleQuantity = bundleItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+      // bundleItems.length > 0
+      //   ? Math.floor(bundleItems[0].quantity / bundleItems.length)
+      //   : 0;
 
-      // 添加到套装列表
+      // 添加到套裝列表
       bundles.push({
         id: bundle_id,
         name: bundleInfo[0].name,
@@ -178,7 +181,7 @@ router.get("/:orderId", async (req, res) => {
 
       switch (paymentStatus) {
         case "pending":
-          return "待付款";
+          return "已付款";
         case "paid":
           if (status === "shipped") return "已出貨";
           if (status === "delivered") return "已送達";
@@ -445,6 +448,10 @@ router.get("/user/:userId", async (req, res) => {
                 Number(activityCount[0].count || 0) +
                 Number(rentalCount[0].count || 0) +
                 Number(bundleCount[0].count || 0),
+              productCount: Number(productCount[0].count || 0),
+              activityCount: Number(activityCount[0].count || 0),
+              rentalCount: Number(rentalCount[0].count || 0),
+              bundleCount: Number(bundleCount[0].count || 0),
               firstItem: firstRental.length > 0 ? firstRental[0] : null,
             };
           }
@@ -453,9 +460,14 @@ router.get("/user/:userId", async (req, res) => {
             ...order,
             orderNumber: `OD${String(order.id).padStart(8, "0")}`,
             totalItems:
-              (productCount[0].count || 0) +
-              (activityCount[0].count || 0) +
-              (rentalCount[0].count || 0),
+              Number(productCount[0].count || 0) +
+              Number(activityCount[0].count || 0) +
+              Number(rentalCount[0].count || 0) +
+              Number(bundleCount[0].count || 0),
+            productCount: Number(productCount[0].count || 0),
+            activityCount: Number(activityCount[0].count || 0),
+            rentalCount: Number(rentalCount[0].count || 0),
+            bundleCount: Number(bundleCount[0].count || 0),
             firstItem: firstActivity[0],
           };
         }
@@ -464,9 +476,14 @@ router.get("/user/:userId", async (req, res) => {
           ...order,
           orderNumber: `OD${String(order.id).padStart(8, "0")}`,
           totalItems:
-            (productCount[0].count || 0) +
-            (activityCount[0].count || 0) +
-            (rentalCount[0].count || 0),
+            Number(productCount[0].count || 0) +
+            Number(activityCount[0].count || 0) +
+            Number(rentalCount[0].count || 0) +
+            Number(bundleCount[0].count || 0),
+          productCount: Number(productCount[0].count || 0),
+          activityCount: Number(activityCount[0].count || 0),
+          rentalCount: Number(rentalCount[0].count || 0),
+          bundleCount: Number(bundleCount[0].count || 0),
           firstItem: firstItem[0],
         };
       })
