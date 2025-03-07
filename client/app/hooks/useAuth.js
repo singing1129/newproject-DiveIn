@@ -474,7 +474,17 @@ export function AuthProvider({ children }) {
   //  google和line登入
   const handleSocialLogin = async (provider) => {
     try {
-      console.log(`嘗試 ${provider} 登入`);
+      // 檢查是否為連結操作
+      const isLinking = localStorage.getItem("isLinkingAccount") === "true";
+      const linkToUserId = localStorage.getItem("linkToUserId");
+
+      console.log(`嘗試 ${provider} ${isLinking ? "連結" : "登入"}`, {
+        isLinking,
+        linkToUserId,
+        authSource: localStorage.getItem("authSource"),
+        returnToAccountPage: localStorage.getItem("returnToAccountPage"),
+      });
+
       await signIn(provider);
 
       // 等待會話建立 - 增加等待時間，特別是對 LINE 可能需要更長時間
@@ -498,6 +508,12 @@ export function AuthProvider({ children }) {
         provider_id:
           session.user.id || session.user.sub || Date.now().toString(),
       };
+
+      // 如果是連結操作，添加連結用戶ID
+      if (isLinking && linkToUserId) {
+        userData.link_to_user_id = linkToUserId;
+        console.log(`準備連結 ${provider} 帳號到用戶ID:`, linkToUserId);
+      }
 
       // 處理 Line 可能不提供 email 的情況
       if (!userData.email && provider === "line") {
@@ -532,7 +548,22 @@ export function AuthProvider({ children }) {
 
   // 使用統一處理函數
   const loginWithGoogle = () => handleSocialLogin("google");
-  const loginWithLine = () => handleSocialLogin("line");
+  const loginWithLine = () => {
+    console.log("執行 loginWithLine");
+
+    // 檢查是否為連結操作
+    const isLinking = localStorage.getItem("isLinkingAccount") === "true";
+    const linkToUserId = localStorage.getItem("linkToUserId");
+
+    console.log("連結操作檢查:", {
+      isLinking,
+      linkToUserId,
+      authSource: localStorage.getItem("authSource"),
+      returnToAccountPage: localStorage.getItem("returnToAccountPage"),
+    });
+
+    handleSocialLogin("line");
+  };
 
   //  loginWithEmail
   const loginWithEmail = async (email, password) => {

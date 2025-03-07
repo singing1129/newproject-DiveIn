@@ -83,10 +83,13 @@ export default function AccountForm() {
     // 設置新標記
     localStorage.setItem("authSource", "account_link");
     localStorage.setItem("linkToUserId", userId);
+    localStorage.setItem("isLinkingAccount", "true"); // 明確標記為連結操作
+    localStorage.setItem("returnToAccountPage", "true");
 
     console.log("從會員中心發起Line連結請求", {
       userId,
       timestamp: new Date().toISOString(),
+      isLinkingAccount: true,
     });
 
     loginWithLine();
@@ -195,11 +198,19 @@ export default function AccountForm() {
           }
         );
 
-      if (result && result.success) {
-        setMessage({ type: "success", text: "手機號碼已成功連結" });
-        setShowPhoneModal(false);
-        // 刷新提供者列表
-        fetchMemberData();
+        const linkResult = await linkResponse.json();
+
+        if (linkResult.status === "success") {
+          setMessage({ type: "success", text: "手機號碼已成功連結" });
+          setShowPhoneModal(false);
+          // 刷新提供者列表
+          fetchMemberData();
+        } else {
+          setMessage({
+            type: "error",
+            text: linkResult.message || "連結手機號碼失敗",
+          });
+        }
       } else {
         setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
       }
@@ -217,38 +228,7 @@ export default function AccountForm() {
     }
     return number;
   };
-  const handleAddGoogleLogin = () => {
-    // 獲取當前用戶ID
-    const userId = getDecodedToken()?.id;
-    if (!userId) {
-      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-      return;
-    }
 
-    // 儲存到localStorage
-    localStorage.setItem("returnToAccountPage", "true");
-    localStorage.setItem("linkToUserId", userId);
-    localStorage.setItem("isLinkingAccount", "true"); // 新增這行，標記為連結操作
-
-
-    loginWithGoogle();
-  };
-
-  // 處理連結 Line 帳號
-  const handleAddLineLogin = () => {
-    // 獲取當前用戶ID
-    const userId = getDecodedToken()?.id;
-    if (!userId) {
-      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-      return;
-    }
-
-    // 儲存到localStorage
-    localStorage.setItem("returnToAccountPage", "true");
-    localStorage.setItem("linkToUserId", userId);
-
-    loginWithLine();
-  };
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
     if (!token) return;
