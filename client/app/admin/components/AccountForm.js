@@ -38,12 +38,90 @@ export default function AccountForm() {
   const [confirmation, setConfirmation] = useState(null);
   const { loginWithPhone } = useAuth();
 
-  // 處理連結手機號碼
+  // 處理連結 Google 帳號
+  const handleAddGoogleLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 清除所有舊標記
+    localStorage.removeItem("authSource");
+    localStorage.removeItem("linkToUserId");
+    localStorage.removeItem("returnToAccountPage");
+    localStorage.removeItem("isLinkingAccount");
+
+    // 設置新標記 - 使用明確的來源標識
+    localStorage.setItem("authSource", "account_link");
+    localStorage.setItem("linkToUserId", userId);
+
+    console.log("從會員中心發起Google連結請求", {
+      userId,
+      timestamp: new Date().toISOString(),
+    });
+
+    loginWithGoogle();
+  };
+
+  // 處理連結 Line 帳號
+  const handleAddLineLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 清除所有舊標記
+    localStorage.removeItem("authSource");
+    localStorage.removeItem("linkToUserId");
+    localStorage.removeItem("returnToAccountPage");
+    localStorage.removeItem("isLinkingAccount");
+
+    // 設置新標記
+    localStorage.setItem("authSource", "account_link");
+    localStorage.setItem("linkToUserId", userId);
+
+    console.log("從會員中心發起Line連結請求", {
+      userId,
+      timestamp: new Date().toISOString(),
+    });
+
+    loginWithLine();
+  };
+
+  // 處理連結電話號碼
+  // 處理連結電話號碼
   const handleAddPhoneLogin = () => {
+    // 獲取當前用戶ID
+    const userId = getDecodedToken()?.id;
+    if (!userId) {
+      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+      return;
+    }
+
+    // 清除所有舊標記
+    localStorage.removeItem("authSource");
+    localStorage.removeItem("linkToUserId");
+    localStorage.removeItem("returnToAccountPage");
+    localStorage.removeItem("isLinkingAccount");
+
+    // 設置新標記
+    localStorage.setItem("linkToUserId", userId);
+    localStorage.setItem("returnToAccountPage", "true"); // 明確標記這是一個連結操作
+
+    console.log("從會員中心發起電話連結請求", {
+      userId,
+      timestamp: new Date().toISOString(),
+    });
+
     setShowPhoneModal(true);
   };
 
   // 發送 OTP
+
   const sendOTP = async () => {
     try {
       // 格式化手機號碼
@@ -57,6 +135,14 @@ export default function AccountForm() {
         });
         return;
       }
+
+      // 獲取當前用戶ID，為後續連結做準備
+      const userId = getDecodedToken()?.id;
+      if (!userId) {
+        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        return;
+      }
+      console.log(`準備將手機號 ${formattedPhone} 連結到用戶ID: ${userId}`);
 
       const confirmationFunc = await loginWithPhone(formattedPhone);
       if (confirmationFunc) {
@@ -87,22 +173,44 @@ export default function AccountForm() {
         return;
       }
 
-      localStorage.setItem("returnToAccountPage", "true");
-      localStorage.setItem("linkToUserId", userId);
+      // 這裡確保在驗證前設置連結標記
+      console.log(`準備連結手機號碼到用戶ID: ${userId}`);
 
+      // 執行 OTP 驗證
       const result = await confirmation(otp);
+      console.log("OTP 驗證結果:", result);
+      if (result && result.user) {
+        // OTP驗證成功，現在調用API將電話與用戶綁定
+        const linkResponse = await fetch(
+          "http://localhost:3005/api/admin/social-login",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              provider: "phone",
+              provider_id: result.user.phoneNumber || phone,
+              name: formData.name || "手機用戶",
+              link_to_user_id: userId, // 明確指定要綁定的用戶ID
+            }),
+          }
+        );
 
-      if (result && result.success) {
-        setMessage({ type: "success", text: "手機號碼已成功連結" });
-        setShowPhoneModal(false);
-        // 刷新提供者列表
-        fetchMemberData();
+        const linkResult = await linkResponse.json();
+
+        if (linkResult.status === "success") {
+          setMessage({ type: "success", text: "手機號碼已成功綁定到您的帳號" });
+          setShowPhoneModal(false);
+          // 刷新提供者列表
+          fetchMemberData();
+        } else {
+          setMessage({ type: "error", text: linkResult.message || "綁定失敗" });
+        }
       } else {
         setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
       }
     } catch (error) {
-      console.error("驗證碼錯誤", error);
-      setMessage({ type: "error", text: "驗證碼錯誤，請重新輸入" });
+      console.error("驗證過程錯誤:", error);
+      setMessage({ type: "error", text: `驗證錯誤: ${error.message}` });
     }
   };
 
@@ -114,38 +222,7 @@ export default function AccountForm() {
     }
     return number;
   };
-  const handleAddGoogleLogin = () => {
-    // 獲取當前用戶ID
-    const userId = getDecodedToken()?.id;
-    if (!userId) {
-      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-      return;
-    }
 
-    // 儲存到localStorage
-    localStorage.setItem("returnToAccountPage", "true");
-    localStorage.setItem("linkToUserId", userId);
-    localStorage.setItem("isLinkingAccount", "true"); // 新增這行，標記為連結操作
-
-
-    loginWithGoogle();
-  };
-
-  // 處理連結 Line 帳號
-  const handleAddLineLogin = () => {
-    // 獲取當前用戶ID
-    const userId = getDecodedToken()?.id;
-    if (!userId) {
-      setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
-      return;
-    }
-
-    // 儲存到localStorage
-    localStorage.setItem("returnToAccountPage", "true");
-    localStorage.setItem("linkToUserId", userId);
-
-    loginWithLine();
-  };
   // 從後端獲取會員資料
   const fetchMemberData = useCallback(async () => {
     if (!token) return;
@@ -286,7 +363,7 @@ export default function AccountForm() {
 
       // 發送請求
       const response = await axios.put(
-        "http://localhost:3005/api/admin/user",
+        "http://localhost:3005/api/admin/profile",
         formDataToSend,
         {
           headers: {
