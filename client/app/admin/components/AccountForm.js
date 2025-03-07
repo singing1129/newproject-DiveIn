@@ -369,7 +369,7 @@ export default function AccountForm() {
 
       // 發送請求
       const response = await axios.put(
-        "http://localhost:3005/api/admin/profile",
+        "http://localhost:3005/api/admin/user",
         formDataToSend,
         {
           headers: {

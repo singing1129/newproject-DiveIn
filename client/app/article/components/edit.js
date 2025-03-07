@@ -150,12 +150,11 @@ const Edit = ({ initialData = {}, onSave }) => {
         <div className="secondaryTitle">上傳封面縮圖</div>
         <div className="image-upload-box">
           <label htmlFor="coverImage" className="upload-square">
-          {previewImage ? (
-  <img src={previewImage} alt="封面圖片預覽" />
-) : (
-  <img src={oldImageUrl} alt="舊封面圖片" />
-)}
-
+            {previewImage ? (
+              <img src={previewImage} alt="封面圖片預覽" />
+            ) : (
+              <img src={oldImageUrl} alt="舊封面圖片" />
+            )}
           </label>
           <input
             type="file"

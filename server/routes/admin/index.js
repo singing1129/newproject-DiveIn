@@ -332,7 +332,6 @@ async function handleAccountLinking(
 }
 
 // 處理常規社交登入邏輯
-// 處理常規社交登入邏輯
 async function handleSocialLogin(
   res,
   provider,
@@ -766,6 +765,180 @@ router.post("/get-user-id", async (req, res) => {
       status: "error",
       message: "伺服器錯誤",
       details: error.message,
+    });
+  }
+});
+
+// 更新會員資料 API - 使用 multer 處理檔案上傳
+router.put("/user", checkToken, upload.single("avatar"), async (req, res) => {
+  const { id } = req.decoded;
+  const { name, email, password, phone } = req.body;
+  const avatarFile = req.file;
+
+  console.log("收到更新請求:", {
+    userId: id,
+    name,
+    email,
+    hasPassword: !!password,
+    phone,
+    hasAvatar: !!avatarFile,
+  });
+
+  if (avatarFile) {
+    console.log("接收到頭像檔案:", avatarFile.filename);
+  }
+
+  try {
+    // 開始一個事務 (transaction)
+    await pool.query("START TRANSACTION");
+
+    // 獲取用戶當前資料
+    const [currentUser] = await pool.execute(
+      "SELECT email, head FROM users WHERE id = ?",
+      [id]
+    );
+
+    if (currentUser.length === 0) {
+      await pool.query("ROLLBACK");
+      return res.status(404).json({
+        status: "error",
+        message: "找不到使用者資料",
+      });
+    }
+
+    const currentEmail = currentUser[0].email;
+    const currentAvatar = currentUser[0].head;
+
+    // 查詢用戶的登入方式
+    const [providers] = await pool.execute(
+      "SELECT provider FROM user_providers WHERE user_id = ?",
+      [id]
+    );
+
+    const usesEmailLogin = providers.some((p) => p.provider === "email");
+
+    // 如果用戶要修改 email 且使用 email 登入，需要檢查新 email 是否已被使用
+    if (email && email !== currentEmail) {
+      // 檢查新 email 是否已被其他用戶使用
+      const [existingUsers] = await pool.execute(
+        "SELECT id FROM users WHERE email = ? AND id != ?",
+        [email, id]
+      );
+
+      if (existingUsers.length > 0) {
+        await pool.query("ROLLBACK");
+        return res.status(409).json({
+          status: "error",
+          message: "此電子郵件已被其他用戶使用",
+        });
+      }
+    }
+
+    // 準備更新數據
+    let updateFields = [];
+    let values = [];
+
+    // 添加需要更新的欄位
+    if (name) {
+      updateFields.push("name = ?");
+      values.push(name);
+    }
+
+    if (email) {
+      updateFields.push("email = ?");
+      values.push(email);
+    }
+
+    if (phone) {
+      updateFields.push("phone = ?");
+      values.push(phone);
+    }
+
+    // 處理頭像檔案
+    if (avatarFile) {
+      updateFields.push("head = ?");
+      values.push(avatarFile.filename);
+      console.log("更新頭像為:", avatarFile.filename);
+
+      // 如果有舊頭像且不是 base64 格式，刪除舊檔案
+      if (currentAvatar && !currentAvatar.startsWith("data:")) {
+        const oldFilePath = path.join(uploadDir, currentAvatar);
+        if (fs.existsSync(oldFilePath)) {
+          fs.unlinkSync(oldFilePath);
+          console.log("刪除舊頭像:", oldFilePath);
+        }
+      }
+    }
+
+    // 如果提供了新密碼，則加密後更新
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateFields.push("password = ?");
+      values.push(hashedPassword);
+    }
+
+    // 如果沒有任何欄位需要更新，則返回成功
+    if (updateFields.length === 0) {
+      await pool.query("COMMIT");
+      return res.status(200).json({
+        status: "success",
+        message: "資料保持不變",
+      });
+    }
+
+    // 添加 id 作為 WHERE 條件
+    values.push(id);
+
+    // 執行更新 users 表操作
+    const sql = `UPDATE users SET ${updateFields.join(
+      ", "
+    )}, updated_at = NOW() WHERE id = ?`;
+
+    console.log("執行的 SQL:", sql);
+    console.log("SQL 參數:", values);
+
+    const [result] = await pool.execute(sql, values);
+
+    // 如果用戶修改了 email 且使用 email 登入，同時更新 user_providers 表
+    if (email && email !== currentEmail && usesEmailLogin) {
+      await pool.execute(
+        "UPDATE user_providers SET provider_id = ? WHERE user_id = ? AND provider = 'email'",
+        [email, id]
+      );
+      console.log("已更新 user_providers 表中的 email 登入記錄");
+    }
+
+    // 提交事務
+    await pool.query("COMMIT");
+
+    // 檢查是否成功更新
+    if (result.affectedRows > 0) {
+      res.status(200).json({
+        status: "success",
+        message: "會員資料更新成功",
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        message: "找不到會員資料",
+      });
+    }
+  } catch (err) {
+    // 發生錯誤時回滾事務
+    await pool.query("ROLLBACK");
+    console.error("更新會員資料錯誤:", err);
+
+    // 處理電子郵件衝突的情況
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        status: "error",
+        message: "此電子郵件已被使用",
+      });
+    }
+
+    res.status(500).json({
+      status: "error",
+      message: "更新會員資料失敗: " + err.message,
     });
   }
 });
