@@ -12,9 +12,17 @@ router.get("/:orderId", async (req, res) => {
     await connection.beginTransaction();
 
     // 1. 查詢訂單基本資訊
+    // const [orderRows] = await connection.execute(
+    //   `SELECT o.id, o.user_id, o.total_price, o.status, o.createdAt, 
+    //           o.payment_method, o.transaction_id, o.payment_time, o.payment_status, o.points
+    //    FROM orders o 
+    //    WHERE o.id = ?`,
+    //   [orderId]
+    // );
     const [orderRows] = await connection.execute(
       `SELECT o.id, o.user_id, o.total_price, o.status, o.createdAt, 
-              o.payment_method, o.transaction_id, o.payment_time, o.payment_status, o.points
+              o.payment_method, o.transaction_id, o.payment_time, o.payment_status, 
+              o.points, o.coupon_usage_id, o.coupon_discount
        FROM orders o 
        WHERE o.id = ?`,
       [orderId]
@@ -26,8 +34,22 @@ router.get("/:orderId", async (req, res) => {
         message: "找不到訂單資訊",
       });
     }
-
     const orderInfo = orderRows[0];
+    // 如果有優惠券使用 ID，查詢優惠券詳細資訊
+    let couponInfo = null;
+    if (orderInfo.coupon_usage_id) {
+      const [couponRows] = await connection.execute(
+        `SELECT cu.id as usage_id, c.code, c.name, c.discount_type, c.discount
+         FROM coupon_usage cu
+         JOIN coupon c ON cu.coupon_id = c.id
+         WHERE cu.id = ?`,
+        [orderInfo.coupon_usage_id]
+      );
+      
+      if (couponRows.length > 0) {
+        couponInfo = couponRows[0];
+      }
+    }
 
     // 2. 查詢訂單配送資訊
     const [shippingRows] = await connection.execute(
@@ -194,6 +216,8 @@ router.get("/:orderId", async (req, res) => {
           return "處理中";
       }
     };
+    console.log("訂單信息:", orderInfo);
+
 
     // 整合數據
     const orderData = {
@@ -209,6 +233,10 @@ router.get("/:orderId", async (req, res) => {
         statusCode: orderInfo.status, // 保留原始狀態碼，前端可能需要判斷
         totalAmount: orderInfo.total_price,
         rewardPoints: orderInfo.points || 0,
+         // 添加優惠券相關資訊
+        couponDiscount: parseFloat(orderInfo.coupon_discount) || 0,
+        couponName: couponInfo ? couponInfo.name : null,
+        couponCode: couponInfo ? couponInfo.code : null,
       },
       paymentInfo: {
         method: orderInfo.payment_method,

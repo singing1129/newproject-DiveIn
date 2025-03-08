@@ -355,10 +355,10 @@ const Cart2 = () => {
         }
       }
 
-      // 建立訂單前標記優惠券為已使用
-      if (selectedCoupon) {
-        await completeCouponUsage();
-      }
+      // // 建立訂單前標記優惠券為已使用
+      // if (selectedCoupon) {
+      //   await completeCouponUsage();
+      // }
 
       // 建立訂單
       const orderResponse = await fetch(`${API_BASE_URL}/checkout/complete`, {
@@ -372,13 +372,15 @@ const Cart2 = () => {
           shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
           paymentMethod: "linepay",
           couponCode: selectedCoupon ? selectedCoupon.code : null,
-          couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
-          couponDiscount: couponDiscount,
+          // couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
+          // couponDiscount: couponDiscount,
           activityTravelers: Object.values(activityTravelers).flat(),
         }),
       });
 
       const orderResult = await orderResponse.json();
+      console.log("orderResult:", orderResult);
+
       // if (!orderResult.success) throw new Error(orderResult.message);
       localStorage.setItem("lastOrderId", orderResult.data.orderId);
 
@@ -409,7 +411,15 @@ const Cart2 = () => {
       window.location.href = result.data.paymentUrl;
     } catch (error) {
       console.error("LINE Pay 付款失敗:", error);
-      alert(error.message);
+
+      // 提供更明確的錯誤訊息
+      if (error.message.includes("優惠券")) {
+        alert(
+          `優惠券錯誤: ${error.message}. 請嘗試使用其他優惠券或不使用優惠券結帳。`
+        );
+      } else {
+        alert(error.message);
+      }
     }
   };
 
@@ -504,10 +514,10 @@ const Cart2 = () => {
       const activityTravelers = JSON.parse(
         localStorage.getItem("activityTravelers") || "{}"
       );
-      // 建立訂單前標記優惠券為已使用
-      if (selectedCoupon) {
-        await completeCouponUsage();
-      }
+      // // 建立訂單前標記優惠券為已使用
+      // if (selectedCoupon) {
+      //   await completeCouponUsage();
+      // }
 
       // 建立訂單
       const orderResponse = await fetch(`${API_BASE_URL}/checkout/complete`, {
@@ -521,8 +531,8 @@ const Cart2 = () => {
           shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
           paymentMethod: "ecpay",
           couponCode: selectedCoupon ? selectedCoupon.code : null,
-          couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
-          couponDiscount: couponDiscount,
+          // couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
+          // couponDiscount: couponDiscount,
           activityTravelers: Object.values(activityTravelers).flat(),
         }),
       });

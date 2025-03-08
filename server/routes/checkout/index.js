@@ -525,6 +525,9 @@ router.post("/complete", async (req, res) => {
         [couponCode, userId]
       );
 
+       // 輸出查詢結果進行調試
+      console.log("優惠券查詢結果:", couponResult);
+
       if (couponResult.length > 0) {
         const coupon = couponResult[0];
 
