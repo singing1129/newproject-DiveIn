@@ -28,6 +28,7 @@ const MainSection = () => {
   const headerRef = useRef(null);
   const breadcrumbRef = useRef(null);
   const footerRef = useRef(null);
+  const bubbleContainerRef = useRef(null);
 
   useEffect(() => {
     const API_BASE_URL = "http://localhost:3005";
@@ -82,37 +83,15 @@ const MainSection = () => {
 
   // 隨機分散氣泡位置並限制在容器內，確保不重疊
   const setRandomPositionForItem = (
-    item,
+    index,
     existingPositions,
-    containerSelector,
     itemSize = 200
   ) => {
-    const container = document.querySelector(containerSelector);
-    if (!container) {
-      console.log(
-        `[Debug] Container not found for selector: ${containerSelector}`
-      );
-      return { top: 0, left: 0 };
-    }
+    const container = bubbleContainerRef.current;
+    if (!container) return { top: 0, left: 0 };
 
-    const slide = document.querySelector(`.${styles.slide}`);
-    const content = document.querySelector(`.${styles.content}`);
-    const header = content.querySelector("h2");
-    const slideWidth = slide.clientWidth;
-    const slideHeight = slide.clientHeight;
-    const contentPadding = parseInt(getComputedStyle(content).padding) || 20;
-    const headerHeight = header ? header.offsetHeight : 0;
-    const containerWidth = container.clientWidth - 2 * contentPadding;
-    const containerHeight = slideHeight - 2 * contentPadding - headerHeight;
-
-    console.log(
-      `[Debug] Slide size - Width: ${slideWidth}px, Height: ${slideHeight}px`
-    );
-    console.log(`[Debug] Header height: ${headerHeight}px`);
-    console.log(
-      `[Debug] Adjusted Container size - Width: ${containerWidth}px, Height: ${containerHeight}px`
-    );
-
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
     const padding = 20;
     const minSpacing = itemSize + 60; // 增加間距以確保不重疊
     let attempts = 0;
@@ -151,11 +130,6 @@ const MainSection = () => {
       left = padding;
     }
 
-    console.log(
-      `[Debug] Bubble position - Top: ${top}px, Left: ${left}px, Attempts: ${attempts}`
-    );
-    item.style.top = `${top}px`;
-    item.style.left = `${left}px`;
     return { top, left };
   };
 
@@ -166,76 +140,40 @@ const MainSection = () => {
       activities.length > 0 &&
       swiperInstance?.activeIndex === 0
     ) {
-      setTimeout(() => {
-        const bubbles = document.querySelectorAll(`.${styles.bubble}`);
-        bubbles.forEach((bubble, index) => {
-          if (index < visibleCards && !activityPositions[index]) {
-            const newPosition = setRandomPositionForItem(
-              bubble,
-              activityPositions.filter((pos) => pos),
-              `.${styles.slide}:nth-child(1) .${styles.bubbleContainer}`
-            );
-            setActivityPositions((prev) => {
-              const updated = [...prev];
-              updated[index] = newPosition;
-              return updated;
-            });
-          } else if (activityPositions[index]) {
-            bubble.style.top = `${activityPositions[index].top}px`;
-            bubble.style.left = `${activityPositions[index].left}px`;
-          }
-        });
-      }, 100);
+      const newPositions = activityPositions.map((pos, index) => {
+        if (index < visibleCards && !pos) {
+          return setRandomPositionForItem(
+            index,
+            activityPositions.filter((p) => p)
+          );
+        }
+        return pos;
+      });
+      setActivityPositions(newPositions);
     }
   }, [visibleCards, activities, loading, swiperInstance]);
 
   // 商品/租借氣泡位置處理
   useEffect(() => {
     if (!loading && products.length > 0 && swiperInstance?.activeIndex === 1) {
-      setTimeout(() => {
-        const bubbles = document.querySelectorAll(`.${styles.productBubble}`);
-        console.log(`[Debug] Number of product bubbles: ${bubbles.length}`);
-        bubbles.forEach((bubble, index) => {
-          const product = products[index];
-          const rentProduct = expandedProducts[product?.id];
+      const newPositions = productPositions.map((pos, index) => {
+        const product = products[index];
+        const rentProduct = expandedProducts[product?.id];
 
-          // 初始產品氣泡位置
-          if (
-            visibleProducts[index] &&
-            !rentProduct &&
-            !productPositions[index]
-          ) {
-            const newPosition = setRandomPositionForItem(
-              bubble,
-              productPositions.filter((pos) => pos),
-              `.${styles.slide}:nth-child(2) .${styles.bubbleContainer}`
-            );
-            setProductPositions((prev) => {
-              const updated = [...prev];
-              updated[index] = newPosition;
-              return updated;
-            });
-          }
-          // 點擊後租借氣泡位置
-          else if (rentProduct && !productPositions[index]) {
-            const newPosition = setRandomPositionForItem(
-              bubble,
-              productPositions.filter((pos) => pos),
-              `.${styles.slide}:nth-child(2) .${styles.bubbleContainer}`
-            );
-            setProductPositions((prev) => {
-              const updated = [...prev];
-              updated[index] = newPosition;
-              return updated;
-            });
-          }
-          // 保持已計算位置
-          else if (productPositions[index]) {
-            bubble.style.top = `${productPositions[index].top}px`;
-            bubble.style.left = `${productPositions[index].left}px`;
-          }
-        });
-      }, 100);
+        if (visibleProducts[index] && !rentProduct && !pos) {
+          return setRandomPositionForItem(
+            index,
+            productPositions.filter((p) => p)
+          );
+        } else if (rentProduct && !pos) {
+          return setRandomPositionForItem(
+            index,
+            productPositions.filter((p) => p)
+          );
+        }
+        return pos;
+      });
+      setProductPositions(newPositions);
     }
   }, [visibleProducts, products, expandedProducts, loading, swiperInstance]);
 
@@ -245,44 +183,40 @@ const MainSection = () => {
 
   useEffect(() => {
     if (!swiperInstance) return;
-
+  
     const handleWheel = (e) => {
       const activeIndex = swiperInstance.activeIndex;
-
-      // 阻止事件冒泡，避免傳遞到 HomePage
       e.stopPropagation();
-
+  
       if (activeIndex === 0 && (visibleCards > 0 || e.deltaY > 0)) {
         e.preventDefault();
       }
-
+  
       if (activeIndex === 0) {
         if (e.deltaY > 0) {
           if (visibleCards < activities.length)
             setVisibleCards((prev) => prev + 1);
-          else swiperInstance.slideNext();
+          else if (!swiperInstance.isEnd) swiperInstance.slideNext(); // 檢查是否到達邊界
         } else if (e.deltaY < 0 && visibleCards > 0) {
           setVisibleCards((prev) => prev - 1);
-        } else if (e.deltaY < 0 && visibleCards === 0) {
-          swiperInstance.slidePrev(); // 改為滑動到上一頁
+        } else if (e.deltaY < 0 && visibleCards === 0 && !swiperInstance.isBeginning) {
+          swiperInstance.slidePrev(); // 檢查是否到達邊界
         }
       } else {
-        if (e.deltaY > 0) swiperInstance.slideNext();
-        else if (e.deltaY < 0) swiperInstance.slidePrev();
+        if (e.deltaY > 0 && !swiperInstance.isEnd) swiperInstance.slideNext(); // 檢查是否到達邊界
+        else if (e.deltaY < 0 && !swiperInstance.isBeginning) swiperInstance.slidePrev(); // 檢查是否到達邊界
       }
     };
-
-    const swiperContainer = document.querySelector(
-      `.${styles.swiperContainer}`
-    );
-    if (swiperContainer)
-      swiperContainer.addEventListener("wheel", handleWheel, {
-        passive: false,
-      });
-
+  
+    const swiperContainer = swiperRef.current;
+    if (swiperContainer) {
+      swiperContainer.addEventListener("wheel", handleWheel, { passive: false });
+    }
+  
     return () => {
-      if (swiperContainer)
+      if (swiperContainer) {
         swiperContainer.removeEventListener("wheel", handleWheel);
+      }
     };
   }, [swiperInstance, visibleCards, activities.length]);
 
@@ -292,7 +226,6 @@ const MainSection = () => {
     swiperInstance.on("slideChange", () => {
       const activeIndex = swiperInstance.activeIndex;
 
-      // 隱藏 Header、Breadcrumb 和 Footer，除非在第三頁
       if (activeIndex !== 2) {
         if (headerRef.current) {
           headerRef.current.style.display = "none";
@@ -308,7 +241,6 @@ const MainSection = () => {
         }
       }
 
-      // 在第三頁時直接顯示 Header 和 Breadcrumb
       if (activeIndex === 2) {
         if (headerRef.current) {
           headerRef.current.style.display = "block";
@@ -320,7 +252,6 @@ const MainSection = () => {
         }
       }
 
-      // 其他邏輯
       if (activeIndex !== 0) setVisibleCards(0);
       if (activeIndex === 1) {
         setVisibleProducts(products.map(() => true));
@@ -330,7 +261,6 @@ const MainSection = () => {
         setProductPositions(products.map(() => null));
       }
 
-      // Footer 在滾動到底部時顯示
       if (activeIndex === 2) {
         const slide = document.querySelector(`.${styles.slide}:nth-child(3)`);
         if (slide) {
@@ -341,7 +271,6 @@ const MainSection = () => {
               const clientHeight = slide.clientHeight;
               const scrollHeight = slide.scrollHeight;
               if (scrollTop + clientHeight >= scrollHeight - 10) {
-                // 接近底部
                 if (footerRef.current) {
                   footerRef.current.style.display = "block";
                   footerRef.current.classList.add(styles.fadeInDown);
@@ -374,60 +303,17 @@ const MainSection = () => {
   };
 
   const handleBubbleClick = (product, index) => {
-    console.log(`[Debug] Clicked on product bubble: ${product.name}`);
-    const bubble = document.querySelectorAll(`.${styles.productBubble}`)[index];
-    if (bubble) {
-      bubble.classList.add(styles.burst);
-      bubble.addEventListener(
-        "animationend",
-        () => {
-          console.log(
-            `[Debug] Bubble click animation ended for product: ${product.name}`
-          );
-          const rentProduct = rentProducts.find(
-            (rent) => rent.name === product.name
-          );
-          if (rentProduct) {
-            console.log(
-              `[Debug] Successfully found rent product for ${product.name}`
-            );
-            setExpandedProducts((prev) => ({
-              ...prev,
-              [product.id]: rentProduct,
-            }));
-            setProductPositions((prev) => {
-              const updated = [...prev];
-              updated[index] = null; // 清除舊位置
-              return updated;
-            });
-            setTimeout(() => {
-              const newBubble = document.querySelectorAll(
-                `.${styles.productBubble}`
-              )[index];
-              if (newBubble) {
-                newBubble.classList.remove(styles.burst);
-                newBubble.classList.add(styles.visible);
-                const newPosition = setRandomPositionForItem(
-                  newBubble,
-                  productPositions.filter((pos) => pos),
-                  `.${styles.slide}:nth-child(2) .${styles.bubbleContainer}`
-                );
-                setProductPositions((prev) => {
-                  const updated = [...prev];
-                  updated[index] = newPosition;
-                  return updated;
-                });
-              }
-            }, 100);
-          } else {
-            console.log(
-              `[Debug] Failed to find rent product for ${product.name}`
-            );
-            bubble.style.display = "none"; // 隱藏氣泡
-          }
-        },
-        { once: true }
-      );
+    const rentProduct = rentProducts.find((rent) => rent.name === product.name);
+    if (rentProduct) {
+      setExpandedProducts((prev) => ({
+        ...prev,
+        [product.id]: rentProduct,
+      }));
+      setProductPositions((prev) => {
+        const updated = [...prev];
+        updated[index] = null;
+        return updated;
+      });
     }
   };
 
@@ -435,25 +321,32 @@ const MainSection = () => {
 
   return (
     <section className={styles.mainSection}>
-      {/* Header 和 Breadcrumb 只在第三頁顯示 */}
       {swiperInstance?.activeIndex === 2 && (
         <>
-          <Header ref={headerRef} className={`${styles.header} ${styles.fadeInUp}`} />
-          <Breadcrumb ref={breadcrumbRef} className={`${styles.breadcrumb} ${styles.fadeInUp}`} />
+          <Header
+            ref={headerRef}
+            className={`${styles.header} ${styles.fadeInUp}`}
+          />
+          <Breadcrumb
+            ref={breadcrumbRef}
+            className={`${styles.breadcrumb} ${styles.fadeInUp}`}
+          />
         </>
       )}
 
       <Swiper
         ref={swiperRef}
-        direction="vertical"
-        speed={1200}
-        slidesPerView={1}
+        direction="vertical" // 確保滑動方向正確
+        speed={1200} // 調整滑動速度
+        slidesPerView={1} // 確保每次只顯示一個 slide
         parallax={true}
         pagination={{ clickable: true }}
         modules={[Parallax, Pagination]}
         className={styles.swiperContainer}
         style={{ height: "100vh" }}
         onSwiper={handleSwiperInit}
+        onReachBeginning={() => console.log("Reached beginning")} // 檢查邊界
+        onReachEnd={() => console.log("Reached end")} // 檢查邊界
       >
         <div
           slot="container-start"
@@ -462,15 +355,15 @@ const MainSection = () => {
           data-swiper-parallax="-50%"
         ></div>
 
-        {/* 第一頁：活動 */}
         <SwiperSlide className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
             <h2>必試潛水冒險，精彩不容錯過</h2>
-            <div className={styles.bubbleContainer}>
+            <div className={styles.bubbleContainer} ref={bubbleContainerRef}>
               {activities.map((activity, index) => {
                 const { activityName, location } = splitActivityName(
                   activity.name
                 );
+                const position = activityPositions[index];
                 return (
                   <Link
                     href={`/activity/${activity.id}`}
@@ -487,6 +380,8 @@ const MainSection = () => {
                           "activity"
                         )})`,
                         animationDelay: `${index * 0.3}s`,
+                        top: position ? `${position.top}px` : "0",
+                        left: position ? `${position.left}px` : "0",
                       }}
                     >
                       <div className={styles.bubbleOverlay}></div>
@@ -502,13 +397,13 @@ const MainSection = () => {
           </div>
         </SwiperSlide>
 
-        {/* 第二頁：商品/租借 */}
         <SwiperSlide className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
             <h2>推薦商品</h2>
-            <div className={styles.bubbleContainer}>
+            <div className={styles.bubbleContainer} ref={bubbleContainerRef}>
               {products.map((product, index) => {
                 const rentProduct = expandedProducts[product?.id];
+                const position = productPositions[index];
                 return (
                   <div key={index} className={styles.productWrapper}>
                     {!rentProduct && (
@@ -522,6 +417,8 @@ const MainSection = () => {
                             "product"
                           )})`,
                           animationDelay: `${index * 0.3}s`,
+                          top: position ? `${position.top}px` : "0",
+                          left: position ? `${position.left}px` : "0",
                         }}
                         onClick={() => handleBubbleClick(product, index)}
                       >
@@ -545,6 +442,8 @@ const MainSection = () => {
                               "rent"
                             )})`,
                             animationDelay: "0s",
+                            top: position ? `${position.top}px` : "0",
+                            left: position ? `${position.left}px` : "0",
                           }}
                         >
                           <div className={styles.bubbleOverlay}></div>
@@ -567,7 +466,6 @@ const MainSection = () => {
           </div>
         </SwiperSlide>
 
-        {/* 第三頁 */}
         <SwiperSlide className={styles.slide}>
           <div className={styles.welcomeContent} data-swiper-parallax="-200">
             <h2>歡迎來到我們的商城</h2>
@@ -578,9 +476,11 @@ const MainSection = () => {
         </SwiperSlide>
       </Swiper>
 
-      {/* Footer 只在第三頁顯示 */}
       {swiperInstance?.activeIndex === 2 && (
-        <Footer ref={footerRef} className={`${styles.footer} ${styles.fadeInDown}`} />
+        <Footer
+          ref={footerRef}
+          className={`${styles.footer} ${styles.fadeInDown}`}
+        />
       )}
     </section>
   );
