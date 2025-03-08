@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import HeroSection from "../components/HeroSection";
 import MainSection from "../components/MainSection"; // 改名為 MainSection
-import WelcomeSection from "../components/WelcomeSection"; // 新增 WelcomeSection
+// import WelcomeSection from "../components/WelcomeSection"; // 新增 WelcomeSection
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import dynamic from "next/dynamic";
@@ -167,9 +167,9 @@ const HomePage = () => {
       </div>
 
       {/* 歡迎區 */}
-      <div ref={(el) => (sectionsRef.current[2] = el)} className={styles.section}>
+      {/* <div ref={(el) => (sectionsRef.current[2] = el)} className={styles.section}>
         <WelcomeSection />
-      </div>
+      </div> */}
     </div>
   );
 };

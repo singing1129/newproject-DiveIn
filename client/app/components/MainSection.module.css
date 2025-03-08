@@ -1,3 +1,30 @@
+:global(:root) {
+  --primary-color: #219ebc;
+  --primary-deep-color: #023047;
+  --primary-light-color: #8ecae6;
+  --secondary-color: #ffd500;
+  --secondary-deep-color: #ffb703;
+  --secondary-light-color: #f1d691;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-20-color: #f8f9fa;
+  --gray-50-color: #e5e5e5;
+  --gray-100-color: #dedede;
+  --gray-200-color: #e5e5e5;
+  --gray-300-color: #cfcfcf;
+  --gray-400-color: #b2b2b2;
+  --gray-500-color: #a3a3a3;
+  --gray-600-color: #898989;
+  --gray-700-color: #6f6f6f;
+  --gray-800-color: #555555;
+  --gray-900-color: #3b3b3b;
+}
+
+:global(*) {
+  font-family: "Noto Sans TC", serif;
+  font-size: 16px;
+}
+
 .mainSection {
   position: relative;
   width: 100%;
@@ -12,7 +39,7 @@
   height: 100%;
   overflow: visible;
   position: relative;
-  z-index: 1; /* 確保 Swiper 在正確的層級 */
+  z-index: 1;
 }
 
 .parallaxBg {
@@ -25,7 +52,7 @@
   background-position: center top;
   z-index: 1;
   filter: contrast(1.2) brightness(1.1);
-  transition: transform 1.2s ease-out; /* 背景視差滾動效果 */
+  transition: transform 1.2s ease-out;
 }
 
 .slide {
@@ -34,87 +61,250 @@
   align-items: center;
   height: 100vh;
   position: relative;
-  z-index: 2; /* 確保內容在背景之上 */
+  z-index: 2;
 }
 
 .content {
+  width: 100%; 
+  height: 100%;
   text-align: center;
   padding: 20px;
-  max-width: 800px;
   margin: 0 auto;
-  opacity: 1; /* 確保透明度為 1 */
-  transform: translateY(0); /* 確保位置正確 */
   position: relative;
-  z-index: 3; /* 確保內容在 Swiper 之上 */
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .bubbleContainer {
   position: relative;
   width: 100%;
   height: 100%;
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap; /* 允許氣泡自動換行 */
+  justify-content: center;
+  align-items: center;
 }
 
 .bubble {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(5px);
+  width: 200px;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   cursor: pointer;
-  transition: all 0.5s ease;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* 發光效果 */
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.2),
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(100vh); /* 初始位置在底部 */
+  transition: box-shadow 0.3s ease, border 0.3s ease;
+  --scale-factor: 1; /* 定義放大比例變量 */
+}
+
+.bubble.visible {
+  opacity: 1;
+  animation: bubbleRise 1.5s ease-out forwards, floatWave 4s infinite ease-in-out 1.5s; /* 上升 + 漂浮波浪 */
 }
 
 .bubble:hover {
-  width: 250px; /* 放大後的寬度 */
-  height: 250px; /* 放大後的高度 */
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8); /* 發光效果增強 */
-  z-index: 10; /* 確保放大氣泡在最上層 */
-  transform: scale(1.5) translate(-50%, -50%); /* 從中間放大 */
+  --scale-factor: 1.05; /* Hover 時調整放大比例 */
+  box-shadow: 
+    0 8px 20px rgba(0, 0, 0, 0.25),
+    inset 0 0 15px rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* 氣泡上升動畫 */
+@keyframes bubbleRise {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(20px) translateX(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 正常漂浮與波浪動畫 */
+@keyframes floatWave {
+  0%, 100% {
+    transform: translateY(0) scale(1); /* 正常大小 */
+    border-radius: 50%;
+  }
+  25% {
+    transform: translateY(-15px) scale(1) translateX(2px); /* 輕微上升和偏移 */
+    border-radius: 48% 52% 50% 50% / 50% 50% 52% 48%;
+  }
+  50% {
+    transform: translateY(-20px) scale(1); /* 最高點 */
+    border-radius: 50% 48% 52% 50% / 52% 50% 48% 50%;
+  }
+  75% {
+    transform: translateY(-15px) scale(1) translateX(-2px); /* 下落時偏移 */
+    border-radius: 52% 50% 48% 50% / 50% 48% 50% 52%;
+  }
+}
+
+/* Hover 時的漂浮與波浪動畫 */
+@keyframes floatWaveHover {
+  0%, 100% {
+    transform: translateY(0) scale(1.05); /* Hover 時放大 */
+    border-radius: 50%;
+  }
+  25% {
+    transform: translateY(-15px) scale(1.05) translateX(2px);
+    border-radius: 48% 52% 50% 50% / 50% 50% 52% 48%;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+    border-radius: 50% 48% 52% 50% / 52% 50% 48% 50%;
+  }
+  75% {
+    transform: translateY(-15px) scale(1.05) translateX(-2px);
+    border-radius: 52% 50% 48% 50% / 50% 48% 50% 52%;
+  }
+}
+
+.bubbleOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 60% 40%,
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.15)
+  );
+  border-radius: 50%;
+  transition: background 0.3s ease, filter 0.3s ease;
+}
+
+.bubble:hover .bubbleOverlay {
+  background: radial-gradient(
+    circle at 60% 40%,
+    rgba(255, 255, 255, 0.15),
+    rgba(0, 0, 0, 0.25)
+  );
+  filter: brightness(1.1) blur(2px);
 }
 
 .bubbleContent {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  text-align: center;
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
-  padding: 20px;
+  padding: 15px;
   box-sizing: border-box;
+  color: var(--white);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  transform: perspective(500px) rotateX(10deg) rotateY(10deg);
 }
 
-.bubble:hover .bubbleContent {
-  opacity: 1;
-}
-
-.activityImage {
-  width: 100%;
-  max-width: 150px;
-  height: auto;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-.bubbleContent h3 {
-  font-size: 1.2rem;
-  color: var(--primary-deep-color);
-  margin-bottom: 5px;
+.bubbleContent .activityName {
+  font-size: 12px;
+  font-style: italic;
+  margin: 0 0 10px;
+  text-align: center;
+  transform: translateZ(30px) rotateX(-5deg);
 }
 
 .bubbleContent .location {
-  font-size: 0.9rem;
-  color: rgba(0, 0, 0, 0.8);
-  font-style: italic;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+  transform: translateZ(50px) rotateX(-5deg);
+}
+
+.link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 平板尺寸 */
+@media (max-width: 1024px) {
+  .bubbleContainer {
+    height: auto;
+    padding: 20px;
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .bubble {
+    position: relative;
+    width: 25vw;
+    height: 25vw;
+    max-width: 250px;
+    max-height: 250px;
+  }
+
+  .bubble.visible {
+    animation: bubbleRiseMobile 0.8s ease-out forwards; /* 無持續漂浮 */
+  }
+
+  .bubble:hover {
+    animation: bubbleRiseMobile 0.8s ease-out forwards; /* Hover 不改變動畫 */
+  }
+}
+
+/* 手機版：垂直整齊排列 */
+@media (max-width: 768px) {
+  .bubbleContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    height: auto;
+    padding: 20px;
+  }
+
+  .bubble {
+    position: relative;
+    width: 80vw;
+    height: 80vw;
+    max-width: 300px;
+    max-height: 300px;
+  }
+
+  .bubble.visible {
+    animation: bubbleRiseMobile 0.8s ease-out forwards;
+  }
+
+  .bubble:hover {
+    animation: bubbleRiseMobile 0.8s ease-out forwards;
+  }
+}
+
+/* 手機和平板專用的出現動畫 */
+@keyframes bubbleRiseMobile {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .welcomeContent {
@@ -130,17 +320,20 @@
 
 .moreButton {
   position: absolute;
-  bottom: 20px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px 20px;
-  border-radius: 25px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 12px 30px;
+  border-radius: 30px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   z-index: 3;
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: var(--primary-deep-color);
+  font-weight: 500;
 }
 
 .moreButton.visible {
@@ -149,5 +342,6 @@
 
 .moreButton:hover {
   background: rgba(255, 255, 255, 1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  transform: translateX(-50%) scale(1.05);
 }
