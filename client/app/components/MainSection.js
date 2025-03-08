@@ -12,25 +12,44 @@ import Link from "next/link";
 
 const MainSection = () => {
   const [activities, setActivities] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [rentProducts, setRentProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showMoreButton, setShowMoreButton] = useState(false);
   const [visibleCards, setVisibleCards] = useState(0);
+  const [visibleProducts, setVisibleProducts] = useState([]);
+  const [expandedProducts, setExpandedProducts] = useState({});
+  const [activityPositions, setActivityPositions] = useState([]);
+  const [productPositions, setProductPositions] = useState([]);
   const [swiperInstance, setSwiperInstance] = useState(null);
   const swiperRef = useRef(null);
 
-  // 獲取活動數據
   useEffect(() => {
     const API_BASE_URL = "http://localhost:3005";
-    const fetchActivities = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(
+        const activityResponse = await axios.get(
           `${API_BASE_URL}/api/homeRecommendations?category=activity&type=all`
         );
-        if (response.data.status === "success" && Array.isArray(response.data.data)) {
-          setActivities(response.data.data.slice(0, 4));
-          console.log("Activities loaded:", response.data.data.slice(0, 4));
-        } else {
-          throw new Error("Invalid data format from backend");
+        if (activityResponse.data.status === "success" && Array.isArray(activityResponse.data.data)) {
+          setActivities(activityResponse.data.data.slice(0, 4));
+          setActivityPositions(new Array(activityResponse.data.data.length).fill(null));
+        }
+
+        const productResponse = await axios.get(
+          `${API_BASE_URL}/api/homeRecommendations?category=product`
+        );
+        if (productResponse.data.status === "success" && Array.isArray(productResponse.data.data)) {
+          setProducts(productResponse.data.data.slice(0, 4));
+          setVisibleProducts(new Array(productResponse.data.data.length).fill(false));
+          setProductPositions(new Array(productResponse.data.data.length).fill(null));
+        }
+
+        const rentResponse = await axios.get(
+          `${API_BASE_URL}/api/homeRecommendations?category=rent`
+        );
+        if (rentResponse.data.status === "success" && Array.isArray(rentResponse.data.data)) {
+          setRentProducts(rentResponse.data.data);
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -38,136 +57,213 @@ const MainSection = () => {
         setLoading(false);
       }
     };
-    fetchActivities();
+    fetchData();
   }, []);
 
-  // 隨機設置卡片位置
-  useEffect(() => {
-    if (!loading && activities.length > 0) {
-      const bubbles = document.querySelectorAll(`.${styles.bubble}`);
-      const container = document.querySelector(`.${styles.bubbleContainer}`);
-      const containerWidth = container.offsetWidth;
-      const containerHeight = container.offsetHeight;
-      console.log("Bubble container size:", containerWidth, "x", containerHeight);
-
-      bubbles.forEach((bubble, index) => {
-        const bubbleSize = 220;
-        const randomTop = Math.random() * (containerHeight - bubbleSize);
-        const randomLeft = Math.random() * (containerWidth - bubbleSize);
-        bubble.style.top = `${randomTop}px`;
-        bubble.style.left = `${randomLeft}px`;
-        console.log(`Bubble ${index}: top=${randomTop}px, left=${randomLeft}px`);
-      });
+  // 隨機分散氣泡位置並限制在容器內
+  const setRandomPositionForItem = (item, existingPositions, containerSelector, itemSize = 200) => {
+    const container = document.querySelector(containerSelector);
+    if (!container) {
+      console.log(`[Debug] Container not found for selector: ${containerSelector}`);
+      return { top: 0, left: 0 };
     }
-  }, [activities, loading]);
 
-  // 初始化 Swiper 並綁定事件
+    const slide = document.querySelector(`.${styles.slide}`);
+    const content = document.querySelector(`.${styles.content}`);
+    const slideWidth = slide.clientWidth;
+    const slideHeight = slide.clientHeight;
+    const contentPadding = parseInt(getComputedStyle(content).padding) || 20;
+    const containerWidth = container.clientWidth - 2 * contentPadding;
+    const containerHeight = container.clientHeight - 2 * contentPadding;
+
+    console.log(`[Debug] Slide size - Width: ${slideWidth}px, Height: ${slideHeight}px`);
+    console.log(`[Debug] Adjusted Container size - Width: ${containerWidth}px, Height: ${containerHeight}px`);
+
+    const padding = 20;
+    const minSpacing = 20;
+    let attempts = 0;
+    let validPosition = false;
+    let top, left;
+
+    while (!validPosition && attempts < 50) {
+      top = padding + Math.random() * (containerHeight - itemSize - 2 * padding);
+      left = padding + Math.random() * (containerWidth - itemSize - 2 * padding);
+
+      if (top < padding) top = padding;
+      if (left < padding) left = padding;
+      if (top > containerHeight - itemSize - padding) top = containerHeight - itemSize - padding;
+      if (left > containerWidth - itemSize - padding) left = containerWidth - itemSize - padding;
+
+      validPosition = existingPositions.every((pos) => {
+        if (!pos) return true;
+        const distance = Math.sqrt(Math.pow(pos.top - top, 2) + Math.pow(pos.left - left, 2));
+        return distance >= itemSize + minSpacing;
+      });
+
+      attempts++;
+    }
+
+    console.log(`[Debug] Bubble position - Top: ${top}px, Left: ${left}px, Attempts: ${attempts}`);
+    item.style.top = `${top}px`;
+    item.style.left = `${left}px`;
+    return { top, left };
+  };
+
+  // 活動氣泡位置處理
+  useEffect(() => {
+    if (!loading && activities.length > 0 && swiperInstance?.activeIndex === 0) {
+      setTimeout(() => {
+        const bubbles = document.querySelectorAll(`.${styles.bubble}`);
+        bubbles.forEach((bubble, index) => {
+          if (index < visibleCards && !activityPositions[index]) {
+            const newPosition = setRandomPositionForItem(
+              bubble,
+              activityPositions.filter((pos) => pos),
+              `.${styles.slide}:nth-child(1) .${styles.bubbleContainer}`
+            );
+            setActivityPositions((prev) => {
+              const updated = [...prev];
+              updated[index] = newPosition;
+              return updated;
+            });
+          } else if (activityPositions[index]) {
+            bubble.style.top = `${activityPositions[index].top}px`;
+            bubble.style.left = `${activityPositions[index].left}px`;
+          }
+        });
+      }, 100);
+    }
+  }, [visibleCards, activities, loading, swiperInstance]);
+
+  // 商品氣泡位置處理
+  useEffect(() => {
+    if (!loading && products.length > 0 && swiperInstance?.activeIndex === 1) {
+      setTimeout(() => {
+        const bubbles = document.querySelectorAll(`.${styles.productBubble}`);
+        console.log(`[Debug] Number of product bubbles: ${bubbles.length}`);
+        bubbles.forEach((bubble, index) => {
+          const product = products[index];
+          const rentProduct = expandedProducts[product?.id];
+
+          if (visibleProducts[index] && !rentProduct && !productPositions[index]) {
+            const newPosition = setRandomPositionForItem(
+              bubble,
+              productPositions.filter((pos) => pos),
+              `.${styles.slide}:nth-child(2) .${styles.bubbleContainer}`
+            );
+            setProductPositions((prev) => {
+              const updated = [...prev];
+              updated[index] = newPosition;
+              return updated;
+            });
+          } else if (rentProduct && productPositions[index]) {
+            const newPosition = setRandomPositionForItem(
+              bubble,
+              productPositions.filter((pos) => pos && pos !== productPositions[index]),
+              `.${styles.slide}:nth-child(2) .${styles.bubbleContainer}`
+            );
+            setProductPositions((prev) => {
+              const updated = [...prev];
+              updated[index] = newPosition;
+              return updated;
+            });
+          } else if (productPositions[index]) {
+            bubble.style.top = `${productPositions[index].top}px`;
+            bubble.style.left = `${productPositions[index].left}px`;
+          }
+        });
+      }, 100);
+    }
+  }, [visibleProducts, products, expandedProducts, loading, swiperInstance]);
+
   const handleSwiperInit = (swiper) => {
-    console.log("Swiper initialized:", swiper);
     setSwiperInstance(swiper);
   };
 
-  // 自定義滾輪事件處理
   useEffect(() => {
-    if (!swiperInstance) {
-      console.log("Swiper instance not ready yet");
-      return;
-    }
-
-    console.log("Swiper instance ready, binding wheel event");
+    if (!swiperInstance) return;
 
     const handleWheel = (e) => {
       const activeIndex = swiperInstance.activeIndex;
-      console.log("Wheel event triggered - activeIndex:", activeIndex, "deltaY:", e.deltaY, "visibleCards:", visibleCards);
-
-      // 在 Swiper 內部處理時阻止默認滾動
-      if (activeIndex > 0 || (activeIndex === 0 && visibleCards > 0)) {
+      if (activeIndex === 0 && (visibleCards > 0 || e.deltaY > 0)) {
         e.preventDefault();
       }
 
       if (activeIndex === 0) {
         if (e.deltaY > 0) {
-          // 向下滾動
-          if (visibleCards < activities.length) {
-            setVisibleCards((prev) => {
-              console.log("Visible cards increased to:", prev + 1);
-              return prev + 1;
-            });
-          } else {
-            console.log("All cards visible, sliding to next");
-            swiperInstance.slideNext();
-          }
+          if (visibleCards < activities.length) setVisibleCards((prev) => prev + 1);
+          else swiperInstance.slideNext();
         } else if (e.deltaY < 0 && visibleCards > 0) {
-          // 向上滾動，減少可見卡片
-          setVisibleCards((prev) => {
-            console.log("Visible cards decreased to:", prev - 1);
-            return prev - 1;
-          });
+          setVisibleCards((prev) => prev - 1);
         } else if (e.deltaY < 0 && visibleCards === 0) {
-          // 第一頁頂部，允許滾動到影片首頁
-          console.log("Attempting to scroll to top of page");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       } else {
-        // 其他頁面
-        if (e.deltaY > 0) {
-          // 向下滾動
-          console.log("Sliding to next page");
-          swiperInstance.slideNext();
-        } else if (e.deltaY < 0) {
-          // 向上滾動，回到上一頁
-          console.log("Sliding to previous page");
-          swiperInstance.slidePrev();
-        }
+        if (e.deltaY > 0) swiperInstance.slideNext();
+        else if (e.deltaY < 0) swiperInstance.slidePrev();
       }
     };
 
     const swiperContainer = document.querySelector(`.${styles.swiperContainer}`);
-    if (swiperContainer) {
-      console.log("Adding wheel event listener to swiper container");
-      swiperContainer.addEventListener("wheel", handleWheel, { passive: false });
-    } else {
-      console.log("Swiper container not found");
-    }
+    if (swiperContainer) swiperContainer.addEventListener("wheel", handleWheel, { passive: false });
 
     return () => {
-      if (swiperContainer) {
-        console.log("Removing wheel event listener");
-        swiperContainer.removeEventListener("wheel", handleWheel);
-      }
+      if (swiperContainer) swiperContainer.removeEventListener("wheel", handleWheel);
     };
   }, [swiperInstance, visibleCards, activities.length]);
 
-  // Swiper 切換時重置卡片和更新 showMoreButton
   useEffect(() => {
     if (!swiperInstance) return;
 
     swiperInstance.on("slideChange", () => {
       const activeIndex = swiperInstance.activeIndex;
-      console.log("Slide changed to:", activeIndex);
       setShowMoreButton(activeIndex === 2);
-      if (activeIndex !== 0) {
-        setVisibleCards(0); // 離開第一頁時重置卡片
+      if (activeIndex !== 0) setVisibleCards(0);
+      if (activeIndex === 1) {
+        setVisibleProducts(products.map(() => true));
+      } else {
+        setVisibleProducts(products.map(() => false));
+        setExpandedProducts({});
+        setProductPositions(products.map(() => null));
       }
     });
-  }, [swiperInstance]);
+  }, [swiperInstance, products]);
 
-  // 圖片路徑處理
-  const getImagePath = (item) => {
+  const getImagePath = (item, category) => {
     const defaultImage = "/image/rent/no-img.png";
     if (!item || !item.id || !item.main_image) return defaultImage;
-    return `/image/activity/${item.id}/${item.main_image}`;
+    if (category === "rent") return item.main_image;
+    return `/image/${category}/${item.id}/${item.main_image}`;
   };
 
-  // 分割活動名稱和地點
   const splitActivityName = (name) => {
     const parts = name.split("｜");
     return { location: parts[0], activityName: parts[1] };
   };
 
-  if (loading) {
-    return <div className={styles.loading}>資料加載中...</div>;
-  }
+  const getRentPrice = (product) => {
+    return product.price2 !== null && product.price2 !== undefined
+      ? `NT$${product.price2}/天`
+      : `NT$${product.price}/天`;
+  };
+
+  const handleBubbleClick = (product, index) => {
+    const bubble = document.querySelectorAll(`.${styles.productBubble}`)[index];
+    if (bubble) {
+      bubble.classList.add(styles.burst);
+      bubble.addEventListener("animationend", () => {
+        const rentProduct = rentProducts.find((rent) => rent.name === product.name);
+        if (rentProduct) {
+          setExpandedProducts((prev) => ({
+            ...prev,
+            [product.id]: rentProduct,
+          }));
+        }
+      }, { once: true });
+    }
+  };
+
+  if (loading) return <div className={styles.loading}>資料加載中...</div>;
 
   return (
     <section className={styles.mainSection}>
@@ -189,6 +285,7 @@ const MainSection = () => {
           data-swiper-parallax="-50%"
         ></div>
 
+        {/* 第一頁：活動 */}
         <SwiperSlide className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
             <h2>必試潛水冒險，精彩不容錯過</h2>
@@ -198,9 +295,9 @@ const MainSection = () => {
                 return (
                   <Link href={`/activity/${activity.id}`} key={index} className={styles.link}>
                     <div
-                      className={`${styles.bubble} ${index < visibleCards ? styles.visible : ''}`}
+                      className={`${styles.bubble} ${index < visibleCards ? styles.visible : ""}`}
                       style={{
-                        backgroundImage: `url(${getImagePath(activity)})`,
+                        backgroundImage: `url(${getImagePath(activity, "activity")})`,
                         animationDelay: `${index * 0.3}s`,
                       }}
                     >
@@ -217,12 +314,55 @@ const MainSection = () => {
           </div>
         </SwiperSlide>
 
+        {/* 第二頁：商品/租借 */}
         <SwiperSlide className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
             <h2>推薦商品</h2>
+            <div className={styles.bubbleContainer}>
+              {products.map((product, index) => {
+                const rentProduct = expandedProducts[product.id];
+                return (
+                  <div key={index} className={styles.productWrapper}>
+                    {!rentProduct && (
+                      <div
+                        className={`${styles.productBubble} ${visibleProducts[index] ? styles.visible : ""}`}
+                        style={{
+                          backgroundImage: `url(${getImagePath(product, "product")})`,
+                          animationDelay: `${index * 0.3}s`,
+                        }}
+                        onClick={() => handleBubbleClick(product, index)}
+                      >
+                        <div className={styles.bubbleOverlay}></div>
+                        <div className={styles.bubbleContent}>
+                          <h3 className={styles.productName}>{product.name}</h3>
+                        </div>
+                      </div>
+                    )}
+                    {rentProduct && (
+                      <Link href={`/rent/${rentProduct.id}`} className={styles.link}>
+                        <div
+                          className={`${styles.productBubble} ${styles.visible}`}
+                          style={{
+                            backgroundImage: `url(${getImagePath(rentProduct, "rent")})`,
+                            animationDelay: "0s",
+                          }}
+                        >
+                          <div className={styles.bubbleOverlay}></div>
+                          <div className={styles.bubbleContent}>
+                            <h3 className={styles.productName}>{rentProduct.name}</h3>
+                            <p className={styles.productPrice}>{getRentPrice(rentProduct)}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </SwiperSlide>
 
+        {/* 第三頁 */}
         <SwiperSlide className={styles.slide}>
           <div className={styles.welcomeContent} data-swiper-parallax="-200">
             <h2>打開你的新視界</h2>
