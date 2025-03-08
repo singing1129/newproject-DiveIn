@@ -10,7 +10,7 @@ import { WebSocketProvider } from "./hooks/useWebSocket";
 
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
-  const noLayoutPages = ["/admin/login", "/admin/register", "/admin/login2", "/admin/register2",
+  const noLayoutPages = ["/admin/login", "/admin/register", "/admin/login2" , "/admin/register2", "/admin/forgot2", "/admin/logout",
     "/home",];
   const isNoLayoutPage = noLayoutPages.includes(pathname);
 
