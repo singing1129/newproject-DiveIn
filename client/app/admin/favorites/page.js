@@ -8,7 +8,6 @@ export default function FavoritesPage() {
   return (
     <div className={styles.favoritesPage}>
       <PageHeader title="我的收藏" />
-
       <div className={styles.contentWrapper}>
         <FavoritesContent />
       </div>

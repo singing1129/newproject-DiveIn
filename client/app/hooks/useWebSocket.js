@@ -31,8 +31,19 @@ export const WebSocketProvider = ({ children }) => {
                     // 設定對話歷史紀錄
                     setMessages(message.messages)
                 } else if (message.type === "message") {
-                    // 把新訊息累加進 message 這個 state
-                    setMessages((prev) => [...prev, message]);
+                    // 只添加不是自己發送的訊息（避免重複）
+                    setMessages((prev) => {
+                        const isDuplicate = prev.some(
+                            (msg) =>
+                                msg.userId === message.userId &&
+                                msg.content === message.content &&
+                                msg.timestamp === message.timestamp
+                        );
+                        if (!isDuplicate) {
+                            return [...prev, message];
+                        }
+                        return prev;
+                    });
                 } else if (message.type === "error") {
                     console.error("WebSocket錯誤:", message.message);
                 }
@@ -70,7 +81,7 @@ export const WebSocketProvider = ({ children }) => {
         }
     }
     return (
-        <WebSocketContext.Provider value={{ messages, sendMessage, joinRoom, isConnected }}>
+        <WebSocketContext.Provider value={{ messages,setMessages, sendMessage, joinRoom, isConnected }}>
             {children}
         </WebSocketContext.Provider>
     );
