@@ -14,6 +14,8 @@ import favoritesRouter from "../routes/favorites/index.js";
 import cartRouter from "../routes/cart/index.js";
 import categoriesRouter from "../routes/categories/index.js";
 import brandRouter from "../routes/brands/index.js";
+// jimmy
+import jimmyRouter from "../routes/jimmy/index.js";
 // 活動相關路由
 import activityRouter from "../routes/activity/index.js";
 import activityDetailRouter from "../routes/activity/detail.js";
@@ -141,7 +143,8 @@ apiRouter.use("/linepay", linepayRouter);
 apiRouter.use("/order", orderRouter);
 // 密碼重設
 apiRouter.use("/passwordReset", passwordResetRouter);
-
+// jimmy
+apiRouter.use("/jimmy", jimmyRouter);
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);

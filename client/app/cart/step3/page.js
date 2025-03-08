@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import CouponSelector from "./components/CouponSelector";
+import { useCoupon } from "@/hooks/useCoupon";
 import "./step3.css";
 import CartFlow from "../components/cartFlow";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,8 +15,19 @@ import { useAuth } from "@/hooks/useAuth";
 const API_BASE_URL = "http://localhost:3005/api";
 
 // 將 HomeDeliveryForm 提取為獨立組件
-const HomeDeliveryForm = React.memo(({ shippingInfo, onInputChange }) => {
+const HomeDeliveryForm = React.memo(({ shippingInfo, onInputChange, cityDistricts }) => {
   HomeDeliveryForm.displayName = "HomeDeliveryForm";
+
+   // 當縣市改變時，清空區域
+   const handleCityChange = (e) => {
+    const selectedCity = e.target.value;
+    onInputChange({ target: { name: "city", value: selectedCity } });
+
+    // 清空區域選擇
+    onInputChange({ target: { name: "district", value: "" } });
+  };
+
+
   return (
     <div className="mt-3">
       <div className="form-check mb-3">
@@ -49,23 +62,39 @@ const HomeDeliveryForm = React.memo(({ shippingInfo, onInputChange }) => {
             onChange={onInputChange}
           />
         </div>
-        <div className="col-12">
+        <div className="col-2">
           <select
             className="form-select mb-2"
             name="city"
             value={shippingInfo.city}
-            onChange={onInputChange}
+            onChange={handleCityChange}
           >
             <option value="">選擇縣市</option>
-            <option value="台北市">台北市</option>
-            <option value="新北市">新北市</option>
-            <option value="桃園市">桃園市</option>
-            <option value="台中市">台中市</option>
-            <option value="台南市">台南市</option>
-            <option value="高雄市">高雄市</option>
+            {Object.keys(cityDistricts).map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
           </select>
         </div>
-        <div className="col-12">
+        <div className="col-2">
+          <select
+            className="form-select mb-2"
+            name="district"
+            value={shippingInfo.district}
+            onChange={onInputChange}
+            disabled={!shippingInfo.city}
+          >
+            <option value="">選擇區域</option>
+            {shippingInfo.city &&
+              cityDistricts[shippingInfo.city]?.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+          </select>
+        </div>
+        <div className="col">
           <input
             type="text"
             className="form-control"
@@ -151,6 +180,22 @@ const StorePickupForm = React.memo(
 );
 
 const Cart2 = () => {
+  // 添加縣市和區域的狀態和函數
+  const [cityDistricts, setCityDistricts] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/data/cityDistricts.json");
+        const data = await response.json();
+        setCityDistricts(data);
+      } catch (error) {
+        console.error("載入 cityDistricts.json 失敗:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+  // 添加優惠券相關的狀態和函數
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -159,6 +204,14 @@ const Cart2 = () => {
   const [checkoutSteps, setCheckoutSteps] = useState({
     needsShippingInfo: false,
   });
+  // 新增優惠券處理
+  const {
+    selectedCoupon,
+    applyCoupon,
+    removeCoupon,
+    calculateDiscount,
+    completeCouponUsage,
+  } = useCoupon(cartData);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -235,6 +288,7 @@ const Cart2 = () => {
     name: "",
     phone: "",
     city: "",
+    district: "",
     address: "",
     storeName: "",
     storeAddress: "",
@@ -284,6 +338,7 @@ const Cart2 = () => {
             name: shippingInfo.name,
             phone: shippingInfo.phone,
             city: shippingInfo.city,
+            district: shippingInfo.district,
             address: shippingInfo.address,
             method: "homeDelivery",
           };
@@ -299,21 +354,27 @@ const Cart2 = () => {
         }
       }
 
-      // **先建立訂單**
-      const orderResponse = await fetch(
-        "http://localhost:3005/api/checkout/complete",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id,
-            paymentMethod: "linepay",
-            couponCode: null,
-            activityTravelers: Object.values(activityTravelers).flat(),
-            shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
-          }),
-        }
-      );
+      // 建立訂單前標記優惠券為已使用
+      if (selectedCoupon) {
+        await completeCouponUsage();
+      }
+
+      // 建立訂單
+      const orderResponse = await fetch(`${API_BASE_URL}/checkout/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          userId: user.id,
+          shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
+          paymentMethod: "linepay",
+          couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
+          couponDiscount: couponDiscount,
+          activityTravelers: Object.values(activityTravelers).flat(),
+        }),
+      });
 
       const orderResult = await orderResponse.json();
       // if (!orderResult.success) throw new Error(orderResult.message);
@@ -421,6 +482,7 @@ const Cart2 = () => {
             name: shippingInfo.name,
             phone: shippingInfo.phone,
             city: shippingInfo.city,
+            district: shippingInfo.district,
             address: shippingInfo.address,
             method: "homeDelivery",
           };
@@ -442,23 +504,21 @@ const Cart2 = () => {
       );
 
       // 建立訂單
-      const orderResponse = await fetch(
-        "http://localhost:3005/api/checkout/complete",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            userId: user.id,
-            shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
-            paymentMethod: "ecpay",
-            couponCode: null,
-            activityTravelers: Object.values(activityTravelers).flat(),
-          }),
-        }
-      );
+      const orderResponse = await fetch(`${API_BASE_URL}/checkout/complete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          userId: user.id,
+          shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
+          paymentMethod: "ecpay",
+          couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
+          couponDiscount: couponDiscount,
+          activityTravelers: Object.values(activityTravelers).flat(),
+        }),
+      });
 
       const orderResult = await orderResponse.json();
 
@@ -526,10 +586,18 @@ const Cart2 = () => {
     return subtotal >= 1000 ? 0 : 60;
   };
 
-  // 計算總金額
+  // 計算優惠券折扣金額
+  const couponDiscount = selectedCoupon ? calculateDiscount() : 0;
+  // 更新計算總金額的函數，考慮優惠券折扣
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateShipping();
+    return calculateSubtotal() + calculateShipping() - couponDiscount;
   };
+  // useEffect(() => {
+  //   console.log("結帳頁面 - 選中優惠券:", selectedCoupon);
+  //   console.log("結帳頁面 - 可用優惠券數量:", eligibleCoupons?.length);
+  //   console.log("結帳頁面 - 所有優惠券數量:", availableCoupons?.length);
+  //   console.log("結帳頁面 - 優惠折扣金額:", couponDiscount);
+  // }, [selectedCoupon, eligibleCoupons, availableCoupons, couponDiscount]);
 
   const validateOrder = () => {
     // 檢查購物車是否為空
@@ -575,6 +643,15 @@ const Cart2 = () => {
         ) {
           throw new Error("請填寫完整的取貨資訊並選擇門市");
         }
+      }
+    }
+    // 添加優惠券檢查
+    if (selectedCoupon) {
+      const subtotal = calculateSubtotal();
+      if (subtotal < parseFloat(selectedCoupon.min_spent)) {
+        throw new Error(
+          `訂單金額未達到優惠券使用條件，最低消費為 NT$${selectedCoupon.min_spent}`
+        );
       }
     }
 
@@ -726,13 +803,13 @@ const Cart2 = () => {
                 <div className="p-3 bg-light">
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
-                      <div className="text-muted">商品總金額</div>
+                      <div className="text-muted">總金額</div>
                       <div className="text-muted small">
                         共{" "}
                         {cartData.products.length +
                           cartData.activities.length +
                           cartData.rentals.length}{" "}
-                        項商品
+                        項
                       </div>
                     </div>
                     <div className="text-primary fw-bold fs-5">
@@ -837,6 +914,7 @@ const Cart2 = () => {
                         <HomeDeliveryForm
                           shippingInfo={shippingInfo}
                           onInputChange={handleShippingInfoChange}
+                          cityDistricts={cityDistricts}
                         />
                       ) : (
                         <StorePickupForm
@@ -856,9 +934,12 @@ const Cart2 = () => {
                   <h5 className="mb-0">使用優惠券</h5>
                 </div>
                 <div className="card-body">
-                  {/* 優惠碼輸入區 */}
+                  <CouponSelector
+                    cartData={cartData}
+                    onApplyCoupon={applyCoupon}
+                    onRemoveCoupon={removeCoupon}
+                  />
                   <div className="mb-4">
-                    {/* 優惠碼提示訊息 */}
                     <div
                       id="couponMessage"
                       className="mt-2"
@@ -866,56 +947,8 @@ const Cart2 = () => {
                     >
                       <small className="text-success">
                         <i className="bi bi-check-circle-fill me-1" />
-                        已套用優惠碼，折抵 NT$100
+                        已套用優惠碼，折抵 NT$ {calculateDiscount()}
                       </small>
-                    </div>
-                  </div>
-                  {/* 可領取的優惠券列表 */}
-                  <div>
-                    <div className="vstack gap-2">
-                      {/* 優惠券項目 */}
-                      <div className="border rounded p-3 position-relative">
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div className="fw-bold text-danger mb-1">
-                              NT$100 折價券
-                            </div>
-                            <small className="text-muted d-block">
-                              消費滿 NT$1,000 可使用
-                            </small>
-                            <small className="text-muted">
-                              有效期限：2024/12/31
-                            </small>
-                          </div>
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            // onClick="claimCoupon(this, 'SAVE100')"
-                          >
-                            可使用
-                          </button>
-                        </div>
-                      </div>
-                      <div className="border rounded p-3 position-relative">
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div className="fw-bold text-danger mb-1">
-                              NT$200 折價券
-                            </div>
-                            <small className="text-muted d-block">
-                              消費滿 NT$2,000 可使用
-                            </small>
-                            <small className="text-muted">
-                              有效期限：2024/12/31
-                            </small>
-                          </div>
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            // onclick="claimCoupon(this, 'SAVE200')"
-                          >
-                            可使用
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -953,7 +986,16 @@ const Cart2 = () => {
                             <div className="free-shipping-hint mt-1">
                               <small className="text-danger">
                                 <i className="bi bi-info-circle me-1" />
-                                還差 NT$ {1000 - calculateSubtotal()} 享免運優惠
+                                {calculateSubtotal() >= 1000 ? (
+                                  <span className="text-success">
+                                    已符合免運
+                                  </span>
+                                ) : (
+                                  <>
+                                    還差 NT$ {1000 - calculateSubtotal()}{" "}
+                                    享免運優惠
+                                  </>
+                                )}
                                 <Link
                                   href="/products"
                                   className="text-danger text-decoration-none ms-1"
@@ -969,15 +1011,18 @@ const Cart2 = () => {
                     </div>
                     <div className="d-flex justify-content-between text-danger">
                       <span>優惠折抵</span>
-                      {/* 優惠折抵的金額 */}
-                      <span>-NT$ 100</span>
+                      {couponDiscount > 0 ? (
+                        <span>-NT$ {couponDiscount}</span>
+                      ) : (
+                        <span>NT$ 0</span>
+                      )}
                     </div>
                     <hr />
                     <div className="d-flex justify-content-between fw-bold">
                       <span>總計金額</span>
                       <span className="text-danger fs-5">
                         {/* 優惠折抵後的金額 */}
-                        NT$ {calculateTotal() - 100}
+                        NT$ {calculateTotal()}
                       </span>
                     </div>
                     <button

@@ -22,7 +22,7 @@ export default function AccountForm() {
     useAuth();
   const token = getToken();
   const decodedToken = getDecodedToken();
-  console.log("user", user);
+  // console.log("user", user);
   console.log("token", token);
   console.log("更新資料的用戶ID", decodedToken);
   const [providers, setProviders] = useState([]);

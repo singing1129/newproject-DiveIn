@@ -367,7 +367,7 @@ router.get("/:orderId", async (req, res) => {
 // 查詢用戶的所有訂單
 router.get("/user/:userId", async (req, res) => {
   const { userId } = req.params;
-  console.log(userId);
+  // console.log(userId);
   try {
     // 查詢用戶所有訂單基本資訊
     const [orderRows] = await pool.execute(
