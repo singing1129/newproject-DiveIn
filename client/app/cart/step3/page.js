@@ -15,99 +15,100 @@ import { useAuth } from "@/hooks/useAuth";
 const API_BASE_URL = "http://localhost:3005/api";
 
 // 將 HomeDeliveryForm 提取為獨立組件
-const HomeDeliveryForm = React.memo(({ shippingInfo, onInputChange, cityDistricts }) => {
-  HomeDeliveryForm.displayName = "HomeDeliveryForm";
+const HomeDeliveryForm = React.memo(
+  ({ shippingInfo, onInputChange, cityDistricts }) => {
+    HomeDeliveryForm.displayName = "HomeDeliveryForm";
 
-   // 當縣市改變時，清空區域
-   const handleCityChange = (e) => {
-    const selectedCity = e.target.value;
-    onInputChange({ target: { name: "city", value: selectedCity } });
+    // 當縣市改變時，清空區域
+    const handleCityChange = (e) => {
+      const selectedCity = e.target.value;
+      onInputChange({ target: { name: "city", value: selectedCity } });
 
-    // 清空區域選擇
-    onInputChange({ target: { name: "district", value: "" } });
-  };
+      // 清空區域選擇
+      onInputChange({ target: { name: "district", value: "" } });
+    };
 
-
-  return (
-    <div className="mt-3">
-      <div className="form-check mb-3">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="sameAsCustomer"
-          defaultChecked
-        />
-        <label className="form-check-label" htmlFor="sameAsCustomer">
-          收件人資料與會員資料相同
-        </label>
-      </div>
-      <div className="row g-3">
-        <div className="col-6">
+    return (
+      <div className="mt-3">
+        <div className="form-check mb-3">
           <input
-            type="text"
-            className="form-control"
-            placeholder="收件人姓名"
-            name="name"
-            value={shippingInfo.name}
-            onChange={onInputChange}
+            className="form-check-input"
+            type="checkbox"
+            id="sameAsCustomer"
+            defaultChecked
           />
+          <label className="form-check-label" htmlFor="sameAsCustomer">
+            收件人資料與會員資料相同
+          </label>
         </div>
-        <div className="col-6">
-          <input
-            type="tel"
-            className="form-control"
-            placeholder="手機號碼"
-            name="phone"
-            value={shippingInfo.phone}
-            onChange={onInputChange}
-          />
-        </div>
-        <div className="col-2">
-          <select
-            className="form-select mb-2"
-            name="city"
-            value={shippingInfo.city}
-            onChange={handleCityChange}
-          >
-            <option value="">選擇縣市</option>
-            {Object.keys(cityDistricts).map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-2">
-          <select
-            className="form-select mb-2"
-            name="district"
-            value={shippingInfo.district}
-            onChange={onInputChange}
-            disabled={!shippingInfo.city}
-          >
-            <option value="">選擇區域</option>
-            {shippingInfo.city &&
-              cityDistricts[shippingInfo.city]?.map((district) => (
-                <option key={district} value={district}>
-                  {district}
+        <div className="row g-3">
+          <div className="col-6">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="收件人姓名"
+              name="name"
+              value={shippingInfo.name}
+              onChange={onInputChange}
+            />
+          </div>
+          <div className="col-6">
+            <input
+              type="tel"
+              className="form-control"
+              placeholder="手機號碼"
+              name="phone"
+              value={shippingInfo.phone}
+              onChange={onInputChange}
+            />
+          </div>
+          <div className="col-2">
+            <select
+              className="form-select mb-2"
+              name="city"
+              value={shippingInfo.city}
+              onChange={handleCityChange}
+            >
+              <option value="">選擇縣市</option>
+              {Object.keys(cityDistricts).map((city) => (
+                <option key={city} value={city}>
+                  {city}
                 </option>
               ))}
-          </select>
-        </div>
-        <div className="col">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="詳細地址"
-            name="address"
-            value={shippingInfo.address}
-            onChange={onInputChange}
-          />
+            </select>
+          </div>
+          <div className="col-2">
+            <select
+              className="form-select mb-2"
+              name="district"
+              value={shippingInfo.district}
+              onChange={onInputChange}
+              disabled={!shippingInfo.city}
+            >
+              <option value="">選擇區域</option>
+              {shippingInfo.city &&
+                cityDistricts[shippingInfo.city]?.map((district) => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="col">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="詳細地址"
+              name="address"
+              value={shippingInfo.address}
+              onChange={onInputChange}
+            />
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 // 將 StorePickupForm 也提取為獨立組件
 const StorePickupForm = React.memo(
@@ -370,6 +371,7 @@ const Cart2 = () => {
           userId: user.id,
           shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
           paymentMethod: "linepay",
+          couponCode: selectedCoupon ? selectedCoupon.code : null,
           couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
           couponDiscount: couponDiscount,
           activityTravelers: Object.values(activityTravelers).flat(),
@@ -502,6 +504,10 @@ const Cart2 = () => {
       const activityTravelers = JSON.parse(
         localStorage.getItem("activityTravelers") || "{}"
       );
+      // 建立訂單前標記優惠券為已使用
+      if (selectedCoupon) {
+        await completeCouponUsage();
+      }
 
       // 建立訂單
       const orderResponse = await fetch(`${API_BASE_URL}/checkout/complete`, {
@@ -514,6 +520,7 @@ const Cart2 = () => {
           userId: user.id,
           shippingInfo: checkoutSteps.needsShippingInfo ? shippingData : null,
           paymentMethod: "ecpay",
+          couponCode: selectedCoupon ? selectedCoupon.code : null,
           couponUsageId: selectedCoupon ? selectedCoupon.coupon_usage_id : null,
           couponDiscount: couponDiscount,
           activityTravelers: Object.values(activityTravelers).flat(),

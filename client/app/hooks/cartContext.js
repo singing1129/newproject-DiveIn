@@ -23,7 +23,6 @@ export const CartProvider = ({ children }) => {
   });
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-
   const [error, setError] = useState(null);
   // 添加選中項目的狀態
   const [selectedItems, setSelectedItems] = useState({
@@ -43,22 +42,23 @@ export const CartProvider = ({ children }) => {
   }, [user]);
 
   // 處理優惠券
-   // 添加計算優惠券折扣的函數
-   const calculateCouponDiscount = (coupon) => {
+  // 添加計算優惠券折扣的函數
+  const calculateCouponDiscount = (coupon) => {
     if (!coupon) return 0;
-    
-    const subtotal = 
-      cartData.total?.products || 0 + 
-      cartData.total?.activities || 0 + 
-      cartData.total?.bundles || 0 + 
-      cartData.total?.rentals?.rental_fee || 0;
-    
-    if (coupon.discount_type === '金額') {
+
+    const subtotal =
+      cartData.total?.products ||
+      0 + cartData.total?.activities ||
+      0 + cartData.total?.bundles ||
+      0 + cartData.total?.rentals?.rental_fee ||
+      0;
+
+    if (coupon.discount_type === "金額") {
       return parseFloat(coupon.discount);
-    } else if (coupon.discount_type === '折扣 %') {
-      return (subtotal * parseFloat(coupon.discount) / 100).toFixed(0);
+    } else if (coupon.discount_type === "折扣 %") {
+      return ((subtotal * parseFloat(coupon.discount)) / 100).toFixed(0);
     }
-    
+
     return 0;
   };
 
@@ -71,8 +71,6 @@ export const CartProvider = ({ children }) => {
   const removeCoupon = () => {
     setAppliedCoupon(null);
   };
-  
-
 
   // 處理全選
   const handleSelectAll = (type, items, isSelected) => {
@@ -347,17 +345,19 @@ export const CartProvider = ({ children }) => {
 
   const completeCheckout = async (checkoutData) => {
     try {
-
+      // 確保加入優惠券信息
       const checkoutWithCoupon = {
         ...checkoutData,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
+        couponUsageId: appliedCoupon ? appliedCoupon.coupon_usage_id : null,
+        couponDiscount: appliedCoupon
+          ? calculateCouponDiscount(appliedCoupon)
+          : 0,
       };
 
-
-
       const response = await axios.post(`${API_BASE_URL}/checkout/complete`, {
-        userId: user.id, // 這裡應該使用實際的 userId
-        ...checkoutData,
+        userId: user.id,
+        ...checkoutWithCoupon, // 使用包含優惠券信息的數據
       });
 
       if (response.data.success) {

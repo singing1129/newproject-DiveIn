@@ -221,7 +221,7 @@ export const useCoupon = (cartData) => {
     if (!user || user === -1 || !couponUsageId) return;
 
     try {
-      const response = await axios.put(`${API_BASE_URL}/mycustom/use-coupon`, {
+      const response = await axios.put(`${API_BASE_URL}/jimmy/use-coupon`, {
         couponUsageId,
         userId: user.id,
       });
@@ -245,6 +245,7 @@ export const useCoupon = (cartData) => {
   // 結帳時調用，將優惠券標記為已使用
   const completeCouponUsage = async () => {
     if (selectedCoupon && selectedCoupon.coupon_usage_id) {
+      console.log("正在標記優惠券為已使用:", selectedCoupon.coupon_usage_id);
       return await markCouponAsUsed(selectedCoupon.coupon_usage_id);
     }
     return true;

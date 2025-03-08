@@ -1,4 +1,4 @@
-// routes/myCustomCoupon.js
+// routes/jimmy/index.js
 import express from "express";
 import { pool } from "../../config/mysql.js";
 

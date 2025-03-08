@@ -9,7 +9,6 @@ import ShippingInfo from "./components/ShippingInfo";
 import axios from "axios";
 import "./step4.css";
 
-
 export default function Cart4() {
   const router = useRouter();
   const [orderData, setOrderData] = useState(null);
@@ -106,6 +105,31 @@ export default function Cart4() {
                     </span>
                   </div>
                   <hr />
+                  {/* 新增：顯示優惠券折扣（如果有） */}
+                  {orderData.orderInfo.couponDiscount > 0 && (
+                    <>
+                      <div className="d-flex justify-content-between">
+                        <span>商品小計</span>
+                        <span>
+                          NT${" "}
+                          {orderData.orderInfo.totalAmount +
+                            orderData.orderInfo.couponDiscount}
+                        </span>
+                      </div>
+                      {orderData.orderInfo.couponName && (
+                        <div className="alert alert-success p-2 mb-2">
+                          <small>
+                            <i className="bi bi-ticket-perforated me-1"></i>
+                            已使用優惠券：{orderData.orderInfo.couponName}
+                          </small>
+                        </div>
+                      )}
+                      <div className="d-flex justify-content-between text-danger">
+                        <span>優惠券折扣</span>
+                        <span>-NT$ {orderData.orderInfo.couponDiscount}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="d-flex justify-content-between fw-bold">
                     <span>總計金額</span>
                     <span className="text-danger">
