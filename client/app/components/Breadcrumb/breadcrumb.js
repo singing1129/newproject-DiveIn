@@ -50,7 +50,9 @@ export default function Breadcrumb() {
       login: "用戶登入",
       coupon: "我的優惠券",
       "coupon-claim":"領取專屬優惠",
-      "coupon-history":"歷史紀錄"
+      "coupon-history":"歷史紀錄",
+      message:"我的訊息",
+      notifications:"系統通知"
     }
   };
 
