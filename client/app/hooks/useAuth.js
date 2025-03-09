@@ -390,74 +390,136 @@ export function AuthProvider({ children }) {
         throw new Error("系統錯誤，請重新整理頁面後再試");
       }
 
-      const formattedPhone = phoneNumber.startsWith("+")
-        ? phoneNumber
-        : `+${phoneNumber}`;
+      // 处理台湾手机号码格式
+      let formattedPhone = phoneNumber;
+      if (phoneNumber.startsWith("09")) {
+        formattedPhone = "+886" + phoneNumber.substring(1);
+      } else if (!phoneNumber.startsWith("+")) {
+        formattedPhone = "+886" + phoneNumber;
+      }
+
       console.log("發送驗證碼到:", formattedPhone);
 
-      const confirmationResult = await signInWithPhoneNumber(
-        auth,
-        formattedPhone,
-        window.recaptchaVerifier
-      );
+      try {
+        // 尝试发送验证码
+        const confirmationResult = await signInWithPhoneNumber(
+          auth,
+          formattedPhone,
+          window.recaptchaVerifier
+        );
 
-      return async (verificationCode) => {
-        try {
-          const result = await confirmationResult.confirm(verificationCode);
+        console.log("验证码发送成功");
 
-          if (result.user) {
-            const isLinking =
-              localStorage.getItem("isLinkingAccount") === "true";
-            const linkToUserId = localStorage.getItem("linkToUserId");
+        // 返回验证函数
+        return async (verificationCode) => {
+          try {
+            console.log("开始验证OTP...");
+            // 验证OTP
+            const result = await confirmationResult.confirm(verificationCode);
+            console.log("OTP验证成功:", result.user.phoneNumber);
 
-            if (isLinking && linkToUserId) {
-              // 處理手機號碼綁定
-              const response = await fetch(
-                "http://localhost:3005/api/admin/social-login",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    provider: "phone",
-                    provider_id: formattedPhone,
-                    name: "手機用戶",
-                    link_to_user_id: linkToUserId,
-                    force_link: true,
-                    stay_on_account_page: true,
-                  }),
-                  credentials: "include",
+            if (result.user) {
+              // 检查是否是账号连结操作
+              const isLinking =
+                localStorage.getItem("isLinkingAccount") === "true";
+              const linkToUserId = localStorage.getItem("linkToUserId");
+
+              if (isLinking && linkToUserId) {
+                console.log("检测到账号连结操作");
+                // 转换为09开头的格式
+                const displayPhone = formattedPhone.startsWith("+886")
+                  ? "0" + formattedPhone.substring(4)
+                  : formattedPhone;
+
+                try {
+                  const response = await fetch(
+                    "http://localhost:3005/api/admin/social-login",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        provider: "phone",
+                        provider_id: displayPhone, // 使用09开头的格式
+                        name: "手機用戶",
+                        link_to_user_id: linkToUserId,
+                        force_link: true,
+                        stay_on_account_page: true,
+                      }),
+                      credentials: "include",
+                    }
+                  );
+
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("账号连结失败:", errorData);
+                    throw new Error(
+                      errorData.message || "綁定失敗，請稍後再試"
+                    );
+                  }
+
+                  const data = await response.json();
+                  console.log("账号连结成功:", data);
+
+                  // 如果绑定成功，更新本地存储的token
+                  if (data.status === "success" && data.data?.token) {
+                    localStorage.setItem(appKey, data.data.token);
+                    const newUser = jwt.decode(data.data.token);
+                    setUser(newUser);
+                  }
+
+                  return {
+                    success: data.status === "success",
+                    user: result.user,
+                  };
+                } catch (linkError) {
+                  console.error("账号连结请求失败:", linkError);
+                  throw linkError;
                 }
-              );
-
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "綁定失敗，請稍後再試");
               }
 
-              const data = await response.json();
-
-              // 如果綁定成功，更新本地存儲的token
-              if (data.status === "success" && data.data?.token) {
-                localStorage.setItem(appKey, data.data.token);
-                const newUser = jwt.decode(data.data.token);
-                setUser(newUser);
-              }
-
-              return { success: data.status === "success", user: result.user };
+              // 普通登录
+              return { success: true, user: result.user };
             }
-
-            return { success: true, user: result.user };
+            return { success: false };
+          } catch (error) {
+            console.error("驗證碼確認失敗:", error);
+            throw error;
           }
-          return { success: false };
-        } catch (error) {
-          console.error("驗證碼確認失敗:", error);
-          throw error;
+        };
+      } catch (sendError) {
+        console.error("发送验证码失败:", sendError);
+
+        // 处理特定的Firebase错误
+        if (sendError.code === "auth/invalid-phone-number") {
+          throw new Error("手機號碼格式無效，請確認後重試");
+        } else if (sendError.code === "auth/too-many-requests") {
+          throw new Error("發送請求過於頻繁，請稍後再試");
+        } else if (sendError.code === "auth/quota-exceeded") {
+          throw new Error("今日驗證碼發送次數已達上限，請明天再試");
+        } else {
+          throw sendError;
         }
-      };
+      }
     } catch (error) {
       console.error("發送驗證碼失敗:", error);
+
+      // 如果是reCAPTCHA错误，尝试重置
+      if (
+        error.code === "auth/argument-error" ||
+        error.code === "auth/captcha-check-failed"
+      ) {
+        try {
+          if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = null;
+          }
+        } catch (e) {
+          console.error("清除reCAPTCHA失敗:", e);
+        }
+      }
+
       throw error;
     }
   };
@@ -501,6 +563,8 @@ export function AuthProvider({ children }) {
           session.user.id || session.user.sub || Date.now().toString(),
       };
 
+      console.log("准备发送到后端的用户数据:", userData);
+
       // 只有在明确是连结操作时，才添加连结用户ID
       if (isLinking && linkToUserId) {
         userData.link_to_user_id = linkToUserId;
@@ -513,58 +577,98 @@ export function AuthProvider({ children }) {
         userData.email = `${userData.provider_id}@line.temporary.email`;
       }
 
-      const apiUrl = "http://localhost:3005/api/admin/social-login";
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(userData),
-        credentials: "include",
-      });
+      try {
+        const apiUrl = "http://localhost:3005/api/admin/social-login";
+        console.log(`正在发送请求到: ${apiUrl}`);
+        console.log(`请求体:`, JSON.stringify(userData));
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `API响应错误: ${response.status}`);
-      }
+        // 添加超时处理
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
 
-      const result = await response.json();
-      console.log("API响应:", result);
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(userData),
+          signal: controller.signal,
+          credentials: "include", // 包含cookies
+        });
 
-      if (result.status === "success") {
-        if (isLinking && returnToAccountPage) {
-          // 清除连结标记
-          localStorage.removeItem("isLinkingAccount");
-          localStorage.removeItem("linkToUserId");
-          localStorage.removeItem("returnToAccountPage");
-          localStorage.removeItem("authSource");
+        clearTimeout(timeoutId);
 
-          // 显示成功讯息并刷新页面
-          alert(`${provider}帐号连结成功！`);
-          window.location.reload();
-        } else {
-          // 普通登入
-          const token = result.data.token;
-          localStorage.setItem(appKey, token);
-          setUser(jwt.decode(token));
+        // 检查响应状态
+        if (!response.ok) {
+          let errorMessage = `API响应错误: ${response.status}`;
+          let errorDetails = {};
 
-          // 清除连结标记
-          localStorage.removeItem("isLinkingAccount");
-          localStorage.removeItem("linkToUserId");
-          localStorage.removeItem("returnToAccountPage");
-          localStorage.removeItem("authSource");
-
-          if (isLinking) {
-            alert(`${provider}帐号连结成功！`);
+          try {
+            errorDetails = await response.json();
+            errorMessage = errorDetails.message || errorMessage;
+          } catch (e) {
+            console.error("无法解析错误响应:", e);
           }
+
+          console.error(errorMessage, errorDetails);
+          throw new Error(errorMessage);
         }
-      } else {
-        throw new Error(result.message || "处理失败");
+
+        const result = await response.json();
+        console.log("API响应:", result);
+
+        if (result.status === "success") {
+          if (isLinking && returnToAccountPage) {
+            // 清除连结标记
+            localStorage.removeItem("isLinkingAccount");
+            localStorage.removeItem("linkToUserId");
+            localStorage.removeItem("returnToAccountPage");
+            localStorage.removeItem("authSource");
+
+            // 显示成功讯息并刷新页面
+            alert(`${provider}帐号连结成功！`);
+            window.location.reload();
+          } else {
+            // 普通登入
+            const token = result.data.token;
+            localStorage.setItem(appKey, token);
+            setUser(jwt.decode(token));
+
+            // 清除连结标记
+            localStorage.removeItem("isLinkingAccount");
+            localStorage.removeItem("linkToUserId");
+            localStorage.removeItem("returnToAccountPage");
+            localStorage.removeItem("authSource");
+
+            if (isLinking) {
+              alert(`${provider}帐号连结成功！`);
+            }
+          }
+        } else {
+          throw new Error(result.message || "处理失败");
+        }
+      } catch (error) {
+        console.error("API请求失败:", error);
+
+        // 如果是网络错误或超时，提供更友好的错误信息
+        if (error.name === "AbortError") {
+          alert("服务器响应超时，请稍后再试");
+        } else if (
+          error.message.includes("NetworkError") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          alert("网络连接错误，请检查您的网络连接");
+        } else {
+          alert(error.message || "登录处理失败，请稍后再试");
+        }
+
+        // 清除会话状态
+        await signOut({ redirect: false });
       }
     } catch (error) {
       console.error("处理失败:", error);
-      alert(error.message);
+      alert(error.message || "登录处理失败，请稍后再试");
     }
   };
 
