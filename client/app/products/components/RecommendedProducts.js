@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import axios from "axios";
+import Link from "next/link";
 
 const API_BASE_URL = "http://localhost:3005/api";
 
@@ -47,6 +48,7 @@ export default function RecommendedProducts() {
               }));
 
             setRecommendedProducts(filteredProducts);
+            console.log("filteredProducts", filteredProducts);
           }
         }
       } catch (error) {
@@ -60,6 +62,7 @@ export default function RecommendedProducts() {
   }, [params.id]);
 
   if (recommendedProducts.length === 0) return null;
+  console.log("recommendedProducts", recommendedProducts);
 
   return (
     <div className="mt-5">
@@ -75,39 +78,51 @@ export default function RecommendedProducts() {
           <div className="products-track">
             {recommendedProducts.map((product, index) => (
               <div key={index} className="product-slide">
-                <div className="product-img mb-2 position-relative">
-                  <Image
-                    src={`/img/product/${product.imgSrc}`}
-                    alt={product.name}
-                    width={200}
-                    height={200}
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                      objectFit: "cover",
-                    }}
-                  />
-                  <div className="button-group">
-                    <button className="like-button">
-                      <i className="fa-heart fa-solid text-danger"></i>
-                    </button>
-                    <button className="cart-button">
-                      <i className="fa-solid fa-cart-shopping text-primary"></i>
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <div className="fw-bold text-truncate">{product.name}</div>
-                  <div className="text-muted text-truncate">
-                    {product.description}
-                  </div>
-                  <div className="text-danger fw-bold">{product.salePrice}</div>
-                  {product.originalPrice && (
-                    <div className="text-decoration-line-through text-secondary">
-                      {product.originalPrice}
+                <Link
+                  href={`/products/${product.id}`}
+                  className="text-decoration-none"
+                >
+                  <div
+                    className="product-img mb-2 position-relative"
+                    style={{ paddingTop: "100%" }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    >
+                      <Image
+                        src={`/image/product/${product.imgSrc}`}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        style={{
+                          objectFit: "cover",
+                        }}
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+                  <div>
+                    <div className="fw-bold text-truncate text-dark">
+                      {product.name}
+                    </div>
+                    {/* <div className="text-muted text-truncate">
+                    {product.description}
+                  </div> */}
+                    <div className="text-danger fw-bold">
+                      {product.salePrice}
+                    </div>
+                    {/* {product.originalPrice && (
+                      <div className="text-decoration-line-through text-secondary">
+                        {product.originalPrice}
+                      </div>
+                    )} */}
+                  </div>
+                </Link>
               </div>
             ))}
           </div>

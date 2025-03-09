@@ -14,6 +14,7 @@ import { useCart } from "@/hooks/cartContext";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { FreeMode, Navigation, Thumbs } from "swiper/modules";
 import useToast from "@/hooks/useToast";
+import useLocalStorage from "@/hooks/use-localstorage";
 //使用swiper
 import "swiper/css";
 import "swiper/css/free-mode";
@@ -43,7 +44,12 @@ export default function ProductDetail() {
   const [currentOriginalPrice, setCurrentOriginalPrice] = useState(0);
   const [allImages, setAllImages] = useState([]);
   const mainSwiperRef = useRef(null);
+  const [historyItems, setHistoryItems] = useLocalStorage(
+    "browsingHistory",
+    []
+  );
 
+  // 複製連結
   const handleShare = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
@@ -51,25 +57,42 @@ export default function ProductDetail() {
       style: { backgroundColor: "green" },
     });
   };
+
   //瀏覽紀錄
   useEffect(() => {
     if (!product) return;
-    const storedHistory =
-      JSON.parse(localStorage.getItem("browsingHistory")) || [];
-    const updatedHistory = [
-      {
+
+    // 使用函數式更新，避免依賴於 historyItems
+    setHistoryItems((prevHistory) => {
+      // 檢查商品是否已經在歷史記錄中
+      const isProductInHistory = prevHistory.some(
+        (item) => item.id === product.id
+      );
+
+      // 如果已經在歷史記錄中且位置是第一個，則不需要更新
+      if (isProductInHistory && prevHistory[0]?.id === product.id) {
+        return prevHistory;
+      }
+
+      // 創建新的歷史記錄項目
+      const newItem = {
         id: product.id,
         name: product.name,
         price: product.variants[0].price,
-        image: product.main_image
-          ? `/image/product/${product.main_image}`
+        image: product.images[0]
+          ? `/image/product/${product.images[0]}`
           : "/image/product/no-img.png",
-      },
-      ...storedHistory.filter((item) => item.id !== product.id),
-    ].slice(0, 10); // 限制只保留最近 10 筆
+      };
 
-    localStorage.setItem("browsingHistory", JSON.stringify(updatedHistory));
-  }, [product]);
+      // 創建新的歷史記錄，移除舊的相同商品（如果有）
+      const filteredHistory = prevHistory.filter(
+        (item) => item.id !== product.id
+      );
+
+      // 將新項目添加到歷史記錄的開頭，並限制為10項
+      return [newItem, ...filteredHistory].slice(0, 10);
+    });
+  }, [product, setHistoryItems]); // 只依賴 product 和 setHistoryItems
 
   // 當顏色或尺寸改變時，更新庫存
   useEffect(() => {
@@ -80,52 +103,59 @@ export default function ProductDetail() {
   }, [selectedColor, selectedSize]);
 
   // 範例：改寫 getCurrentVariant
-const getCurrentVariant = () => {
-  if (!product) return null;
+  const getCurrentVariant = () => {
+    if (!product) return null;
 
-  // 如果既沒有顏色也沒有尺寸，就直接回傳唯一或第一個變體
-  if (
-    (!product.colors || product.colors.length === 0) &&
-    (!product.sizes || product.sizes.length === 0) &&
-    product.variants &&
-    product.variants.length > 0
-  ) {
-    return product.variants[0];
-  }
+    // 如果既沒有顏色也沒有尺寸，就直接回傳唯一或第一個變體
+    if (
+      (!product.colors || product.colors.length === 0) &&
+      (!product.sizes || product.sizes.length === 0) &&
+      product.variants &&
+      product.variants.length > 0
+    ) {
+      return product.variants[0];
+    }
 
-  // 如果只有顏色，沒有尺寸
-  if (product.colors && product.colors.length > 0 && product.sizes.length === 0) {
-    // user 必須選了顏色之後才找得到
-    if (!selectedColor) return null;
+    // 如果只有顏色，沒有尺寸
+    if (
+      product.colors &&
+      product.colors.length > 0 &&
+      product.sizes.length === 0
+    ) {
+      // user 必須選了顏色之後才找得到
+      if (!selectedColor) return null;
 
-    // 只靠 color_id 來找
-    return product.variants.find((v) => v.color_id === selectedColor.id);
-  }
+      // 只靠 color_id 來找
+      return product.variants.find((v) => v.color_id === selectedColor.id);
+    }
 
-  // 如果只有尺寸，沒有顏色
-  if (product.sizes && product.sizes.length > 0 && product.colors.length === 0) {
-    if (!selectedSize) return null;
+    // 如果只有尺寸，沒有顏色
+    if (
+      product.sizes &&
+      product.sizes.length > 0 &&
+      product.colors.length === 0
+    ) {
+      if (!selectedSize) return null;
 
-    return product.variants.find((v) => v.size_id === selectedSize.id);
-  }
+      return product.variants.find((v) => v.size_id === selectedSize.id);
+    }
 
-  // 如果既有顏色又有尺寸
-  if (
-    product.colors &&
-    product.colors.length > 0 &&
-    product.sizes &&
-    product.sizes.length > 0
-  ) {
-    if (!selectedColor || !selectedSize) return null;
+    // 如果既有顏色又有尺寸
+    if (
+      product.colors &&
+      product.colors.length > 0 &&
+      product.sizes &&
+      product.sizes.length > 0
+    ) {
+      if (!selectedColor || !selectedSize) return null;
 
-    return product.variants.find(
-      (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
-    );
-  }
+      return product.variants.find(
+        (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
+      );
+    }
 
-  return null; 
-};
-
+    return null;
+  };
 
   // 處理數量變更
   const handleQuantityChange = (value) => {

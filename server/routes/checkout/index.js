@@ -525,7 +525,7 @@ router.post("/complete", async (req, res) => {
         [couponCode, userId]
       );
 
-       // 輸出查詢結果進行調試
+      // 輸出查詢結果進行調試
       console.log("優惠券查詢結果:", couponResult);
 
       if (couponResult.length > 0) {
@@ -759,6 +759,26 @@ router.post("/complete", async (req, res) => {
          coupon_discount = ? 
          WHERE id = ?`,
         [appliedCouponId, couponDiscount, orderId]
+      );
+    }
+    
+    // 訂單完成後，記錄積分
+    if (orderPoints > 0) {
+      // 新增積分歷史記錄
+      await connection.execute(
+        `INSERT INTO points_history (user_id, order_id, points, action, description, created_at)
+     VALUES (?, ?, ?, 'purchase', '購物消費獲得積分', NOW())`,
+        [userId, orderId, orderPoints]
+      );
+
+      // 更新用戶總積分
+      await connection.execute(
+        `UPDATE users SET total_points = total_points + ? WHERE id = ?`,
+        [orderPoints, userId]
+      );
+
+      console.log(
+        `用戶 ${userId} 完成訂單 ${orderId} 獲得 ${orderPoints} 積分`
       );
     }
 
