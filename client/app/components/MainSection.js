@@ -20,6 +20,7 @@ const MainSection = ({ scrollToSection }) => {
   const [visibleCards, setVisibleCards] = useState(0);
   const [visibleProducts, setVisibleProducts] = useState([]);
   const [expandedProducts, setExpandedProducts] = useState({});
+  const [burstStates, setBurstStates] = useState({});
   const [activityPositions, setActivityPositions] = useState([]);
   const [productPositions, setProductPositions] = useState([]);
   const [swiperInstance, setSwiperInstance] = useState(null);
@@ -37,60 +38,104 @@ const MainSection = ({ scrollToSection }) => {
         if (activityResponse.data.status === "success" && Array.isArray(activityResponse.data.data)) {
           setActivities(activityResponse.data.data.slice(0, 4));
           setActivityPositions(new Array(activityResponse.data.data.length).fill(null));
+          console.log("[Debug] Fetched activities:", activityResponse.data.data, "Length:", activityResponse.data.data.length);
         }
         const productResponse = await axios.get(`${API_BASE_URL}/api/homeRecommendations?category=product`);
         if (productResponse.data.status === "success" && Array.isArray(productResponse.data.data)) {
-          setProducts(productResponse.data.data.slice(0, 4));
+          console.log("[Debug] Fetched products:", productResponse.data.data, "Length:", productResponse.data.data.length);
+          setProducts(productResponse.data.data);
           setVisibleProducts(new Array(productResponse.data.data.length).fill(false));
           setProductPositions(new Array(productResponse.data.data.length).fill(null));
         }
         const rentResponse = await axios.get(`${API_BASE_URL}/api/homeRecommendations?category=rent`);
         if (rentResponse.data.status === "success" && Array.isArray(rentResponse.data.data)) {
+          console.log("[Debug] Fetched rent products:", rentResponse.data.data, "Length:", rentResponse.data.data.length);
           setRentProducts(rentResponse.data.data);
         }
       } catch (err) {
-        console.error("Fetch error:", err);
+        console.error("[Debug] Fetch error:", err);
       } finally {
+        console.log("[Debug] Data loading completed, loading:", loading);
         setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  const setRandomPositionForItem = (index, existingPositions, itemSize = 200) => {
+  const setRandomPositionForItem = (index, existingPositions, allPositions, itemSize = 200) => {
     const container = bubbleContainerRef.current;
-    if (!container) return { top: 0, left: 0 };
+    if (!container || !container.clientWidth || !container.clientHeight) {
+      console.warn("[Debug] bubbleContainerRef is not ready:", container, "Index:", index);
+      return { top: 20 + Math.random() * 50, left: 20 + Math.random() * 50 };
+    }
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     const padding = 20;
-    const minSpacing = itemSize + 60;
+    const minSpacing = itemSize + 80;
     let attempts = 0;
     let validPosition = false;
     let top, left;
 
-    while (!validPosition && attempts < 300) {
-      top = padding + Math.random() * (containerHeight - itemSize - 2 * padding);
-      left = padding + Math.random() * (containerWidth - itemSize - 2 * padding);
+    console.log("[Debug] Setting position for index:", index, "Container size:", { width: containerWidth, height: containerHeight });
+
+    while (!validPosition && attempts < 500) {
+      top = padding + Math.random() * (containerHeight - itemSize - 2 * padding) * (0.3 + Math.random() * 0.7);
+      left = padding + Math.random() * (containerWidth - itemSize - 2 * padding) * (0.3 + Math.random() * 0.7);
       if (top < padding) top = padding;
       if (left < padding) left = padding;
       if (top > containerHeight - itemSize - padding) top = containerHeight - itemSize - padding;
       if (left > containerWidth - itemSize - padding) left = containerWidth - itemSize - padding;
 
-      validPosition = existingPositions.every((pos) => {
+      validPosition = allPositions.every((pos) => {
         if (!pos) return true;
         const distance = Math.sqrt(Math.pow(pos.top - top, 2) + Math.pow(pos.left - left, 2));
         return distance >= minSpacing;
       });
+
       attempts++;
     }
-    return { top: validPosition ? top : padding, left: validPosition ? left : padding };
+
+    if (!validPosition) {
+      console.warn("[Debug] Failed to find valid position after", attempts, "attempts. Using random fallback.");
+      top = padding + Math.random() * (containerHeight - itemSize - 2 * padding);
+      left = padding + Math.random() * (containerWidth - itemSize - 2 * padding);
+    }
+
+    console.log("[Debug] Final position for index", index, ":", { top, left });
+    return { top, left };
+  };
+
+  const calculateProductPositions = () => {
+    if (!loading && products.length > 0) {
+      console.log("[Debug] Calculating product positions, products length:", products.length);
+      const allPositions = [
+        ...activityPositions.filter((p) => p),
+        ...productPositions.filter((p) => p),
+      ];
+      const newPositions = products.map((_, index) => {
+        const product = products[index];
+        const rentProduct = expandedProducts[product?.id];
+        if ((visibleProducts[index] || rentProduct || swiperInstance?.activeIndex === 1) && !burstStates[index]) {
+          if (!productPositions[index] || (rentProduct && !visibleProducts[index])) {
+            return setRandomPositionForItem(index, productPositions.filter((p) => p), allPositions);
+          }
+        }
+        return productPositions[index] || { top: 0, left: 0 };
+      });
+      setProductPositions(newPositions);
+      console.log("[Debug] Product positions set, length:", newPositions.length, "Positions:", newPositions);
+    }
   };
 
   useEffect(() => {
     if (!loading && activities.length > 0 && swiperInstance?.activeIndex === 0) {
+      console.log("[Debug] Updating activity positions, activities length:", activities.length, "visibleCards:", visibleCards);
       const newPositions = Array(activities.length).fill(null).map((pos, index) => {
         if (index < visibleCards && !activityPositions[index]) {
-          return setRandomPositionForItem(index, activityPositions.filter((p) => p));
+          return setRandomPositionForItem(index, activityPositions.filter((p) => p), [
+            ...activityPositions.filter((p) => p),
+            ...productPositions.filter((p) => p),
+          ]);
         }
         return activityPositions[index] || pos;
       });
@@ -100,22 +145,13 @@ const MainSection = ({ scrollToSection }) => {
 
   useEffect(() => {
     if (!loading && products.length > 0 && swiperInstance?.activeIndex === 1) {
-      const newPositions = Array(products.length).fill(null).map((pos, index) => {
-        const product = products[index];
-        const rentProduct = expandedProducts[product?.id];
-        if (visibleProducts[index] && !rentProduct && !productPositions[index]) {
-          return setRandomPositionForItem(index, productPositions.filter((p) => p));
-        } else if (rentProduct && !productPositions[index]) {
-          return setRandomPositionForItem(index, productPositions.filter((p) => p));
-        }
-        return productPositions[index] || pos;
-      });
-      setProductPositions(newPositions);
+      console.log("[Debug] Triggering calculateProductPositions, products length:", products.length);
+      calculateProductPositions();
     }
-  }, [visibleProducts, products, expandedProducts, loading, swiperInstance]);
+  }, [visibleProducts, products, expandedProducts, burstStates, loading, swiperInstance]);
 
   const handleSwiperInit = (swiper) => {
-    console.log("[Debug] Swiper initialized", swiper);
+    console.log("[Debug] Swiper initialized, swiper instance:", swiper);
     setSwiperInstance(swiper);
   };
 
@@ -130,14 +166,23 @@ const MainSection = ({ scrollToSection }) => {
         if (e.deltaY > 0) {
           if (visibleCards < activities.length) {
             e.preventDefault();
-            setVisibleCards((prev) => prev + 1);
+            setVisibleCards((prev) => {
+              const newValue = prev + 1;
+              console.log("[Debug] Increasing visibleCards to:", newValue);
+              return newValue;
+            });
           } else if (!swiperInstance.isEnd) {
+            console.log("[Debug] Sliding to next slide");
             swiperInstance.slideNext();
           }
         } else if (e.deltaY < 0) {
           if (visibleCards > 0) {
             e.preventDefault();
-            setVisibleCards((prev) => prev - 1);
+            setVisibleCards((prev) => {
+              const newValue = prev - 1;
+              console.log("[Debug] Decreasing visibleCards to:", newValue);
+              return newValue;
+            });
           } else {
             console.log("[Debug] Triggering scroll to HeroSection");
             swiperInstance.params.speed = 0;
@@ -148,21 +193,23 @@ const MainSection = ({ scrollToSection }) => {
       } else {
         if (e.deltaY > 0 && !swiperInstance.isEnd) {
           e.preventDefault();
+          console.log("[Debug] Sliding to next slide");
           swiperInstance.slideNext();
         } else if (e.deltaY < 0 && !swiperInstance.isBeginning) {
           e.preventDefault();
+          console.log("[Debug] Sliding to previous slide");
           swiperInstance.slidePrev();
         }
       }
     };
 
     swiperInstance.on("transitionStart", () => {
-      console.log("[Debug] Transition started");
+      console.log("[Debug] Transition started, activeIndex:", swiperInstance.activeIndex);
       document.body.style.overflow = "hidden";
     });
 
     swiperInstance.on("transitionEnd", () => {
-      console.log("[Debug] Transition ended");
+      console.log("[Debug] Transition ended, activeIndex:", swiperInstance.activeIndex);
       const activeIndex = swiperInstance.activeIndex;
       document.body.style.overflow = activeIndex === 2 ? "auto" : "hidden";
     });
@@ -212,15 +259,37 @@ const MainSection = ({ scrollToSection }) => {
 
       if (activeIndex === 0) {
         setVisibleCards(activities.length > 0 ? 1 : 0);
+        console.log("[Debug] Set visibleCards to:", activities.length > 0 ? 1 : 0, "for activity slide");
       } else {
         setVisibleCards(0);
+        console.log("[Debug] Set visibleCards to 0 for non-activity slide");
       }
 
       if (activeIndex === 1) {
-        setVisibleProducts(products.map(() => true));
+        console.log("[Debug] Entering product slide, products length:", products.length);
+        calculateProductPositions();
+        setVisibleProducts(products.map(() => false));
+        let index = 0;
+        const interval = setInterval(() => {
+          setVisibleProducts((prev) => {
+            const newVisible = [...prev];
+            if (index < products.length) {
+              newVisible[index] = true;
+              console.log("[Debug] Activating bubble at index:", index, "Product:", products[index], "Visible products:", newVisible);
+              index++;
+            }
+            if (index === products.length) {
+              clearInterval(interval);
+              console.log("[Debug] All bubbles activated, total:", products.length, "Visible products state:", newVisible);
+            }
+            return newVisible;
+          });
+        }, 300);
       } else {
+        console.log("[Debug] Leaving product slide, resetting states");
         setVisibleProducts(products.map(() => false));
         setExpandedProducts({});
+        setBurstStates({});
         setProductPositions(products.map(() => null));
       }
     });
@@ -239,9 +308,24 @@ const MainSection = ({ scrollToSection }) => {
 
   const getImagePath = (item, category) => {
     const defaultImage = "/image/rent/no-img.png";
-    if (!item || !item.id || !item.main_image) return defaultImage;
-    if (category === "rent") return item.main_image;
-    return `/image/${category}/${item.id}/${item.main_image}`;
+    if (!item || !item.main_image) {
+      console.warn("[Debug] Missing item data for image path:", { item, category });
+      return defaultImage;
+    }  
+    if (category === "rent") {
+      return item.main_image || defaultImage;
+    } else if (category === "activity") {
+      if (!item.id) {
+        console.warn("[Debug] Missing item.id for activity image path:", { item });
+        return defaultImage;
+      }
+      return `/image/activity/${item.id}/${item.main_image}` || defaultImage;
+    } else if (category === "product") {
+      return `/image/product/${item.main_image}` || defaultImage;
+    }
+
+    console.warn("[Debug] Unknown category for image path:", category);
+    return defaultImage;
   };
 
   const splitActivityName = (name) => {
@@ -256,25 +340,48 @@ const MainSection = ({ scrollToSection }) => {
   };
 
   const handleBubbleClick = (product, index) => {
-    const rentProduct = rentProducts.find((rent) => rent.name === product.name);
-    if (rentProduct) {
-      setExpandedProducts((prev) => ({
+    console.log("[Debug] Bubble clicked, product:", product, "index:", index, "Current expandedProducts:", expandedProducts);
+    setBurstStates((prev) => ({
+      ...prev,
+      [index]: true,
+    }));
+
+    setTimeout(() => {
+      console.log("[Debug] Searching for rent product, product name:", product.name, "rentProducts:", rentProducts);
+      const rentProduct = rentProducts.find((rent) => rent.name === product.name);
+      if (rentProduct) {
+        console.log("[Debug] Found matching rent product:", rentProduct);
+        setExpandedProducts((prev) => ({
+          ...prev,
+          [product.id]: rentProduct,
+        }));
+        setProductPositions((prev) => {
+          const updated = [...prev];
+          updated[index] = null;
+          console.log("[Debug] Updated product position at index:", index, "New position:", updated[index]);
+          return updated;
+        });
+        setVisibleProducts((prev) => {
+          const newVisible = [...prev];
+          newVisible[index] = true;
+          console.log("[Debug] Updated visible products at index:", index, "New visible state:", newVisible);
+          return newVisible;
+        });
+      } else {
+        console.warn("[Debug] No matching rent product found for:", product.name, "rentProducts:", rentProducts);
+      }
+      setBurstStates((prev) => ({
         ...prev,
-        [product.id]: rentProduct,
+        [index]: false,
       }));
-      setProductPositions((prev) => {
-        const updated = [...prev];
-        updated[index] = null;
-        return updated;
-      });
-    }
+      console.log("[Debug] Burst state reset for index:", index, "New burstStates:", burstStates);
+    }, 300);
   };
 
   if (loading) return <div className={styles.loading}>資料加載中...</div>;
 
   return (
     <section className={styles.mainSection}>
-      {/* 始終渲染 Header，但通過樣式控制顯示 */}
       <Header ref={headerRef} className={`${styles.header} ${swiperInstance?.activeIndex === 2 ? styles.visible : styles.hidden} ${styles.debug}`} />
 
       <Swiper
@@ -329,16 +436,17 @@ const MainSection = ({ scrollToSection }) => {
 
         <SwiperSlide ref={(el) => (slideRefs.current[1] = el)} className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
-            <h2>推薦商品</h2>
+            <h2>精選潛水好物，打造極致潛水體驗</h2>
             <div className={styles.bubbleContainer} ref={bubbleContainerRef}>
               {products.map((product, index) => {
                 const rentProduct = expandedProducts[product?.id];
                 const position = productPositions[index];
+                const isBursting = burstStates[index];
                 return (
                   <div key={index} className={styles.productWrapper}>
                     {!rentProduct && (
                       <div
-                        className={`${styles.productBubble} ${visibleProducts[index] ? styles.visible : ""}`}
+                        className={`${styles.productBubble} ${visibleProducts[index] ? styles.visible : ""} ${isBursting ? styles.burst : ""}`}
                         style={{
                           backgroundImage: `url(${getImagePath(product, "product")})`,
                           animationDelay: `${index * 0.3}s`,
@@ -391,7 +499,6 @@ const MainSection = ({ scrollToSection }) => {
         </SwiperSlide>
       </Swiper>
 
-      {/* 始終渲染 Footer，但通過樣式控制顯示 */}
       <Footer
         ref={footerRef}
         className={`${styles.footer} ${swiperInstance?.activeIndex === 2 ? styles.visible : styles.hidden} ${styles.debug}`}
