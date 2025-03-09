@@ -18,8 +18,8 @@
   --gray-700-color: #6f6f6f;
   --gray-800-color: #555555;
   --gray-900-color: #3b3b3b;
-  --header-height: 60px;
-  --footer-height: 60px;
+  --header-height: 100px;
+  --footer-height: 0px;
 }
 
 :global(*) {
@@ -32,7 +32,7 @@
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
-  background-color: var(--primary-deep-color);
+  /* background-color: var(--primary-deep-color); */
   color: var(--white);
 }
 
@@ -43,29 +43,76 @@
   left: 0;
   width: 100%;
   display: none;
-  z-index: 1000;
-  opacity: 0; /* 初始透明 */
+  opacity: 0;
+  z-index: 2000;
+  transition: opacity 1s ease-out, transform 1s ease-out;
 }
 
 .header {
+  width: 100%;
   top: 0;
-  height: var(--header-height);
-  background-color: rgba(2, 48, 71, 0.9);
+  height: var(--header-height, 100px);
+  background-color: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
 }
 
+/* 確保 nav 和內部元素也透明 */
+.header nav,
+.header .container,
+.header .d-none,
+.header .d-sm-flex {
+  background-color: transparent !important;
+}
 
 .footer {
   bottom: 0;
-  height: var(--footer-height);
-  background-color: rgba(2, 48, 71, 0.9);
-  z-index: 1001; /* 確保在 Swiper 之上 */
+  height: var(--footer-height, 0px);
+  background-color: transparent !important;
+  z-index: 2001;
 }
 
-/* 新增臨時顯示類別 */
-.showFooter {
-  display: block !important; /* 強制顯示，開發期間使用 */
-  opacity: 1 !important; /* 確保可見 */
-  background-color: rgba(255, 0, 0, 0.5) !important; /* 臨時紅色背景，便於調試 */
+.visible {
+  display: block !important;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hidden {
+  display: none !important;
+  opacity: 0;
+}
+
+.fadeInUp {
+  animation: fadeInFromBottom 1s ease-out forwards;
+}
+
+.fadeInDown {
+  animation: fadeInDown 1s ease-out forwards;
+}
+
+@keyframes fadeInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .swiperContainer {
@@ -74,6 +121,8 @@
   overflow: hidden !important;
   position: relative;
   z-index: 1;
+  padding-top: calc(var(--header-height, 100px));
+  box-sizing: border-box;
 }
 
 .swiperContainer::-webkit-scrollbar {
@@ -87,9 +136,9 @@
 
 .slide {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - var(--header-height, 100px));
   display: flex;
-  justify-content: center;
+  justify-content: flex-start; /* 從頂部開始 */
   align-items: center;
   position: relative;
   z-index: 2;
@@ -126,6 +175,7 @@
   overflow: hidden;
 }
 
+/* 以下為其他樣式，保持不變 */
 .bubbleContainer {
   position: relative;
   width: 100%;
@@ -430,6 +480,7 @@
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   margin: 0 auto;
+  margin-top: -100px; /* 向上偏移，調整這個值以控制位置 */
 }
 
 .welcomeContent h2 {
@@ -444,23 +495,6 @@
   line-height: 1.6;
   padding: 0 20px;
   margin-bottom: 0px;
-}
-
-.fadeInUp {
-  animation: fadeInUp 0.5s ease-in-out forwards;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(-50px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fadeInDown {
-  animation: fadeInDown 1s ease-out forwards;
-}
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(50px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading {

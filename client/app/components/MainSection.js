@@ -169,7 +169,7 @@ const MainSection = ({ scrollToSection }) => {
 
     swiperInstance.on("slideChange", () => {
       const activeIndex = swiperInstance.activeIndex;
-      console.log("[Debug] Slide changed to:", activeIndex, "swiperInstance:", swiperInstance);
+      console.log("[Debug] Slide changed to:", activeIndex, "headerRef:", headerRef.current, "footerRef:", footerRef.current);
 
       slideRefs.current.forEach((slide, index) => {
         if (slide) {
@@ -187,14 +187,18 @@ const MainSection = ({ scrollToSection }) => {
           footerRef.current.classList.remove(styles.fadeInDown);
         }
       } else if (activeIndex === 2) {
-        console.log("[Debug] Attempting to show Footer, footerRef:", footerRef.current);
+        console.log("[Debug] Attempting to show Header and Footer");
         if (headerRef.current) {
           headerRef.current.style.display = "block";
           headerRef.current.classList.remove(styles.fadeInUp);
-          setTimeout(() => headerRef.current.classList.add(styles.fadeInUp), 10);
+          setTimeout(() => {
+            headerRef.current.classList.add(styles.fadeInUp);
+            console.log("[Debug] Header fadeInUp added");
+          }, 10);
+        } else {
+          console.warn("[Debug] headerRef is null");
         }
         if (footerRef.current) {
-          console.log("[Debug] Showing Footer");
           footerRef.current.style.display = "block";
           footerRef.current.classList.remove(styles.fadeInDown);
           setTimeout(() => {
@@ -202,7 +206,7 @@ const MainSection = ({ scrollToSection }) => {
             console.log("[Debug] Footer fadeInDown added");
           }, 10);
         } else {
-          console.log("[Debug] footerRef.current is null");
+          console.warn("[Debug] footerRef is null");
         }
       }
 
@@ -270,11 +274,8 @@ const MainSection = ({ scrollToSection }) => {
 
   return (
     <section className={styles.mainSection}>
-      {swiperInstance?.activeIndex === 2 && (
-        <>
-          <Header ref={headerRef} className={`${styles.header}`} />
-        </>
-      )}
+      {/* 始終渲染 Header，但通過樣式控制顯示 */}
+      <Header ref={headerRef} className={`${styles.header} ${swiperInstance?.activeIndex === 2 ? styles.visible : styles.hidden} ${styles.debug}`} />
 
       <Swiper
         ref={swiperRef}
@@ -390,12 +391,11 @@ const MainSection = ({ scrollToSection }) => {
         </SwiperSlide>
       </Swiper>
 
-      {/* 臨時強制顯示 Footer 進行調試 */}
-      {process.env.NODE_ENV === "development" ? (
-        <Footer ref={footerRef} className={`${styles.footer} ${styles.showFooter}`} />
-      ) : swiperInstance?.activeIndex === 2 ? (
-        <Footer ref={footerRef} className={`${styles.footer}`} />
-      ) : null}
+      {/* 始終渲染 Footer，但通過樣式控制顯示 */}
+      <Footer
+        ref={footerRef}
+        className={`${styles.footer} ${swiperInstance?.activeIndex === 2 ? styles.visible : styles.hidden} ${styles.debug}`}
+      />
     </section>
   );
 };

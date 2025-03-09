@@ -34,7 +34,7 @@ body {
 .homePage {
   height: 100vh;
   position: relative;
-  background: linear-gradient(to bottom, #023047 0%, #8ecae6 50%, #f8f9fa 100%);
+  background: transparent;
   overflow-y: auto;
   scroll-snap-type: y mandatory; /* 強制全屏切換 */
   /* overflow: hidden; */
