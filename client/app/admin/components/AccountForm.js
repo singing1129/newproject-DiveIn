@@ -44,7 +44,7 @@ export default function AccountForm() {
   const decodedToken = getDecodedToken ? getDecodedToken() : null;
   // console.log("user", user);
   console.log("token", token);
-  console.log("更新資料的用戶ID", decodedToken);
+  console.log("更新資料的用户ID", decodedToken);
   const [originalEmail, setOriginalEmail] = useState(""); // 儲存原始 email 值
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -68,11 +68,11 @@ export default function AccountForm() {
     try {
       console.log("開始Google帳號連結流程");
 
-      // 獲取當前用戶ID
+      // 獲取當前用户ID
       const userId = getDecodedToken()?.id;
       if (!userId) {
-        console.error("無法獲取用戶ID");
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        console.error("無法獲取用户ID");
+        setMessage({ type: "error", text: "無法獲取用户ID，請重新登入" });
         return;
       }
 
@@ -109,11 +109,11 @@ export default function AccountForm() {
     try {
       console.log("開始LINE帳號連結流程");
 
-      // 獲取當前用戶ID
+      // 獲取當前用户ID
       const userId = getDecodedToken()?.id;
       if (!userId) {
-        console.error("無法獲取用戶ID");
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        console.error("無法獲取用户ID");
+        setMessage({ type: "error", text: "無法獲取用户ID，請重新登入" });
         return;
       }
 
@@ -150,11 +150,11 @@ export default function AccountForm() {
     try {
       console.log("開始手機帳號連結流程");
 
-      // 獲取當前用戶ID
+      // 獲取當前用户ID
       const userId = getDecodedToken()?.id;
       if (!userId) {
-        console.error("無法獲取用戶ID");
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        console.error("無法獲取用户ID");
+        setMessage({ type: "error", text: "無法獲取用户ID，請重新登入" });
         return;
       }
 
@@ -185,18 +185,18 @@ export default function AccountForm() {
     }
   };
 
-  // 在组件加载时设置reCAPTCHA
+  // 在組件加載時設置reCAPTCHA
   useEffect(() => {
     const setupRecaptcha = () => {
       try {
         if (typeof window !== "undefined" && !window.recaptchaVerifier) {
-          // 确保 auth 已经初始化
+          // 確保 auth 已經初始化
           if (!auth) {
             console.error("Firebase auth 未初始化");
             return;
           }
 
-          // 确保容器存在
+          // 確保容器存在
           const container = document.getElementById("recaptcha-container");
           if (!container) {
             console.error("找不到 recaptcha-container 元素");
@@ -218,11 +218,11 @@ export default function AccountForm() {
           );
         }
       } catch (error) {
-        console.error("设置reCAPTCHA失败:", error);
+        console.error("設置reCAPTCHA失敗:", error);
       }
     };
 
-    // 延迟初始化，确保DOM已完全加载
+    // 延遲初始化，確保DOM已完全加載
     const timer = setTimeout(() => {
       if (document.getElementById("recaptcha-container")) {
         setupRecaptcha();
@@ -237,18 +237,18 @@ export default function AccountForm() {
           window.recaptchaVerifier.clear();
           window.recaptchaVerifier = null;
         } catch (e) {
-          console.error("清除 reCAPTCHA 失败:", e);
+          console.error("清除 reCAPTCHA 失敗:", e);
         }
       }
     };
   }, []);
 
-  // 获取点数历史和等级信息
+  // 獲取點數歷史和等級信息
   const fetchPointsHistory = async () => {
     try {
       const userId = getDecodedToken?.()?.id;
       if (!userId) {
-        console.error("無法獲取用戶ID");
+        console.error("無法獲取用户ID");
         return;
       }
 
@@ -259,7 +259,7 @@ export default function AccountForm() {
         return;
       }
 
-      console.log("正在獲取點數歷史，用戶ID:", userId);
+      console.log("正在獲取點數歷史，用户ID:", userId);
       console.log("使用 token:", token.substring(0, 10) + "...");
 
       const response = await fetch(
@@ -310,7 +310,7 @@ export default function AccountForm() {
     }
   };
 
-  // 检查是否可以获得完善资料奖励
+  // 檢查是否可以獲得完善資料獎勵
   const checkProfileCompletion = () => {
     if (
       formData.name &&
@@ -324,18 +324,18 @@ export default function AccountForm() {
     }
   };
 
-  // 检查是否已经领取过奖励
+  // 檢查是否已經領取過獎勵
   useEffect(() => {
-    // 检查点数历史中是否有完善资料奖励的记录
+    // 檢查點數歷史中是否有完善資料獎勵的記錄
     const hasClaimedReward = pointsHistory.some(
       (item) => item.action === "profile_completion"
     );
     if (hasClaimedReward) {
-      setProfileCompleted(false); // 已领取过，不再显示奖励按钮
+      setProfileCompleted(false); // 已領取過，不再顯示獎勵按鈕
     }
   }, [pointsHistory]);
 
-  // 领取完善资料奖励
+  // 領取完善資料獎勵
   const claimProfileReward = async () => {
     try {
       setIsLoading(true);
@@ -354,37 +354,37 @@ export default function AccountForm() {
 
       if (response.ok) {
         setMessage({ type: "success", text: data.message });
-        // 更新本地存储的token
+        // 更新本地存儲的token
         if (data.data && data.data.token) {
           localStorage.setItem("loginWithToken", data.data.token);
         }
-        // 重新获取会员资料
+        // 重新獲取會員資料
         fetchMemberData();
         fetchPointsHistory();
       } else {
         setMessage({ type: "error", text: data.message });
       }
     } catch (error) {
-      console.error("领取奖励失败:", error);
-      setMessage({ type: "error", text: "领取奖励失败，请稍后再试" });
+      console.error("領取獎勵失敗:", error);
+      setMessage({ type: "error", text: "領取獎勵失敗，請稍後再試" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 在组件加载时获取点数历史
+  // 在組件加載時獲取點數歷史
   useEffect(() => {
     if (token) {
       fetchPointsHistory();
     }
   }, [token]);
 
-  // 监听表单数据变化，检查是否可以获得完善资料奖励
+  // 監聽表單數據變化，檢查是否可以獲得完善資料獎勵
   useEffect(() => {
     checkProfileCompletion();
   }, [formData]);
 
-  // 发送OTP
+  // 發送OTP
   const sendOTP = async () => {
     try {
       setIsLoading(true);
@@ -394,7 +394,7 @@ export default function AccountForm() {
         return;
       }
 
-      // 处理台湾手机号码格式
+      // 處理台灣手機號碼格式
       let formattedPhone = phone;
       if (phone.startsWith("09")) {
         formattedPhone = "+886" + phone.substring(1);
@@ -402,15 +402,15 @@ export default function AccountForm() {
         formattedPhone = "+886" + phone;
       }
 
-      // 设置连结标记
+      // 設置連結標記
       localStorage.setItem("isLinkingAccount", "true");
       localStorage.setItem("linkToUserId", getDecodedToken()?.id);
       localStorage.setItem("returnToAccountPage", "true");
 
-      // 发送OTP
+      // 發送OTP
       const confirmationFn = await loginWithPhone(formattedPhone);
       if (confirmationFn) {
-        setConfirmation(() => confirmationFn); // 确保设置为函数
+        setConfirmation(() => confirmationFn); // 確保設置為函數
         setMessage({ type: "success", text: "驗證碼已發送，請查收簡訊" });
       }
     } catch (error) {
@@ -420,7 +420,7 @@ export default function AccountForm() {
         text: error.message || "發送驗證碼失敗，請稍後再試",
       });
 
-      // 如果是reCAPTCHA错误，尝试重置
+      // 如果是reCAPTCHA錯誤，嘗試重置
       if (
         error.code === "auth/argument-error" ||
         error.code === "auth/captcha-check-failed"
@@ -446,7 +446,7 @@ export default function AccountForm() {
             }
           );
         } catch (e) {
-          console.error("重置 reCAPTCHA 失败:", e);
+          console.error("重置 reCAPTCHA 失敗:", e);
         }
       }
     } finally {
@@ -454,7 +454,7 @@ export default function AccountForm() {
     }
   };
 
-  // 验证OTP
+  // 驗證OTP
   const verifyOTP = async () => {
     try {
       setIsLoading(true);
@@ -466,20 +466,20 @@ export default function AccountForm() {
 
       const userId = getDecodedToken?.()?.id;
       if (!userId) {
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        setMessage({ type: "error", text: "無法獲取用户ID，請重新登入" });
         return;
       }
 
-      // 确保confirmation是一个函数
+      // 確保confirmation是一個函數
       if (typeof confirmation !== "function") {
         setMessage({ type: "error", text: "驗證碼已過期，請重新發送" });
         return;
       }
 
-      console.log("开始验证OTP...");
+      console.log("開始驗證OTP...");
       try {
         const result = await confirmation(otp);
-        console.log("OTP验证结果:", result);
+        console.log("OTP驗證結果:", result);
 
         if (result && result.success) {
           // 更新providers列表
@@ -487,24 +487,24 @@ export default function AccountForm() {
             setProviders((prev) => [...prev, "phone"]);
           }
 
-          // 更新表单中的手机号码
+          // 更新表單中的手機號碼
           setFormData((prev) => ({
             ...prev,
-            phone: phone, // 使用验证过的手机号码更新表单
+            phone: phone, // 使用驗證過的手機號碼更新表單
           }));
 
           setShowPhoneModal(false);
           setMessage({ type: "success", text: "手機號碼已成功連結" });
 
-          // 重新获取用户数据以确保所有信息都是最新的
+          // 重新獲取用户數據以確保所有信息都是最新的
           fetchMemberData();
         } else {
           setMessage({ type: "error", text: "驗證碼驗證失敗，請重試" });
         }
       } catch (confirmError) {
-        console.error("OTP确认过程中出错:", confirmError);
+        console.error("OTP確認過程中出錯:", confirmError);
 
-        // 提供更详细的错误信息
+        // 提供更詳細的錯誤信息
         if (confirmError.message.includes("帳號連結處理失敗")) {
           setMessage({
             type: "error",
@@ -541,8 +541,8 @@ export default function AccountForm() {
     const requestData = {
       provider: "phone",
       provider_id: phoneNumber,
-      name: formData.name || "手機用戶",
-      link_to_user_id: userId, // 明確指定要綁定的用戶ID
+      name: formData.name || "手機用户",
+      link_to_user_id: userId, // 明確指定要綁定的用户ID
       force_link: forceLink, // 是否強制覆蓋現有連結
       stay_on_account_page: true, // 新增參數，表示保持在會員中心頁面
     };
@@ -597,14 +597,14 @@ export default function AccountForm() {
     }
   };
 
-  // 格式化手机号码
+  // 格式化手機號碼
   const formatPhoneNumber = (number) => {
     if (!number) return "";
 
-    // 移除所有非数字字符
+    // 移除所有非數字字符
     let cleaned = number.replace(/\D/g, "");
 
-    // 如果不是以0开头，添加0
+    // 如果不是以0開頭，添加0
     if (!cleaned.startsWith("0") && cleaned.length > 0) {
       cleaned = "0" + cleaned;
     }
@@ -617,8 +617,8 @@ export default function AccountForm() {
     try {
       const userId = getDecodedToken?.()?.id;
       if (!userId) {
-        console.error("無法獲取用戶ID");
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        console.error("無法獲取用户ID");
+        setMessage({ type: "error", text: "無法獲取用户ID，請重新登入" });
         return;
       }
 
@@ -630,10 +630,10 @@ export default function AccountForm() {
         return;
       }
 
-      console.log(`正在獲取用戶ID為 ${userId} 的資料`);
+      console.log(`正在獲取用户ID為 ${userId} 的資料`);
       console.log("使用 token:", token.substring(0, 10) + "...");
 
-      // 使用fetch代替axios，确保请求正确发送
+      // 使用fetch代替axios，確保請求正確發送
       const response = await fetch(
         `http://localhost:3005/api/admin/user?id=${userId}`,
         {
@@ -645,16 +645,16 @@ export default function AccountForm() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`獲取用戶資料失敗: ${response.status}`, errorText);
-        throw new Error(`獲取用戶資料失敗: ${response.status}`);
+        console.error(`獲取用户資料失敗: ${response.status}`, errorText);
+        throw new Error(`獲取用户資料失敗: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("獲取到的用戶資料:", data);
+      console.log("獲取到的用户資料:", data);
 
       if (data.status === "success") {
         const userData = data.data;
-        console.log("獲取到的用戶資料:", userData);
+        console.log("獲取到的用户資料:", userData);
 
         // 更新表單數據
         setFormData({
@@ -677,16 +677,16 @@ export default function AccountForm() {
         // 清除預覽圖片，使用後端返回的頭像
         setAvatarPreview(null);
 
-        console.log("用戶資料已加載，頭像路徑:", userData.head);
+        console.log("用户資料已加載，頭像路徑:", userData.head);
 
         // 同時獲取點數歷史和會員等級資訊
         fetchPointsHistory();
       } else {
-        console.error("獲取用戶資料失敗:", data.message);
+        console.error("獲取用户資料失敗:", data.message);
         setMessage({ type: "error", text: data.message || "獲取會員資料失敗" });
       }
     } catch (error) {
-      console.error("獲取用戶資料錯誤:", error);
+      console.error("獲取用户資料錯誤:", error);
       setMessage({ type: "error", text: "獲取會員資料失敗，請稍後再試" });
     }
   };
@@ -741,7 +741,7 @@ export default function AccountForm() {
     };
   }, []);
 
-  // 初始化 flatpickr 日期选择器
+  // 初始化 flatpickr 日期選擇器
   useEffect(() => {
     if (birthdayInputRef.current) {
       const fp = flatpickr(birthdayInputRef.current, {
@@ -811,12 +811,12 @@ export default function AccountForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 处理头像变更
+  // 處理頭像變更
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // 检查文件类型
+    // 檢查文件類型
     if (!file.type.startsWith("image/")) {
       setMessage({ type: "error", text: "請上傳圖片檔案" });
       return;
@@ -831,7 +831,7 @@ export default function AccountForm() {
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
 
-    // 保存文件以便后续上传
+    // 保存文件以便後續上傳
     setAvatarFile(file);
 
     // 顯示成功訊息
@@ -840,7 +840,7 @@ export default function AccountForm() {
     console.log("頭像已更新，預覽URL:", previewUrl);
   };
 
-  // 处理表单提交
+  // 處理表單提交
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -849,7 +849,7 @@ export default function AccountForm() {
     try {
       const userId = getDecodedToken()?.id;
       if (!userId) {
-        setMessage({ type: "error", text: "無法獲取用戶ID，請重新登入" });
+        setMessage({ type: "error", text: "無法獲取用户ID，請重新登入" });
         return;
       }
 
@@ -858,7 +858,7 @@ export default function AccountForm() {
       formDataToSend.append("name", formData.name);
       formDataToSend.append("email", formData.email);
 
-      // 格式化手机号码
+      // 格式化手機號碼
       if (formData.phone && formData.phone.trim()) {
         formDataToSend.append("phone", formatPhoneNumber(formData.phone));
       }
@@ -868,7 +868,7 @@ export default function AccountForm() {
         formDataToSend.append("birthday", formData.birthday);
       }
 
-      // 添加头像文件
+      // 添加頭像文件
       if (avatarFile) {
         formDataToSend.append("avatar", avatarFile);
       }
@@ -901,25 +901,25 @@ export default function AccountForm() {
       if (result.status === "success") {
         setMessage({ type: "success", text: result.message });
 
-        // 如果获得了奖励，显示奖励消息
+        // 如果獲得了獎勵，顯示獎勵消息
         if (result.data.reward_added) {
           setRewardMessage({
             points: result.data.reward_points,
             message: `恭喜獲得 ${result.data.reward_points} 點獎勵！`,
           });
 
-          // 3秒后自动关闭奖励消息
+          // 3秒後自動關閉獎勵消息
           setTimeout(() => {
             setRewardMessage(null);
           }, 5000);
         }
 
-        // 更新本地存储的token
+        // 更新本地存儲的token
         if (result.data && result.data.token) {
           localStorage.setItem("loginWithToken", result.data.token);
         }
 
-        // 重新获取会员资料和点数历史
+        // 重新獲取會員資料和點數歷史
         fetchMemberData();
         fetchPointsHistory();
       } else {
@@ -933,32 +933,32 @@ export default function AccountForm() {
     }
   };
 
-  // 获取头像源
+  // 獲取頭像源
   const getAvatarSrc = () => {
-    // 如果有预览头像（刚上传但未保存），优先使用预览
+    // 如果有預覽頭像（剛上傳但未保存），優先使用預覽
     if (avatarPreview && avatarPreview !== "/img/default-avatar.png") {
       console.log("使用預覽頭像:", avatarPreview);
       return avatarPreview;
     }
 
-    // 如果有自定义头像，使用自定义头像
+    // 如果有自定義頭像，使用自定義頭像
     if (formData.is_custom_head === 1 && formData.head) {
-      // 移除/api前缀，确保URL格式正确
+      // 移除/api前綴，確保URL格式正確
       const headPath = formData.head.startsWith("/api")
-        ? formData.head.substring(4) // 移除/api前缀
+        ? formData.head.substring(4) // 移除/api前綴
         : formData.head;
       console.log("使用自定義頭像:", `http://localhost:3005${headPath}`);
       return `http://localhost:3005${headPath}`;
     }
 
-    // 如果有社交账号头像，使用社交账号头像
+    // 如果有社交賬號頭像，使用社交賬號頭像
     if (formData.head && !formData.is_custom_head) {
       // 直接返回原始 URL，不做任何修改
       console.log("使用社交賬號頭像:", formData.head);
       return formData.head;
     }
 
-    // 默认头像
+    // 默認頭像
     console.log("使用默認頭像");
     return "/images/default-avatar.png";
   };
@@ -1033,7 +1033,7 @@ export default function AccountForm() {
     }
   };
 
-  // 处理密码修改
+  // 處理密碼修改
   const handlePasswordChange = async (e) => {
     e.preventDefault();
 
@@ -1079,24 +1079,24 @@ export default function AccountForm() {
     }
   };
 
-  // 获取会员等级
+  // 獲取會員等級
   const getMemberLevel = () => {
     const totalPoints = formData.total_points || 0;
 
     if (totalPoints >= 10000) {
-      return 5; // 钻石会员
+      return 5; // 鑽石會員
     } else if (totalPoints >= 5000) {
-      return 4; // 白金会员
+      return 4; // 白金會員
     } else if (totalPoints >= 2000) {
-      return 3; // 金会员
+      return 3; // 金會員
     } else if (totalPoints >= 500) {
-      return 2; // 银会员
+      return 2; // 銀會員
     } else {
-      return 1; // 铜会员
+      return 1; // 銅會員
     }
   };
 
-  // 获取会员等级名称
+  // 獲取會員等級名稱
   const getMemberLevelName = () => {
     const level = getMemberLevel();
 
