@@ -5,6 +5,8 @@ import Footer from "./components/Footer/footer";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { usePathname } from "next/navigation";
+// 聊天室用
+import { WebSocketProvider } from "./hooks/useWebSocket";
 
 export default function ClientLayout({ children }) {
   const pathname = usePathname();
@@ -13,11 +15,13 @@ export default function ClientLayout({ children }) {
   const isNoLayoutPage = noLayoutPages.includes(pathname);
 
   return (
-    <CartProvider>
-      {!isNoLayoutPage && <Header />}
-      {children}
-      <ToastContainer />
-      {!isNoLayoutPage && <Footer />}
-    </CartProvider>
+    <WebSocketProvider>
+      <CartProvider>
+        {!isNoLayoutPage && <Header />}
+        {children}
+        <ToastContainer />
+        {!isNoLayoutPage && <Footer />}
+      </CartProvider>
+    </WebSocketProvider>
   );
 }
