@@ -6,6 +6,8 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import { pool } from "../../config/mysql.js";
 import { checkToken } from "../../middleware/auth.js";
+import path from "path";
+import fs from "fs";
 
 // 載入環境變數
 dotenv.config();
@@ -121,10 +123,23 @@ router.post("/status", checkToken, async (req, res) => {
 // 改進的 social-login API，添加帳號連結支援
 // 社交登入 API - 處理 Google、LINE 和手機登入，以及帳號連結
 router.post("/social-login", upload.none(), async (req, res) => {
+  console.log("收到社交登入請求");
+  console.log("請求路徑:", req.path);
+  console.log("請求方法:", req.method);
+  console.log("請求頭:", req.headers);
+  console.log("請求體:", req.body);
+
   try {
     // 1. 獲取並驗證請求參數
-    const { email, name, image, provider, provider_id, link_to_user_id } =
-      req.body;
+    const {
+      email,
+      name,
+      image,
+      provider,
+      provider_id,
+      link_to_user_id,
+      stay_on_account_page,
+    } = req.body;
 
     console.log("社交登入請求數據:", {
       email,
@@ -132,11 +147,13 @@ router.post("/social-login", upload.none(), async (req, res) => {
       provider,
       provider_id,
       link_to_user_id,
+      stay_on_account_page,
       hasImage: !!image,
     });
 
     // 基本驗證
     if (!provider || !provider_id) {
+      console.error("缺少必要參數:", { provider, provider_id });
       return res.status(400).json({
         status: "error",
         message: "缺少必要參數: provider 和 provider_id 是必須的",
@@ -146,6 +163,7 @@ router.post("/social-login", upload.none(), async (req, res) => {
     // 2. 標準化數據
     // 轉換 provider 為小寫，確保大小寫一致性
     const normalizedProvider = provider.toLowerCase();
+    console.log(`標準化提供者: ${provider} -> ${normalizedProvider}`);
 
     // 標準化 provider_id
     let normalizedProviderId = provider_id;
@@ -153,6 +171,7 @@ router.post("/social-login", upload.none(), async (req, res) => {
     // 針對手機號碼標準化 (確保格式為 +國碼電話號碼)
     if (normalizedProvider === "phone") {
       normalizedProviderId = standardizePhoneNumber(provider_id);
+      console.log(`標準化手機號碼: ${provider_id} -> ${normalizedProviderId}`);
     }
 
     // 針對LINE標準化 (如果是空值或undefined，使用時間戳)
@@ -164,8 +183,34 @@ router.post("/social-login", upload.none(), async (req, res) => {
       console.log(`LINE provider_id 為空，使用替代ID: ${normalizedProviderId}`);
     }
 
-    // 3. 處理帳號連結流程
+    // 3. 處理帳號連結流程 - 只有在明確提供link_to_user_id時才執行
     if (link_to_user_id) {
+      console.log(`檢測到帳號連結請求，link_to_user_id = ${link_to_user_id}`);
+
+      // 檢查連結目標用戶是否存在
+      console.log(`檢查連結目標用戶是否存在: ${link_to_user_id}`);
+      const [targetUser] = await pool.execute(
+        "SELECT id FROM users WHERE id = ?",
+        [link_to_user_id]
+      );
+      console.log(`查詢結果:`, targetUser);
+
+      if (targetUser.length === 0) {
+        console.error(`連結目標用戶不存在: ${link_to_user_id}`);
+        return res.status(404).json({
+          status: "error",
+          message: "連結目標用戶不存在",
+        });
+      }
+
+      // 默認使用強制覆蓋
+      console.log(`默認使用強制覆蓋現有連結`);
+
+      // 檢查是否需要保持在會員中心頁面
+      const stayOnAccountPage =
+        stay_on_account_page === true || stay_on_account_page === "true";
+      console.log(`是否保持在會員中心頁面: ${stayOnAccountPage}`);
+
       return await handleAccountLinking(
         res,
         normalizedProvider,
@@ -173,18 +218,22 @@ router.post("/social-login", upload.none(), async (req, res) => {
         link_to_user_id,
         email,
         name,
-        image
+        image,
+        true, // 默認使用強制覆蓋
+        stayOnAccountPage // 是否保持在會員中心頁面
       );
     }
 
     // 4. 處理常規社交登入流程
+    console.log(`處理常規社交登入流程`);
     return await handleSocialLogin(
       res,
       normalizedProvider,
       normalizedProviderId,
       email,
       name,
-      image
+      image,
+      null // 明確傳遞null，表示這不是連結操作
     );
   } catch (err) {
     console.error("社交登入處理錯誤:", err);
@@ -229,20 +278,27 @@ async function handleAccountLinking(
   linkToUserId,
   email,
   name,
-  image
+  image,
+  forceLink = true, // 默認使用強制覆蓋
+  stayOnAccountPage = false // 是否保持在會員中心頁面
 ) {
   console.log(
     `處理帳號連結: 將 ${provider}(${providerId}) 連結到用戶ID ${linkToUserId}`
   );
+  console.log(`是否強制覆蓋現有連結: ${forceLink}`);
+  console.log(`是否保持在會員中心頁面: ${stayOnAccountPage}`);
 
   try {
     // 檢查連結目標用戶是否存在
+    console.log(`檢查連結目標用戶是否存在: ${linkToUserId}`);
     const [targetUser] = await pool.execute(
-      "SELECT id FROM users WHERE id = ?",
+      "SELECT id, email, name, phone, head FROM users WHERE id = ?",
       [linkToUserId]
     );
+    console.log(`查詢結果:`, targetUser);
 
     if (targetUser.length === 0) {
+      console.error(`連結目標用戶不存在: ${linkToUserId}`);
       return res.status(404).json({
         status: "error",
         message: "連結目標用戶不存在",
@@ -250,25 +306,65 @@ async function handleAccountLinking(
     }
 
     // 檢查此提供者ID是否已被其他用戶使用
+    console.log(`檢查提供者ID是否已被使用: ${provider}, ${providerId}`);
     const [existingProvider] = await pool.execute(
       "SELECT user_id FROM user_providers WHERE provider = ? AND provider_id = ?",
       [provider, providerId]
     );
+    console.log(`查詢結果:`, existingProvider);
 
     if (existingProvider.length > 0) {
       const existingUserId = existingProvider[0].user_id;
+      console.log(`提供者ID已被用戶使用: ${existingUserId}`);
 
       // 已連結到目標用戶，視為成功
       if (existingUserId == linkToUserId) {
+        console.log(`提供者ID已連結到目標用戶，視為成功`);
+
+        // 獲取用戶的所有提供者
+        const [userProviders] = await pool.execute(
+          "SELECT provider FROM user_providers WHERE user_id = ?",
+          [linkToUserId]
+        );
+
+        // 生成 JWT，使用現有用戶的信息
+        const token = jwt.sign(
+          {
+            id: linkToUserId,
+            email: targetUser[0].email,
+            name: targetUser[0].name,
+            providers: userProviders.map((p) => p.provider),
+          },
+          secretKey,
+          { expiresIn: "30m" }
+        );
+
         return res.status(200).json({
           status: "success",
+          data: {
+            token,
+            user: {
+              ...targetUser[0],
+              providers: userProviders.map((p) => p.provider),
+            },
+          },
           message: `此${getProviderDisplayName(
             provider
           )}帳號已經連結到您的帳戶`,
+          stayOnAccountPage: stayOnAccountPage, // 返回是否保持在會員中心頁面
         });
       }
-      // 已連結到其他用戶，返回錯誤
-      else {
+      // 已連結到其他用戶，但我們默認使用強制覆蓋
+      else if (forceLink) {
+        console.log(`強制覆蓋現有連結，從用戶 ${existingUserId} 移除連結`);
+        // 刪除現有連結
+        await pool.execute(
+          "DELETE FROM user_providers WHERE provider = ? AND provider_id = ?",
+          [provider, providerId]
+        );
+        console.log(`已刪除現有連結`);
+      } else {
+        // 不允許覆蓋
         return res.status(409).json({
           status: "error",
           message: `此${getProviderDisplayName(provider)}帳號已連結到其他用戶`,
@@ -277,53 +373,58 @@ async function handleAccountLinking(
     }
 
     // 建立新的提供者關聯
+    console.log(
+      `建立新的提供者關聯: ${linkToUserId}, ${provider}, ${providerId}`
+    );
     await pool.execute(
       "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, ?, ?, NOW())",
       [linkToUserId, provider, providerId]
     );
+    console.log(`提供者關聯建立成功`);
 
     // 如果是手機登入，同時更新用戶的手機號碼
     if (provider === "phone") {
+      console.log(`更新用戶手機號碼: ${linkToUserId}, ${providerId}`);
       await pool.execute("UPDATE users SET phone = ? WHERE id = ?", [
         providerId,
         linkToUserId,
       ]);
+      console.log(`手機號碼更新成功`);
     }
 
-    // 查詢用戶信息
-    const [userDetails] = await pool.execute(
-      "SELECT id, email, name, phone, head FROM users WHERE id = ?",
-      [linkToUserId]
-    );
-
     // 獲取用戶的所有提供者
+    console.log(`獲取用戶的所有提供者: ${linkToUserId}`);
     const [userProviders] = await pool.execute(
       "SELECT provider FROM user_providers WHERE user_id = ?",
       [linkToUserId]
     );
+    console.log(`用戶提供者:`, userProviders);
 
-    // 生成 JWT
+    // 生成 JWT，使用現有用戶的信息
+    console.log(`生成JWT: ${linkToUserId}`);
     const token = jwt.sign(
       {
         id: linkToUserId,
-        email: userDetails[0].email,
-        name: userDetails[0].name,
+        email: targetUser[0].email,
+        name: targetUser[0].name,
         providers: userProviders.map((p) => p.provider),
       },
       secretKey,
       { expiresIn: "30m" }
     );
+    console.log(`JWT生成成功`);
 
     return res.status(200).json({
       status: "success",
       data: {
         token,
         user: {
-          ...userDetails[0],
+          ...targetUser[0],
           providers: userProviders.map((p) => p.provider),
         },
       },
-      message: `${getProviderDisplayName(provider)}連結成功`,
+      message: `${getProviderDisplayName(provider)}帳號連結成功`,
+      stayOnAccountPage: stayOnAccountPage, // 返回是否保持在會員中心頁面
     });
   } catch (err) {
     console.error("帳號連結處理錯誤:", err);
@@ -339,18 +440,22 @@ async function handleSocialLogin(
   email,
   name,
   image,
-  link_to_user_id // 新增參數，接收要連結的用戶ID
+  link_to_user_id
 ) {
   console.log(
     `處理社交登入: ${provider}(${providerId}), email: ${email || "none"}`
   );
+  console.log(`link_to_user_id: ${link_to_user_id || "無，這是普通登入"}`);
+  console.log(`頭像: ${image || "無"}`);
 
   try {
     // 檢查提供者ID是否已關聯到用戶
+    console.log(`檢查提供者ID是否已關聯到用戶: ${provider}, ${providerId}`);
     const [existingProviderLinks] = await pool.execute(
       "SELECT user_id FROM user_providers WHERE provider = ? AND provider_id = ?",
       [provider, providerId]
     );
+    console.log(`查詢結果:`, existingProviderLinks);
 
     let userId;
     let isNewUser = false;
@@ -365,6 +470,7 @@ async function handleSocialLogin(
         "SELECT id FROM users WHERE id = ?",
         [userId]
       );
+      console.log(`檢查用戶是否存在: ${userId}`, userExists);
 
       if (userExists.length === 0) {
         // 用戶不存在，清理孤立記錄
@@ -372,12 +478,14 @@ async function handleSocialLogin(
         await pool.execute("DELETE FROM user_providers WHERE user_id = ?", [
           userId,
         ]);
+        console.log(`已刪除孤立記錄`);
 
         // 將其視為新用戶
         isNewUser = true;
       } else {
         // 用戶存在，更新基本信息
         if (name) {
+          console.log(`更新用戶名稱: ${userId}, ${name}`);
           await pool.execute(
             "UPDATE users SET name = ? WHERE id = ? AND (name IS NULL OR name = '' OR name LIKE ?)",
             [name, userId, `${provider}%`]
@@ -386,19 +494,39 @@ async function handleSocialLogin(
 
         // 如果是手機登入，確保手機號碼已更新
         if (provider === "phone" && providerId) {
+          console.log(`更新用戶手機號碼: ${userId}, ${providerId}`);
           await pool.execute(
             "UPDATE users SET phone = ? WHERE id = ? AND (phone IS NULL OR phone = '')",
             [providerId, userId]
           );
         }
+
+        // 如果提供了頭像且用戶沒有頭像，更新頭像
+        if (image) {
+          console.log(`檢查用戶是否有頭像: ${userId}`);
+          const [userHead] = await pool.execute(
+            "SELECT head FROM users WHERE id = ?",
+            [userId]
+          );
+
+          if (!userHead[0].head) {
+            console.log(`更新用戶頭像: ${userId}, ${image}`);
+            await pool.execute("UPDATE users SET head = ? WHERE id = ?", [
+              image,
+              userId,
+            ]);
+          }
+        }
       }
     } else {
       // 提供者ID未關聯 - 檢查是否可以通過email找到用戶
       if (email) {
+        console.log(`通過email查找用戶: ${email}`);
         const [usersByEmail] = await pool.execute(
           "SELECT id FROM users WHERE email = ?",
           [email]
         );
+        console.log(`通過email查找結果:`, usersByEmail);
 
         if (usersByEmail.length > 0) {
           // 通過email找到已有用戶 - 添加新的提供者關聯
@@ -409,98 +537,111 @@ async function handleSocialLogin(
             "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, ?, ?, NOW())",
             [userId, provider, providerId]
           );
+          console.log(
+            `已添加新提供者關聯: ${userId}, ${provider}, ${providerId}`
+          );
 
           // 如果是手機登入，更新手機號碼
           if (provider === "phone") {
+            console.log(`更新用戶手機號碼: ${userId}, ${providerId}`);
             await pool.execute(
               "UPDATE users SET phone = ? WHERE id = ? AND (phone IS NULL OR phone = '')",
               [providerId, userId]
             );
           }
+
+          // 如果提供了頭像且用戶沒有頭像，更新頭像
+          if (image) {
+            console.log(`檢查用戶是否有頭像: ${userId}`);
+            const [userHead] = await pool.execute(
+              "SELECT head FROM users WHERE id = ?",
+              [userId]
+            );
+
+            if (!userHead[0].head) {
+              console.log(`更新用戶頭像: ${userId}, ${image}`);
+              await pool.execute("UPDATE users SET head = ? WHERE id = ?", [
+                image,
+                userId,
+              ]);
+            }
+          }
         } else {
           // 沒找到用戶 - 創建新用戶
           isNewUser = true;
+          console.log(`通過email未找到用戶，將創建新用戶`);
         }
       } else {
         // 沒有email - 創建新用戶
         isNewUser = true;
+        console.log(`沒有email，將創建新用戶`);
       }
 
       // 如果需要創建新用戶
       if (isNewUser) {
-        // 關鍵修改：如果有 link_to_user_id 參數，這是一個帳號連結操作，不應創建新用戶
-        if (link_to_user_id) {
-          console.log(
-            `這是帳號連結操作，將 ${provider} 連結到用戶ID: ${link_to_user_id}`
-          );
-          isNewUser = false;
-          userId = link_to_user_id;
+        // 常規新用戶創建流程
+        console.log("創建新用戶");
 
-          // 添加提供者關聯到指定用戶
-          await pool.execute(
-            "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, ?, ?, NOW())",
-            [userId, provider, providerId]
-          );
+        // 準備用戶數據
+        const userData = [
+          email || null,
+          name || `${provider}用戶`,
+          image || null,
+        ];
+        console.log(`新用戶數據:`, userData);
 
-          // 如果是手機登入，更新用戶的手機號碼
-          if (provider === "phone") {
-            await pool.execute("UPDATE users SET phone = ? WHERE id = ?", [
-              providerId,
-              userId,
-            ]);
-          }
+        // 如果是手機登入，同時設置手機號碼
+        if (provider === "phone") {
+          console.log(`創建帶手機號碼的新用戶: ${providerId}`);
+          const [newUser] = await pool.execute(
+            "INSERT INTO users (email, name, head, phone) VALUES (?, ?, ?, ?)",
+            [...userData, providerId]
+          );
+          userId = newUser.insertId;
+          console.log(`創建成功，新用戶ID: ${userId}`);
         } else {
-          // 常規新用戶創建流程
-          console.log("創建新用戶");
-
-          // 準備用戶數據
-          const userData = [
-            email || null,
-            name || `${provider}用戶`,
-            image || null,
-          ];
-
-          // 如果是手機登入，同時設置手機號碼
-          if (provider === "phone") {
-            const [newUser] = await pool.execute(
-              "INSERT INTO users (email, name, head, phone) VALUES (?, ?, ?, ?)",
-              [...userData, providerId]
-            );
-            userId = newUser.insertId;
-          } else {
-            const [newUser] = await pool.execute(
-              "INSERT INTO users (email, name, head) VALUES (?, ?, ?)",
-              userData
-            );
-            userId = newUser.insertId;
-          }
-
-          // 添加提供者關聯
-          await pool.execute(
-            "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, ?, ?, NOW())",
-            [userId, provider, providerId]
+          console.log(`創建常規新用戶`);
+          const [newUser] = await pool.execute(
+            "INSERT INTO users (email, name, head) VALUES (?, ?, ?)",
+            userData
           );
+          userId = newUser.insertId;
+          console.log(`創建成功，新用戶ID: ${userId}`);
         }
+
+        // 添加提供者關聯
+        console.log(`添加提供者關聯: ${userId}, ${provider}, ${providerId}`);
+        await pool.execute(
+          "INSERT INTO user_providers (user_id, provider, provider_id, created_at) VALUES (?, ?, ?, NOW())",
+          [userId, provider, providerId]
+        );
       }
     }
 
     // 獲取用戶詳情
+    console.log(`獲取用戶詳情: userId = ${userId}`);
     const [userDetails] = await pool.execute(
       "SELECT id, email, name, phone, head, level_id FROM users WHERE id = ?",
       [userId]
     );
+    console.log(`用戶詳情:`, userDetails);
 
     if (userDetails.length === 0) {
       throw new Error(`嚴重錯誤: 用戶ID ${userId} 在數據庫中不存在`);
     }
 
     // 獲取用戶的所有提供者
+    console.log(`獲取用戶的所有提供者: userId = ${userId}`);
     const [userProviders] = await pool.execute(
       "SELECT provider FROM user_providers WHERE user_id = ?",
       [userId]
     );
+    console.log(`用戶提供者:`, userProviders);
 
     // 生成 JWT
+    console.log(
+      `生成 JWT: userId = ${userId}, email = ${userDetails[0].email}, name = ${userDetails[0].name}`
+    );
     const token = jwt.sign(
       {
         id: userId,
@@ -511,6 +652,7 @@ async function handleSocialLogin(
       secretKey,
       { expiresIn: "30m" }
     );
+    console.log(`JWT生成成功`);
 
     return res.status(200).json({
       status: "success",
@@ -526,6 +668,11 @@ async function handleSocialLogin(
     });
   } catch (err) {
     console.error("社交登入處理錯誤:", err);
+    console.error("錯誤詳情:", {
+      code: err.code,
+      message: err.message,
+      stack: err.stack,
+    });
     throw err;
   }
 }
@@ -769,176 +916,196 @@ router.post("/get-user-id", async (req, res) => {
   }
 });
 
-// 更新會員資料 API - 使用 multer 處理檔案上傳
-router.put("/user", checkToken, upload.single("avatar"), async (req, res) => {
-  const { id } = req.decoded;
-  const { name, email, password, phone } = req.body;
-  const avatarFile = req.file;
-
-  console.log("收到更新請求:", {
-    userId: id,
-    name,
-    email,
-    hasPassword: !!password,
-    phone,
-    hasAvatar: !!avatarFile,
-  });
-
-  if (avatarFile) {
-    console.log("接收到頭像檔案:", avatarFile.filename);
-  }
-
+// 使用者資料更新 API
+router.post("/update", upload.single("avatar"), async (req, res) => {
   try {
-    // 開始一個事務 (transaction)
-    await pool.query("START TRANSACTION");
-
-    // 獲取用戶當前資料
-    const [currentUser] = await pool.execute(
-      "SELECT email, head FROM users WHERE id = ?",
-      [id]
-    );
-
-    if (currentUser.length === 0) {
-      await pool.query("ROLLBACK");
-      return res.status(404).json({
+    // 從 token 獲取用戶 ID
+    const token = req.headers.authorization?.split(" ")[1] || req.cookies.token;
+    if (!token) {
+      return res.status(401).json({
         status: "error",
-        message: "找不到使用者資料",
+        message: "未提供授權令牌",
       });
     }
 
-    const currentEmail = currentUser[0].email;
-    const currentAvatar = currentUser[0].head;
+    let decoded;
+    try {
+      decoded = jwt.verify(token, secretKey);
+    } catch (err) {
+      return res.status(401).json({
+        status: "error",
+        message: "無效的授權令牌",
+      });
+    }
 
-    // 查詢用戶的登入方式
-    const [providers] = await pool.execute(
+    const userId = decoded.id;
+    console.log(`更新用戶資料，ID: ${userId}`);
+
+    // 獲取表單數據
+    const { name, email, phone, birthday } = req.body;
+    console.log("更新數據:", { name, email, phone, birthday });
+
+    // 準備更新數據
+    const updateData = [];
+    const updateParams = [];
+
+    if (name) {
+      updateData.push("name = ?");
+      updateParams.push(name);
+    }
+
+    if (email) {
+      updateData.push("email = ?");
+      updateParams.push(email);
+    }
+
+    if (phone) {
+      updateData.push("phone = ?");
+      updateParams.push(phone);
+    }
+
+    if (birthday) {
+      // 確保生日格式正確
+      const birthdayDate = new Date(birthday);
+      if (!isNaN(birthdayDate.getTime())) {
+        // 格式化為 YYYY-MM-DD
+        const formattedBirthday = birthdayDate.toISOString().split("T")[0];
+        updateData.push("birthday = ?");
+        updateParams.push(formattedBirthday);
+        console.log(`格式化生日: ${birthday} -> ${formattedBirthday}`);
+      } else {
+        console.error(`無效的生日格式: ${birthday}`);
+      }
+    }
+
+    // 處理頭像上傳
+    if (req.file) {
+      const avatarPath = `/uploads/avatars/${req.file.filename}`;
+      updateData.push("head = ?");
+      updateParams.push(avatarPath);
+      updateData.push("is_custom_head = ?");
+      updateParams.push(1); // 標記為自定義頭像
+    }
+
+    // 如果沒有要更新的數據，返回錯誤
+    if (updateData.length === 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "沒有提供要更新的數據",
+      });
+    }
+
+    // 添加用戶ID到參數列表
+    updateParams.push(userId);
+
+    // 構建更新SQL
+    const updateSQL = `UPDATE users SET ${updateData.join(
+      ", "
+    )}, updated_at = NOW() WHERE id = ?`;
+
+    console.log("執行SQL:", updateSQL);
+    console.log("SQL參數:", updateParams);
+
+    // 執行更新
+    await pool.execute(updateSQL, updateParams);
+
+    // 獲取更新後的用戶數據
+    const [updatedUser] = await pool.execute(
+      "SELECT id, name, email, phone, head, birthday FROM users WHERE id = ?",
+      [userId]
+    );
+
+    console.log("更新後的用戶數據:", updatedUser[0]);
+
+    // 獲取用戶的所有提供者
+    const [userProviders] = await pool.execute(
+      "SELECT provider FROM user_providers WHERE user_id = ?",
+      [userId]
+    );
+
+    // 生成新的 JWT
+    const newToken = jwt.sign(
+      {
+        id: userId,
+        email: updatedUser[0].email,
+        name: updatedUser[0].name,
+        providers: userProviders.map((p) => p.provider),
+      },
+      secretKey,
+      { expiresIn: "30m" }
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: {
+        token: newToken,
+        user: {
+          ...updatedUser[0],
+          providers: userProviders.map((p) => p.provider),
+        },
+      },
+      message: "用戶資料更新成功",
+    });
+  } catch (err) {
+    console.error("更新用戶資料錯誤:", err);
+    return res.status(500).json({
+      status: "error",
+      message: "更新用戶資料時發生錯誤",
+      error: err.message,
+    });
+  }
+});
+
+// 獲取用戶資料 API
+router.get("/user", async (req, res) => {
+  try {
+    const { id } = req.query;
+    console.log(`獲取用戶資料，ID: ${id}`);
+
+    if (!id) {
+      return res.status(400).json({
+        status: "error",
+        message: "缺少用戶ID參數",
+      });
+    }
+
+    // 獲取用戶基本資料
+    const [userDetails] = await pool.execute(
+      "SELECT id, name, email, phone, head, level_id, birthday FROM users WHERE id = ?",
+      [id]
+    );
+
+    if (userDetails.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "找不到用戶資料",
+      });
+    }
+
+    // 獲取用戶的登入方式
+    const [userProviders] = await pool.execute(
       "SELECT provider FROM user_providers WHERE user_id = ?",
       [id]
     );
 
-    const usesEmailLogin = providers.some((p) => p.provider === "email");
-
-    // 如果用戶要修改 email 且使用 email 登入，需要檢查新 email 是否已被使用
-    if (email && email !== currentEmail) {
-      // 檢查新 email 是否已被其他用戶使用
-      const [existingUsers] = await pool.execute(
-        "SELECT id FROM users WHERE email = ? AND id != ?",
-        [email, id]
-      );
-
-      if (existingUsers.length > 0) {
-        await pool.query("ROLLBACK");
-        return res.status(409).json({
-          status: "error",
-          message: "此電子郵件已被其他用戶使用",
-        });
-      }
+    // 處理頭像路徑
+    if (userDetails[0].head) {
+      console.log(`用戶頭像路徑: ${userDetails[0].head}`);
     }
 
-    // 準備更新數據
-    let updateFields = [];
-    let values = [];
-
-    // 添加需要更新的欄位
-    if (name) {
-      updateFields.push("name = ?");
-      values.push(name);
-    }
-
-    if (email) {
-      updateFields.push("email = ?");
-      values.push(email);
-    }
-
-    if (phone) {
-      updateFields.push("phone = ?");
-      values.push(phone);
-    }
-
-    // 處理頭像檔案
-    if (avatarFile) {
-      updateFields.push("head = ?");
-      values.push(avatarFile.filename);
-      console.log("更新頭像為:", avatarFile.filename);
-
-      // 如果有舊頭像且不是 base64 格式，刪除舊檔案
-      if (currentAvatar && !currentAvatar.startsWith("data:")) {
-        const oldFilePath = path.join(uploadDir, currentAvatar);
-        if (fs.existsSync(oldFilePath)) {
-          fs.unlinkSync(oldFilePath);
-          console.log("刪除舊頭像:", oldFilePath);
-        }
-      }
-    }
-
-    // 如果提供了新密碼，則加密後更新
-    if (password && password.trim() !== "") {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updateFields.push("password = ?");
-      values.push(hashedPassword);
-    }
-
-    // 如果沒有任何欄位需要更新，則返回成功
-    if (updateFields.length === 0) {
-      await pool.query("COMMIT");
-      return res.status(200).json({
-        status: "success",
-        message: "資料保持不變",
-      });
-    }
-
-    // 添加 id 作為 WHERE 條件
-    values.push(id);
-
-    // 執行更新 users 表操作
-    const sql = `UPDATE users SET ${updateFields.join(
-      ", "
-    )}, updated_at = NOW() WHERE id = ?`;
-
-    console.log("執行的 SQL:", sql);
-    console.log("SQL 參數:", values);
-
-    const [result] = await pool.execute(sql, values);
-
-    // 如果用戶修改了 email 且使用 email 登入，同時更新 user_providers 表
-    if (email && email !== currentEmail && usesEmailLogin) {
-      await pool.execute(
-        "UPDATE user_providers SET provider_id = ? WHERE user_id = ? AND provider = 'email'",
-        [email, id]
-      );
-      console.log("已更新 user_providers 表中的 email 登入記錄");
-    }
-
-    // 提交事務
-    await pool.query("COMMIT");
-
-    // 檢查是否成功更新
-    if (result.affectedRows > 0) {
-      res.status(200).json({
-        status: "success",
-        message: "會員資料更新成功",
-      });
-    } else {
-      res.status(404).json({
-        status: "error",
-        message: "找不到會員資料",
-      });
-    }
+    return res.status(200).json({
+      status: "success",
+      data: {
+        ...userDetails[0],
+        providers: userProviders.map((p) => p.provider),
+      },
+    });
   } catch (err) {
-    // 發生錯誤時回滾事務
-    await pool.query("ROLLBACK");
-    console.error("更新會員資料錯誤:", err);
-
-    // 處理電子郵件衝突的情況
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({
-        status: "error",
-        message: "此電子郵件已被使用",
-      });
-    }
-
-    res.status(500).json({
+    console.error("獲取用戶資料錯誤:", err);
+    return res.status(500).json({
       status: "error",
-      message: "更新會員資料失敗: " + err.message,
+      message: "獲取用戶資料時發生錯誤",
+      error: err.message,
     });
   }
 });

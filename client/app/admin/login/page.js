@@ -27,6 +27,12 @@ export default function Login() {
 
   const sendOTP = async () => {
     try {
+      // 清除所有連結標記
+      localStorage.removeItem("isLinkingAccount");
+      localStorage.removeItem("linkToUserId");
+      localStorage.removeItem("returnToAccountPage");
+      localStorage.removeItem("authSource");
+
       const formattedPhone = formatPhoneNumber(phone);
       console.log(" 發送 OTP 給:", formattedPhone);
 
@@ -109,6 +115,13 @@ export default function Login() {
   // 修复后的登录处理函数
   const handleLogin = async (e) => {
     e.preventDefault(); // 防止表單提交刷新頁面
+
+    // 清除所有連結標記
+    localStorage.removeItem("isLinkingAccount");
+    localStorage.removeItem("linkToUserId");
+    localStorage.removeItem("returnToAccountPage");
+    localStorage.removeItem("authSource");
+
     try {
       const result = await loginWithEmail(email, password);
 
@@ -216,14 +229,34 @@ export default function Login() {
                 <div className={styles.line2}></div>
               </div>
 
-              <button className={styles.loginGoogle} onClick={loginWithGoogle}>
+              <button
+                className={styles.loginGoogle}
+                onClick={() => {
+                  // 清除所有連結標記
+                  localStorage.removeItem("isLinkingAccount");
+                  localStorage.removeItem("linkToUserId");
+                  localStorage.removeItem("returnToAccountPage");
+                  localStorage.removeItem("authSource");
+                  loginWithGoogle();
+                }}
+              >
                 <div className={styles.googleBox}>
                   <img src="/img/ic_google.svg" alt="Google logo" />
                   <h6>使用 Google 登入</h6>
                 </div>
               </button>
 
-              <button className={styles.loginLine} onClick={loginWithLine}>
+              <button
+                className={styles.loginLine}
+                onClick={() => {
+                  // 清除所有連結標記
+                  localStorage.removeItem("isLinkingAccount");
+                  localStorage.removeItem("linkToUserId");
+                  localStorage.removeItem("returnToAccountPage");
+                  localStorage.removeItem("authSource");
+                  loginWithLine();
+                }}
+              >
                 <div className={styles.lineBox}>
                   <img src="/img/line.png" alt="Line logo" />
                   <h6>使用 Line 登入</h6>
