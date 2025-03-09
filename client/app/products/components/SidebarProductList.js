@@ -17,7 +17,11 @@ export default function SidebarProductList({ title, products }) {
         >
           <div className={styles.sidebarProductImg}>
             <Image
-              src={`/img/product/${product.image_name}`}
+              src={
+                product.main_image
+                  ? `/image/product/${product.main_image}`
+                  : "/image/product/no-img.png"
+              }
               alt={product.name}
               fill
               sizes="80px"

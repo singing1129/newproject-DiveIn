@@ -49,3 +49,36 @@ export function checkToken(req, res, next) {
     next();
   });
 }
+
+// 可選的 JWT 驗證中間件，不強制要求 token
+export function optionalCheckToken(req, res, next) {
+  // 從請求標頭取得 Authorization 值
+  let token = req.get("Authorization");
+
+  // 如果沒有提供 token，直接繼續處理
+  if (!token) {
+    return next();
+  }
+
+  // 檢查 token 格式是否正確 (必須以 "Bearer " 開頭)
+  if (!token.startsWith("Bearer ")) {
+    return next();
+  }
+
+  // 切割 token，移除 "Bearer " 前綴
+  token = token.slice(7);
+
+  // 使用 JWT 驗證 token 是否有效
+  jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) {
+      // token 無效或已過期，但不返回錯誤，繼續處理
+      return next();
+    }
+
+    // token 有效，將解碼後的使用者資訊存到 req.decoded
+    req.decoded = decoded;
+
+    // 繼續處理下一個中間件或路由處理器
+    next();
+  });
+}

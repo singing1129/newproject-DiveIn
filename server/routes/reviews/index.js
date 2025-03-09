@@ -1,6 +1,6 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
-import { checkToken } from "../../middleware/auth.js";
+import { checkToken, optionalCheckToken } from "../../middleware/auth.js";
 
 const router = express.Router();
 
@@ -124,20 +124,20 @@ router.post("/", checkToken, async (req, res) => {
            WHERE oi.id = ?`,
           [itemId]
         );
-        
+
         if (!orderItemInfo || orderItemInfo.length === 0) {
           throw new Error(`找不到訂單項目(ID: ${itemId})`);
         }
-        
+
         const variantId = orderItemInfo[0].variant_id;
         const productId = orderItemInfo[0].product_id;
-        
+
         if (!productId) {
-          throw new Error('找不到關聯的商品ID');
+          throw new Error("找不到關聯的商品ID");
         }
-        
+
         console.log("評價商品:", { orderItemId: itemId, variantId, productId });
-        
+
         await connection.query(
           `INSERT INTO product_reviews (review_id, product_id, variant_id)
            VALUES (?, ?, ?)`,
@@ -149,13 +149,13 @@ router.post("/", checkToken, async (req, res) => {
           `SELECT rental_id FROM order_rental_items WHERE id = ?`,
           [itemId]
         );
-        
+
         if (!rentalItemInfo || rentalItemInfo.length === 0) {
           throw new Error(`找不到租借項目(ID: ${itemId})`);
         }
-        
+
         const rentalId = rentalItemInfo[0].rental_id;
-        
+
         await connection.query(
           `INSERT INTO rental_reviews (review_id, rental_id)
            VALUES (?, ?)`,
@@ -170,14 +170,14 @@ router.post("/", checkToken, async (req, res) => {
            WHERE oai.id = ?`,
           [itemId]
         );
-        
+
         if (!activityItemInfo || activityItemInfo.length === 0) {
           throw new Error(`找不到活動項目(ID: ${itemId})`);
         }
-        
+
         const activityProjectId = activityItemInfo[0].activity_project_id;
         const activityId = activityItemInfo[0].activity_id;
-        
+
         await connection.query(
           `INSERT INTO activity_reviews (review_id, activity_id, activity_project_id)
            VALUES (?, ?, ?)`,
@@ -189,13 +189,17 @@ router.post("/", checkToken, async (req, res) => {
           `SELECT bundle_id FROM order_items WHERE id = ?`,
           [itemId]
         );
-        
-        if (!bundleItemInfo || bundleItemInfo.length === 0 || !bundleItemInfo[0].bundle_id) {
+
+        if (
+          !bundleItemInfo ||
+          bundleItemInfo.length === 0 ||
+          !bundleItemInfo[0].bundle_id
+        ) {
           throw new Error(`找不到套裝項目(ID: ${itemId})`);
         }
-        
+
         const bundleId = bundleItemInfo[0].bundle_id;
-        
+
         await connection.query(
           `INSERT INTO bundle_reviews (review_id, bundle_id)
            VALUES (?, ?)`,
@@ -239,12 +243,12 @@ async function checkAndRewardPoints(orderId, userId) {
       "SELECT id FROM order_items WHERE order_id = ?",
       [orderId]
     );
-    
+
     const [activityItems] = await pool.query(
       "SELECT id FROM order_activity_items WHERE order_id = ?",
       [orderId]
     );
-    
+
     const [rentalItems] = await pool.query(
       "SELECT id FROM order_rental_items WHERE order_id = ?",
       [orderId]
@@ -257,9 +261,10 @@ async function checkAndRewardPoints(orderId, userId) {
     );
 
     // 計算需要評價的項目總數（套裝商品算一個）
-    const totalItems = 
-      productItems.length - bundleItems.length + 
-      activityItems.length + 
+    const totalItems =
+      productItems.length -
+      bundleItems.length +
+      activityItems.length +
       rentalItems.length;
 
     // 獲取已評價的項目數
@@ -267,7 +272,7 @@ async function checkAndRewardPoints(orderId, userId) {
       `SELECT COUNT(DISTINCT r.id) as count FROM reviews r WHERE r.order_id = ?`,
       [orderId]
     );
-    
+
     const reviewedItemCount = reviewedCount[0]?.count || 0;
 
     console.log(`訂單 ${orderId} 評價進度: ${reviewedItemCount}/${totalItems}`);
@@ -320,8 +325,6 @@ async function checkAndRewardPoints(orderId, userId) {
     console.error("檢查評價狀態失敗:", error);
   }
 }
-
-
 
 // 訂單評價狀態檢查API
 router.get("/:orderId", checkToken, async (req, res) => {
@@ -520,12 +523,18 @@ router.get("/:orderId", checkToken, async (req, res) => {
   }
 });
 
-// 獲取商品評價API
-router.get("/product/:productId", async (req, res) => {
+// 修改後的獲取商品評價API
+router.get("/product/:productId", optionalCheckToken, async (req, res) => {
   try {
     const { productId } = req.params;
+    let userId = null;
 
-    // 獲取商品評價統計
+    // 檢查是否有傳入已認證的用戶ID (通過 optionalCheckToken 中間件)
+    if (req.decoded && req.decoded.id) {
+      userId = req.decoded.id;
+    }
+
+    // 獲取商品評價統計 (原始代碼保持不變)
     const [ratingSummary] = await pool.query(
       `SELECT 
          AVG(r.rating) as averageRating,
@@ -541,7 +550,7 @@ router.get("/product/:productId", async (req, res) => {
       [productId]
     );
 
-    // 計算各星級百分比
+    // 計算各星級百分比 (原始代碼保持不變)
     const summary = ratingSummary[0];
     if (summary.totalReviews > 0) {
       summary.fiveStarPercentage = Math.round(
@@ -570,13 +579,22 @@ router.get("/product/:productId", async (req, res) => {
     }
 
     // 獲取評價列表
-    const [reviews] = await pool.query(
-      `SELECT 
-         r.id, r.rating, r.comment, r.createdAt,
-         u.name as userName,
+    let reviewsQuery = `
+      SELECT 
+         r.id, r.rating, r.comment, r.createdAt, r.useful_count,
+         u.name as userName, u.email as userEmail, u.head as userAvatar,
          pv.color_id, pv.size_id,
          c.name as colorName,
-         s.name as sizeName
+         s.name as sizeName`;
+
+    // 如果有用戶ID，加入查詢該用戶是否已投票
+    if (userId) {
+      reviewsQuery += `,
+        (SELECT COUNT(*) > 0 FROM review_helpfulness rh 
+         WHERE rh.review_id = r.id AND rh.user_id = ?) as hasVoted`;
+    }
+
+    reviewsQuery += `
        FROM reviews r
        JOIN product_reviews pr ON r.id = pr.review_id
        JOIN users u ON r.user_id = u.id
@@ -585,9 +603,12 @@ router.get("/product/:productId", async (req, res) => {
        LEFT JOIN size s ON pv.size_id = s.id
        WHERE pr.product_id = ? AND r.isDeleted = 0
        ORDER BY r.createdAt DESC
-       LIMIT 10`,
-      [productId]
-    );
+       LIMIT 10`;
+
+    // 準備查詢參數
+    const queryParams = userId ? [userId, productId] : [productId];
+
+    const [reviews] = await pool.query(reviewsQuery, queryParams);
 
     // 處理評價列表數據
     const formattedReviews = reviews.map((review) => ({
@@ -596,10 +617,15 @@ router.get("/product/:productId", async (req, res) => {
       comment: review.comment,
       createdAt: review.createdAt,
       userName: maskUserName(review.userName),
-      variant:
+      userEmail: review.userEmail,
+      userAvatar: review.userAvatar,
+      spec:
         review.colorName && review.sizeName
           ? `${review.colorName} / ${review.sizeName}`
-          : "標準款式",
+          : null,
+      useful_count: review.useful_count,
+      // 如果有用戶ID，則包含 hasVoted 屬性
+      hasVoted: userId ? review.hasVoted === 1 : false,
     }));
 
     return res.status(200).json({
@@ -620,11 +646,17 @@ router.get("/product/:productId", async (req, res) => {
 });
 
 // 獲取活動評價API
-router.get("/activity/:activityId", async (req, res) => {
+router.get("/activity/:activityId", optionalCheckToken, async (req, res) => {
   try {
     const { activityId } = req.params;
+    let userId = null;
 
-    // 獲取活動評價統計
+    // 檢查是否有傳入已認證的用戶ID (通過 optionalCheckToken 中間件)
+    if (req.decoded && req.decoded.id) {
+      userId = req.decoded.id;
+    }
+
+    // 獲取活動評價統計 (原始代碼保持不變)
     const [ratingSummary] = await pool.query(
       `SELECT 
          AVG(r.rating) as averageRating,
@@ -640,7 +672,7 @@ router.get("/activity/:activityId", async (req, res) => {
       [activityId]
     );
 
-    // 計算各星級百分比
+    // 計算各星級百分比 (原始代碼保持不變)
     const summary = ratingSummary[0];
     if (summary.totalReviews > 0) {
       summary.fiveStarPercentage = Math.round(
@@ -669,20 +701,32 @@ router.get("/activity/:activityId", async (req, res) => {
     }
 
     // 獲取評價列表
-    const [reviews] = await pool.query(
-      `SELECT 
-         r.id, r.rating, r.comment, r.createdAt,
-         u.name as userName,
-         ap.name as projectName
+    let reviewsQuery = `
+      SELECT 
+         r.id, r.rating, r.comment, r.createdAt, r.useful_count,
+         u.name as userName, u.email as userEmail, u.head as userAvatar,
+         ap.name as projectName`;
+
+    // 如果有用戶ID，加入查詢該用戶是否已投票
+    if (userId) {
+      reviewsQuery += `,
+        (SELECT COUNT(*) > 0 FROM review_helpfulness rh 
+         WHERE rh.review_id = r.id AND rh.user_id = ?) as hasVoted`;
+    }
+
+    reviewsQuery += `
        FROM reviews r
        JOIN activity_reviews ar ON r.id = ar.review_id
        JOIN users u ON r.user_id = u.id
        LEFT JOIN activity_project ap ON ar.activity_project_id = ap.id
        WHERE ar.activity_id = ? AND r.isDeleted = 0
        ORDER BY r.createdAt DESC
-       LIMIT 10`,
-      [activityId]
-    );
+       LIMIT 10`;
+
+    // 準備查詢參數
+    const queryParams = userId ? [userId, activityId] : [activityId];
+
+    const [reviews] = await pool.query(reviewsQuery, queryParams);
 
     // 處理評價列表數據
     const formattedReviews = reviews.map((review) => ({
@@ -691,7 +735,12 @@ router.get("/activity/:activityId", async (req, res) => {
       comment: review.comment,
       createdAt: review.createdAt,
       userName: maskUserName(review.userName),
-      projectName: review.projectName || "標準方案",
+      userEmail: review.userEmail,
+      userAvatar: review.userAvatar,
+      spec: review.projectName || "標準方案",
+      useful_count: review.useful_count,
+      // 如果有用戶ID，則包含 hasVoted 屬性
+      hasVoted: userId ? review.hasVoted === 1 : false,
     }));
 
     return res.status(200).json({
@@ -712,11 +761,17 @@ router.get("/activity/:activityId", async (req, res) => {
 });
 
 // 獲取租借項目評價API
-router.get("/rental/:rentalId", async (req, res) => {
+router.get("/rental/:rentalId", optionalCheckToken, async (req, res) => {
   try {
     const { rentalId } = req.params;
+    let userId = null;
 
-    // 獲取租借項目評價統計
+    // 檢查是否有傳入已認證的用戶ID (通過 optionalCheckToken 中間件)
+    if (req.decoded && req.decoded.id) {
+      userId = req.decoded.id;
+    }
+
+    // 獲取租借項目評價統計 (原始代碼保持不變)
     const [ratingSummary] = await pool.query(
       `SELECT 
          AVG(r.rating) as averageRating,
@@ -732,7 +787,7 @@ router.get("/rental/:rentalId", async (req, res) => {
       [rentalId]
     );
 
-    // 計算各星級百分比
+    // 計算各星級百分比 (原始代碼保持不變)
     const summary = ratingSummary[0];
     if (summary.totalReviews > 0) {
       summary.fiveStarPercentage = Math.round(
@@ -761,18 +816,30 @@ router.get("/rental/:rentalId", async (req, res) => {
     }
 
     // 獲取評價列表
-    const [reviews] = await pool.query(
-      `SELECT 
-         r.id, r.rating, r.comment, r.createdAt,
-         u.name as userName
+    let reviewsQuery = `
+      SELECT 
+         r.id, r.rating, r.comment, r.createdAt, r.useful_count,
+         u.name as userName, u.email as userEmail, u.head as userAvatar`;
+
+    // 如果有用戶ID，加入查詢該用戶是否已投票
+    if (userId) {
+      reviewsQuery += `,
+        (SELECT COUNT(*) > 0 FROM review_helpfulness rh 
+         WHERE rh.review_id = r.id AND rh.user_id = ?) as hasVoted`;
+    }
+
+    reviewsQuery += `
        FROM reviews r
        JOIN rental_reviews rr ON r.id = rr.review_id
        JOIN users u ON r.user_id = u.id
        WHERE rr.rental_id = ? AND r.isDeleted = 0
        ORDER BY r.createdAt DESC
-       LIMIT 10`,
-      [rentalId]
-    );
+       LIMIT 10`;
+
+    // 準備查詢參數
+    const queryParams = userId ? [userId, rentalId] : [rentalId];
+
+    const [reviews] = await pool.query(reviewsQuery, queryParams);
 
     // 處理評價列表數據
     const formattedReviews = reviews.map((review) => ({
@@ -781,6 +848,11 @@ router.get("/rental/:rentalId", async (req, res) => {
       comment: review.comment,
       createdAt: review.createdAt,
       userName: maskUserName(review.userName),
+      userEmail: review.userEmail,
+      userAvatar: review.userAvatar,
+      useful_count: review.useful_count,
+      // 如果有用戶ID，則包含 hasVoted 屬性
+      hasVoted: userId ? review.hasVoted === 1 : false,
     }));
 
     return res.status(200).json({
@@ -800,6 +872,118 @@ router.get("/rental/:rentalId", async (req, res) => {
   }
 });
 
+// 獲取套裝商品評價API
+router.get("/bundle/:bundleId", optionalCheckToken, async (req, res) => {
+  try {
+    const { bundleId } = req.params;
+    let userId = null;
+
+    // 檢查是否有傳入已認證的用戶ID (通過 optionalCheckToken 中間件)
+    if (req.decoded && req.decoded.id) {
+      userId = req.decoded.id;
+    }
+
+    // 獲取套裝商品評價統計 (原始代碼保持不變)
+    const [ratingSummary] = await pool.query(
+      `SELECT 
+         AVG(r.rating) as averageRating,
+         COUNT(r.id) as totalReviews,
+         SUM(CASE WHEN r.rating = 5 THEN 1 ELSE 0 END) as fiveStarCount,
+         SUM(CASE WHEN r.rating = 4 THEN 1 ELSE 0 END) as fourStarCount,
+         SUM(CASE WHEN r.rating = 3 THEN 1 ELSE 0 END) as threeStarCount,
+         SUM(CASE WHEN r.rating = 2 THEN 1 ELSE 0 END) as twoStarCount,
+         SUM(CASE WHEN r.rating = 1 THEN 1 ELSE 0 END) as oneStarCount
+       FROM reviews r
+       JOIN bundle_reviews br ON r.id = br.review_id
+       WHERE br.bundle_id = ? AND r.isDeleted = 0`,
+      [bundleId]
+    );
+
+    // 計算各星級百分比 (原始代碼保持不變)
+    const summary = ratingSummary[0];
+    if (summary.totalReviews > 0) {
+      summary.fiveStarPercentage = Math.round(
+        (summary.fiveStarCount / summary.totalReviews) * 100
+      );
+      summary.fourStarPercentage = Math.round(
+        (summary.fourStarCount / summary.totalReviews) * 100
+      );
+      summary.threeStarPercentage = Math.round(
+        (summary.threeStarCount / summary.totalReviews) * 100
+      );
+      summary.twoStarPercentage = Math.round(
+        (summary.twoStarCount / summary.totalReviews) * 100
+      );
+      summary.oneStarPercentage = Math.round(
+        (summary.oneStarCount / summary.totalReviews) * 100
+      );
+      summary.averageRating = parseFloat(summary.averageRating).toFixed(1);
+    } else {
+      summary.fiveStarPercentage = 0;
+      summary.fourStarPercentage = 0;
+      summary.threeStarPercentage = 0;
+      summary.twoStarPercentage = 0;
+      summary.oneStarPercentage = 0;
+      summary.averageRating = "0.0";
+    }
+
+    // 獲取評價列表
+    let reviewsQuery = `
+      SELECT 
+         r.id, r.rating, r.comment, r.createdAt, r.useful_count,
+         u.name as userName, u.email as userEmail, u.head as userAvatar`;
+
+    // 如果有用戶ID，加入查詢該用戶是否已投票
+    if (userId) {
+      reviewsQuery += `,
+        (SELECT COUNT(*) > 0 FROM review_helpfulness rh 
+         WHERE rh.review_id = r.id AND rh.user_id = ?) as hasVoted`;
+    }
+
+    reviewsQuery += `
+       FROM reviews r
+       JOIN bundle_reviews br ON r.id = br.review_id
+       JOIN users u ON r.user_id = u.id
+       WHERE br.bundle_id = ? AND r.isDeleted = 0
+       ORDER BY r.createdAt DESC
+       LIMIT 10`;
+
+    // 準備查詢參數
+    const queryParams = userId ? [userId, bundleId] : [bundleId];
+
+    const [reviews] = await pool.query(reviewsQuery, queryParams);
+
+    // 處理評價列表數據
+    const formattedReviews = reviews.map((review) => ({
+      id: review.id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      userName: maskUserName(review.userName),
+      userEmail: review.userEmail,
+      userAvatar: review.userAvatar,
+      useful_count: review.useful_count,
+      // 如果有用戶ID，則包含 hasVoted 屬性
+      hasVoted: userId ? review.hasVoted === 1 : false,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        summary,
+        reviews: formattedReviews,
+      },
+    });
+  } catch (error) {
+    console.error("獲取套裝商品評價失敗:", error);
+    return res.status(500).json({
+      success: false,
+      message: "獲取套裝商品評價失敗",
+      error: error.message,
+    });
+  }
+});
+
 // 用戶名稱遮罩處理函數
 function maskUserName(name) {
   if (!name) return "匿名用戶";
@@ -814,5 +998,76 @@ function maskUserName(name) {
     );
   }
 }
+
+// 在 API 路由文件中添加 (例如 routes/reviews.js)
+router.post("/:reviewId/useful", checkToken, async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const userId = req.decoded.id; // 從 JWT 獲取用戶 ID
+
+    // 檢查用戶是否已經標記過該評論
+    const [existingVote] = await pool.query(
+      `SELECT * FROM review_helpfulness 
+       WHERE review_id = ? AND user_id = ?`,
+      [reviewId, userId]
+    );
+
+    if (existingVote.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "您已經對此評論進行過標記",
+      });
+    }
+
+    // 開始交易
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // 記錄用戶投票
+      await connection.query(
+        `INSERT INTO review_helpfulness (review_id, user_id, is_helpful, createdAt)
+         VALUES (?, ?, true, NOW())`,
+        [reviewId, userId]
+      );
+
+      // 更新評論的有用計數
+      await connection.query(
+        `UPDATE reviews 
+         SET useful_count = useful_count + 1
+         WHERE id = ?`,
+        [reviewId]
+      );
+
+      // 獲取更新後的計數
+      const [updatedReview] = await connection.query(
+        `SELECT useful_count FROM reviews WHERE id = ?`,
+        [reviewId]
+      );
+
+      await connection.commit();
+      connection.release();
+
+      return res.status(200).json({
+        success: true,
+        message: "成功標記評論為有用",
+        data: {
+          useful_count: updatedReview[0].useful_count,
+        },
+      });
+    } catch (error) {
+      await connection.rollback();
+      connection.release();
+      throw error;
+    }
+  } catch (error) {
+    console.error("標記評論為有用失敗:", error);
+    return res.status(500).json({
+      success: false,
+      message: "標記評論為有用失敗",
+      error: error.message,
+    });
+  }
+});
 
 export default router;

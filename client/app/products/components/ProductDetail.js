@@ -21,6 +21,9 @@ import "swiper/css/free-mode";
 import "swiper/css/navigation";
 import "swiper/css/thumbs";
 
+// 評價
+import RatingSummary from "@/components/RatingSummary";
+import ReviewsSection from "@/components/ReviewsSection";
 // API 基礎 URL
 const API_BASE_URL = "http://localhost:3005/api";
 export default function ProductDetail() {
@@ -610,19 +613,7 @@ export default function ProductDetail() {
                 </h5>
 
                 <div className="mb-2">
-                  {[...Array(5)].map((_, index) => (
-                    <i
-                      key={`star-${product.id}-${index}`}
-                      className={`fa-${
-                        index < Math.floor(product.rating || 0)
-                          ? "solid"
-                          : "regular"
-                      } fa-star text-warning`}
-                    ></i>
-                  ))}
-                  <span className="ms-2 text-muted">
-                    {product.review_count} 則評價
-                  </span>
+                  <RatingSummary type="product" id={product.id} />
                 </div>
 
                 <div>{product.description}</div>
@@ -774,10 +765,7 @@ export default function ProductDetail() {
                   </div>
                 </div>
               ) : (
-                <ProductReviews
-                  rating={product.rating}
-                  reviewCount={product.review_count}
-                />
+                <ReviewsSection type="product" id={product.id} />
               )}
             </div>
           </div>
