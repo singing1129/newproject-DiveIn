@@ -18,6 +18,8 @@
   --gray-700-color: #6f6f6f;
   --gray-800-color: #555555;
   --gray-900-color: #3b3b3b;
+  --header-height: 60px;
+  --footer-height: 60px;
 }
 
 :global(*) {
@@ -34,32 +36,36 @@
   color: var(--white);
 }
 
-.header {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  display: none; /* 初始隱藏 */
-  z-index: 1000;
-  background-color: rgba(2, 48, 71, 0.9); /* 半透明背景，增加質感 */
-}
-
-.breadcrumb {
-  position: fixed;
-  top: 60px; /* 根據 Header 高度調整 */
-  width: 100%;
-  display: none; /* 初始隱藏 */
-  z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.1); /* 半透明背景，增加質感 */
-  padding: 10px 20px;
-}
-
+/* 固定定位元素 */
+.header,
 .footer {
   position: fixed;
-  bottom: 0;
+  left: 0;
   width: 100%;
-  display: none; /* 初始隱藏 */
+  display: none;
   z-index: 1000;
-  background-color: rgba(2, 48, 71, 0.9); /* 半透明背景，增加質感 */
+  opacity: 0; /* 初始透明 */
+}
+
+.header {
+  top: 0;
+  height: var(--header-height);
+  background-color: rgba(2, 48, 71, 0.9);
+}
+
+
+.footer {
+  bottom: 0;
+  height: var(--footer-height);
+  background-color: rgba(2, 48, 71, 0.9);
+  z-index: 1001; /* 確保在 Swiper 之上 */
+}
+
+/* 新增臨時顯示類別 */
+.showFooter {
+  display: block !important; /* 強制顯示，開發期間使用 */
+  opacity: 1 !important; /* 確保可見 */
+  background-color: rgba(255, 0, 0, 0.5) !important; /* 臨時紅色背景，便於調試 */
 }
 
 .swiperContainer {
@@ -69,17 +75,25 @@
   position: relative;
   z-index: 1;
 }
-/* 隱藏瀏覽器的滾輪 */
+
 .swiperContainer::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
+
 .swiperContainer {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* 確保 SwiperSlide 也沒有滾動軸 */
-.swiperSlide {
+.slide {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  background: transparent;
   overflow: hidden !important;
 }
 
@@ -94,18 +108,6 @@
   z-index: -1;
   filter: contrast(1.2) brightness(1.1);
   transition: transform 1.2s ease-out;
-}
-
-.slide {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  z-index: 2;
-  background: transparent;
-  overflow: hidden !important; /* 改為 hidden，避免第三頁以外的滾動 */
 }
 
 .content {
@@ -265,7 +267,7 @@
 
 .productBubble.visible {
   opacity: 1;
-  animation: productBubbleRise 1.2s ease-out forwards;
+  animation: productBubbleRise 1.2s ease-out forwards, productFloatWave 3s infinite ease-in-out 1.2s;
 }
 
 .productBubble.burst {
@@ -308,10 +310,6 @@
     opacity: 0;
     border-radius: 50%;
   }
-}
-
-.productBubble.visible {
-  animation: productBubbleRise 1.2s ease-out forwards, productFloatWave 3s infinite ease-in-out 1.2s;
 }
 
 .productWrapper {
@@ -417,43 +415,52 @@
 }
 
 .welcomeContent {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   text-align: center;
+  gap: 20px;
   color: var(--white);
   z-index: 2;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05); /* 增加質感背景 */
-  border-radius: 15px;
+  position: relative;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  max-width: 800px;
   margin: 0 auto;
 }
 
 .welcomeContent h2 {
-  font-size: 3rem;
-  margin-bottom: 20px;
+  font-size: 36px;
+  margin-bottom: 0px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .welcomeDescription {
-  font-size: 1.2rem;
-  color: var(--primary-light-color);
+  font-size: 16px;
+  color: var(--secondary-deep-color);
   line-height: 1.6;
   padding: 0 20px;
+  margin-bottom: 0px;
 }
 
-.fadeIn {
-  animation: fadeIn 0.5s ease-in-out forwards;
+.fadeInUp {
+  animation: fadeInUp 0.5s ease-in-out forwards;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(-50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fadeInDown {
+  animation: fadeInDown 1s ease-out forwards;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(50px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .loading {
@@ -462,36 +469,4 @@
   left: 50%;
   transform: translate(-50%, -50%);
   color: var(--white);
-}
-
-/* Header 和 Breadcrumb 的動畫 */
-.fadeInUp {
-  animation: fadeInUp 0.5s ease-in-out forwards;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Footer 的動畫 */
-.fadeInDown {
-  animation: fadeInDown 0.5s ease-in-out forwards;
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }

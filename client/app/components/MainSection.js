@@ -10,7 +10,6 @@ import styles from "./MainSection.module.css";
 import axios from "axios";
 import Link from "next/link";
 import Header from "./Header/header";
-import Breadcrumb from "./Breadcrumb/breadcrumb";
 import Footer from "./Footer/footer";
 
 const MainSection = ({ scrollToSection }) => {
@@ -26,7 +25,6 @@ const MainSection = ({ scrollToSection }) => {
   const [swiperInstance, setSwiperInstance] = useState(null);
   const swiperRef = useRef(null);
   const headerRef = useRef(null);
-  const breadcrumbRef = useRef(null);
   const footerRef = useRef(null);
   const bubbleContainerRef = useRef(null);
   const slideRefs = useRef([]);
@@ -117,48 +115,47 @@ const MainSection = ({ scrollToSection }) => {
   }, [visibleProducts, products, expandedProducts, loading, swiperInstance]);
 
   const handleSwiperInit = (swiper) => {
-    console.log("[Debug] Swiper initialized");
+    console.log("[Debug] Swiper initialized", swiper);
     setSwiperInstance(swiper);
   };
 
   useEffect(() => {
     if (!swiperInstance) return;
-  
+
     const handleWheel = (e) => {
       console.log("[Debug] Wheel event - deltaY:", e.deltaY, "activeIndex:", swiperInstance.activeIndex, "visibleCards:", visibleCards);
       const activeIndex = swiperInstance.activeIndex;
-  
+
       if (activeIndex === 0) {
-        if (e.deltaY > 0) { // 向下滾動
+        if (e.deltaY > 0) {
           if (visibleCards < activities.length) {
             e.preventDefault();
             setVisibleCards((prev) => prev + 1);
           } else if (!swiperInstance.isEnd) {
             swiperInstance.slideNext();
           }
-        } else if (e.deltaY < 0) { // 向上滾動
+        } else if (e.deltaY < 0) {
           if (visibleCards > 0) {
             e.preventDefault();
             setVisibleCards((prev) => prev - 1);
           } else {
             console.log("[Debug] Triggering scroll to HeroSection");
-            swiperInstance.params.speed = 0; // 禁用動畫
-            scrollToSection(); // 回到 HeroSection
-            swiperInstance.params.speed = 1200; // 恢復動畫
+            swiperInstance.params.speed = 0;
+            scrollToSection();
+            swiperInstance.params.speed = 1200;
           }
         }
       } else {
-        if (e.deltaY > 0 && !swiperInstance.isEnd) { // 向下滾動
-          e.preventDefault(); // 阻止冒泡到 page.js
+        if (e.deltaY > 0 && !swiperInstance.isEnd) {
+          e.preventDefault();
           swiperInstance.slideNext();
-        } else if (e.deltaY < 0 && !swiperInstance.isBeginning) { // 向上滾動
-          e.preventDefault(); // 阻止冒泡到 page.js
+        } else if (e.deltaY < 0 && !swiperInstance.isBeginning) {
+          e.preventDefault();
           swiperInstance.slidePrev();
         }
-        // 如果在最後一頁向上滾動或第一頁向下滾動，什麼也不做，讓 page.js 處理
       }
     };
-  
+
     swiperInstance.on("transitionStart", () => {
       console.log("[Debug] Transition started");
       document.body.style.overflow = "hidden";
@@ -172,7 +169,7 @@ const MainSection = ({ scrollToSection }) => {
 
     swiperInstance.on("slideChange", () => {
       const activeIndex = swiperInstance.activeIndex;
-      console.log("[Debug] Slide changed to:", activeIndex);
+      console.log("[Debug] Slide changed to:", activeIndex, "swiperInstance:", swiperInstance);
 
       slideRefs.current.forEach((slide, index) => {
         if (slide) {
@@ -185,22 +182,27 @@ const MainSection = ({ scrollToSection }) => {
           headerRef.current.style.display = "none";
           headerRef.current.classList.remove(styles.fadeInUp);
         }
-        if (breadcrumbRef.current) {
-          breadcrumbRef.current.style.display = "none";
-          breadcrumbRef.current.classList.remove(styles.fadeInUp);
-        }
         if (footerRef.current) {
           footerRef.current.style.display = "none";
           footerRef.current.classList.remove(styles.fadeInDown);
         }
       } else if (activeIndex === 2) {
+        console.log("[Debug] Attempting to show Footer, footerRef:", footerRef.current);
         if (headerRef.current) {
           headerRef.current.style.display = "block";
-          headerRef.current.classList.add(styles.fadeInUp); // 修正 className 為 classList
+          headerRef.current.classList.remove(styles.fadeInUp);
+          setTimeout(() => headerRef.current.classList.add(styles.fadeInUp), 10);
         }
-        if (breadcrumbRef.current) {
-          breadcrumbRef.current.style.display = "block";
-          breadcrumbRef.current.classList.add(styles.fadeInUp);
+        if (footerRef.current) {
+          console.log("[Debug] Showing Footer");
+          footerRef.current.style.display = "block";
+          footerRef.current.classList.remove(styles.fadeInDown);
+          setTimeout(() => {
+            footerRef.current.classList.add(styles.fadeInDown);
+            console.log("[Debug] Footer fadeInDown added");
+          }, 10);
+        } else {
+          console.log("[Debug] footerRef.current is null");
         }
       }
 
@@ -216,20 +218,6 @@ const MainSection = ({ scrollToSection }) => {
         setVisibleProducts(products.map(() => false));
         setExpandedProducts({});
         setProductPositions(products.map(() => null));
-      }
-
-      if (activeIndex === 2 && slideRefs.current[2]) {
-        slideRefs.current[2].addEventListener("scroll", () => {
-          const scrollTop = slideRefs.current[2].scrollTop;
-          const clientHeight = slideRefs.current[2].clientHeight;
-          const scrollHeight = slideRefs.current[2].scrollHeight;
-          if (scrollTop + clientHeight >= scrollHeight - 10) {
-            if (footerRef.current) {
-              footerRef.current.style.display = "block";
-              footerRef.current.classList.add(styles.fadeInDown);
-            }
-          }
-        }, { once: true });
       }
     });
 
@@ -284,8 +272,7 @@ const MainSection = ({ scrollToSection }) => {
     <section className={styles.mainSection}>
       {swiperInstance?.activeIndex === 2 && (
         <>
-          <Header ref={headerRef} className={`${styles.header} ${styles.fadeInUp}`} />
-          <Breadcrumb ref={breadcrumbRef} className={`${styles.breadcrumb} ${styles.fadeInUp}`} />
+          <Header ref={headerRef} className={`${styles.header}`} />
         </>
       )}
 
@@ -395,17 +382,20 @@ const MainSection = ({ scrollToSection }) => {
 
         <SwiperSlide ref={(el) => (slideRefs.current[2] = el)} className={styles.slide}>
           <div className={styles.welcomeContent} data-swiper-parallax="-200">
-            <h2>歡迎來到我們的商城</h2>
+            <h2>專業、品質、透明，與 DiveIn 共潛海洋之美</h2>
             <p className={styles.welcomeDescription}>
-              從海底冒險回到海面，現在是選購潛水裝備的最佳時機！探索我們的精選商品，開啟你的下一次旅程。
+              我們承諾陪您探索深海的靜謐，以精選專業潛水裝備，讓您的每一次旅程更加安心與美好。
             </p>
           </div>
         </SwiperSlide>
       </Swiper>
 
-      {swiperInstance?.activeIndex === 2 && (
-        <Footer ref={footerRef} className={`${styles.footer} ${styles.fadeInDown}`} />
-      )}
+      {/* 臨時強制顯示 Footer 進行調試 */}
+      {process.env.NODE_ENV === "development" ? (
+        <Footer ref={footerRef} className={`${styles.footer} ${styles.showFooter}`} />
+      ) : swiperInstance?.activeIndex === 2 ? (
+        <Footer ref={footerRef} className={`${styles.footer}`} />
+      ) : null}
     </section>
   );
 };
