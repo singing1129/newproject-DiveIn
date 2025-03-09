@@ -22,6 +22,7 @@ export const WebSocketProvider = ({ children }) => {
       }
     };
     socket.onmessage = async (event) => {
+        console.log("收到 WebSocket 訊息:", event.data)
       const data = JSON.parse(await event.data.text?.() || event.data);
       console.log("收到 WebSocket 訊息:", data);
       if (data.type === "history") {
