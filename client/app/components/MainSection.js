@@ -9,11 +9,11 @@ import "swiper/css/pagination";
 import styles from "./MainSection.module.css";
 import axios from "axios";
 import Link from "next/link";
-import Header from "./Header/header"; // 假設路徑
-import Breadcrumb from "./Breadcrumb/breadcrumb"; // 假設路徑
-import Footer from "./Footer/footer"; // 假設路徑
+import Header from "./Header/header";
+import Breadcrumb from "./Breadcrumb/breadcrumb";
+import Footer from "./Footer/footer";
 
-const MainSection = () => {
+const MainSection = ({ scrollToSection }) => {
   const [activities, setActivities] = useState([]);
   const [products, setProducts] = useState([]);
   const [rentProducts, setRentProducts] = useState([]);
@@ -29,47 +29,25 @@ const MainSection = () => {
   const breadcrumbRef = useRef(null);
   const footerRef = useRef(null);
   const bubbleContainerRef = useRef(null);
+  const slideRefs = useRef([]);
 
   useEffect(() => {
     const API_BASE_URL = "http://localhost:3005";
     const fetchData = async () => {
       try {
-        const activityResponse = await axios.get(
-          `${API_BASE_URL}/api/homeRecommendations?category=activity&type=all`
-        );
-        if (
-          activityResponse.data.status === "success" &&
-          Array.isArray(activityResponse.data.data)
-        ) {
+        const activityResponse = await axios.get(`${API_BASE_URL}/api/homeRecommendations?category=activity&type=all`);
+        if (activityResponse.data.status === "success" && Array.isArray(activityResponse.data.data)) {
           setActivities(activityResponse.data.data.slice(0, 4));
-          setActivityPositions(
-            new Array(activityResponse.data.data.length).fill(null)
-          );
+          setActivityPositions(new Array(activityResponse.data.data.length).fill(null));
         }
-
-        const productResponse = await axios.get(
-          `${API_BASE_URL}/api/homeRecommendations?category=product`
-        );
-        if (
-          productResponse.data.status === "success" &&
-          Array.isArray(productResponse.data.data)
-        ) {
+        const productResponse = await axios.get(`${API_BASE_URL}/api/homeRecommendations?category=product`);
+        if (productResponse.data.status === "success" && Array.isArray(productResponse.data.data)) {
           setProducts(productResponse.data.data.slice(0, 4));
-          setVisibleProducts(
-            new Array(productResponse.data.data.length).fill(false)
-          );
-          setProductPositions(
-            new Array(productResponse.data.data.length).fill(null)
-          );
+          setVisibleProducts(new Array(productResponse.data.data.length).fill(false));
+          setProductPositions(new Array(productResponse.data.data.length).fill(null));
         }
-
-        const rentResponse = await axios.get(
-          `${API_BASE_URL}/api/homeRecommendations?category=rent`
-        );
-        if (
-          rentResponse.data.status === "success" &&
-          Array.isArray(rentResponse.data.data)
-        ) {
+        const rentResponse = await axios.get(`${API_BASE_URL}/api/homeRecommendations?category=rent`);
+        if (rentResponse.data.status === "success" && Array.isArray(rentResponse.data.data)) {
           setRentProducts(rentResponse.data.data);
         }
       } catch (err) {
@@ -81,103 +59,65 @@ const MainSection = () => {
     fetchData();
   }, []);
 
-  // 隨機分散氣泡位置並限制在容器內，確保不重疊
-  const setRandomPositionForItem = (
-    index,
-    existingPositions,
-    itemSize = 200
-  ) => {
+  const setRandomPositionForItem = (index, existingPositions, itemSize = 200) => {
     const container = bubbleContainerRef.current;
     if (!container) return { top: 0, left: 0 };
-
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     const padding = 20;
-    const minSpacing = itemSize + 60; // 增加間距以確保不重疊
+    const minSpacing = itemSize + 60;
     let attempts = 0;
     let validPosition = false;
     let top, left;
 
     while (!validPosition && attempts < 300) {
-      top =
-        padding + Math.random() * (containerHeight - itemSize - 2 * padding);
-      left =
-        padding + Math.random() * (containerWidth - itemSize - 2 * padding);
-
+      top = padding + Math.random() * (containerHeight - itemSize - 2 * padding);
+      left = padding + Math.random() * (containerWidth - itemSize - 2 * padding);
       if (top < padding) top = padding;
       if (left < padding) left = padding;
-      if (top > containerHeight - itemSize - padding)
-        top = containerHeight - itemSize - padding;
-      if (left > containerWidth - itemSize - padding)
-        left = containerWidth - itemSize - padding;
+      if (top > containerHeight - itemSize - padding) top = containerHeight - itemSize - padding;
+      if (left > containerWidth - itemSize - padding) left = containerWidth - itemSize - padding;
 
       validPosition = existingPositions.every((pos) => {
         if (!pos) return true;
-        const distance = Math.sqrt(
-          Math.pow(pos.top - top, 2) + Math.pow(pos.left - left, 2)
-        );
+        const distance = Math.sqrt(Math.pow(pos.top - top, 2) + Math.pow(pos.left - left, 2));
         return distance >= minSpacing;
       });
-
       attempts++;
     }
-
-    if (!validPosition) {
-      console.log(
-        "[Debug] Failed to find non-overlapping position after 300 attempts"
-      );
-      top = padding;
-      left = padding;
-    }
-
-    return { top, left };
+    return { top: validPosition ? top : padding, left: validPosition ? left : padding };
   };
 
-  // 活動氣泡位置處理
   useEffect(() => {
-    if (
-      !loading &&
-      activities.length > 0 &&
-      swiperInstance?.activeIndex === 0
-    ) {
-      const newPositions = activityPositions.map((pos, index) => {
-        if (index < visibleCards && !pos) {
-          return setRandomPositionForItem(
-            index,
-            activityPositions.filter((p) => p)
-          );
+    if (!loading && activities.length > 0 && swiperInstance?.activeIndex === 0) {
+      const newPositions = Array(activities.length).fill(null).map((pos, index) => {
+        if (index < visibleCards && !activityPositions[index]) {
+          return setRandomPositionForItem(index, activityPositions.filter((p) => p));
         }
-        return pos;
+        return activityPositions[index] || pos;
       });
       setActivityPositions(newPositions);
     }
   }, [visibleCards, activities, loading, swiperInstance]);
 
-  // 商品/租借氣泡位置處理
   useEffect(() => {
     if (!loading && products.length > 0 && swiperInstance?.activeIndex === 1) {
-      const newPositions = productPositions.map((pos, index) => {
+      const newPositions = Array(products.length).fill(null).map((pos, index) => {
         const product = products[index];
         const rentProduct = expandedProducts[product?.id];
-
-        if (visibleProducts[index] && !rentProduct && !pos) {
-          return setRandomPositionForItem(
-            index,
-            productPositions.filter((p) => p)
-          );
-        } else if (rentProduct && !pos) {
-          return setRandomPositionForItem(
-            index,
-            productPositions.filter((p) => p)
-          );
+        if (visibleProducts[index] && !rentProduct && !productPositions[index]) {
+          return setRandomPositionForItem(index, productPositions.filter((p) => p));
+        } else if (rentProduct && !productPositions[index]) {
+          return setRandomPositionForItem(index, productPositions.filter((p) => p));
         }
-        return pos;
+        return productPositions[index] || pos;
       });
       setProductPositions(newPositions);
     }
   }, [visibleProducts, products, expandedProducts, loading, swiperInstance]);
 
   const handleSwiperInit = (swiper) => {
+    console.log("[Debug] Swiper initialized");
     setSwiperInstance(swiper);
   };
 
@@ -185,46 +125,60 @@ const MainSection = () => {
     if (!swiperInstance) return;
   
     const handleWheel = (e) => {
+      console.log("[Debug] Wheel event - deltaY:", e.deltaY, "activeIndex:", swiperInstance.activeIndex, "visibleCards:", visibleCards);
       const activeIndex = swiperInstance.activeIndex;
-      e.stopPropagation();
-  
-      if (activeIndex === 0 && (visibleCards > 0 || e.deltaY > 0)) {
-        e.preventDefault();
-      }
   
       if (activeIndex === 0) {
-        if (e.deltaY > 0) {
-          if (visibleCards < activities.length)
+        if (e.deltaY > 0) { // 向下滾動
+          if (visibleCards < activities.length) {
+            e.preventDefault();
             setVisibleCards((prev) => prev + 1);
-          else if (!swiperInstance.isEnd) swiperInstance.slideNext(); // 檢查是否到達邊界
-        } else if (e.deltaY < 0 && visibleCards > 0) {
-          setVisibleCards((prev) => prev - 1);
-        } else if (e.deltaY < 0 && visibleCards === 0 && !swiperInstance.isBeginning) {
-          swiperInstance.slidePrev(); // 檢查是否到達邊界
+          } else if (!swiperInstance.isEnd) {
+            swiperInstance.slideNext();
+          }
+        } else if (e.deltaY < 0) { // 向上滾動
+          if (visibleCards > 0) {
+            e.preventDefault();
+            setVisibleCards((prev) => prev - 1);
+          } else {
+            console.log("[Debug] Triggering scroll to HeroSection");
+            swiperInstance.params.speed = 0; // 禁用動畫
+            scrollToSection(); // 回到 HeroSection
+            swiperInstance.params.speed = 1200; // 恢復動畫
+          }
         }
       } else {
-        if (e.deltaY > 0 && !swiperInstance.isEnd) swiperInstance.slideNext(); // 檢查是否到達邊界
-        else if (e.deltaY < 0 && !swiperInstance.isBeginning) swiperInstance.slidePrev(); // 檢查是否到達邊界
+        if (e.deltaY > 0 && !swiperInstance.isEnd) { // 向下滾動
+          e.preventDefault(); // 阻止冒泡到 page.js
+          swiperInstance.slideNext();
+        } else if (e.deltaY < 0 && !swiperInstance.isBeginning) { // 向上滾動
+          e.preventDefault(); // 阻止冒泡到 page.js
+          swiperInstance.slidePrev();
+        }
+        // 如果在最後一頁向上滾動或第一頁向下滾動，什麼也不做，讓 page.js 處理
       }
     };
   
-    const swiperContainer = swiperRef.current;
-    if (swiperContainer) {
-      swiperContainer.addEventListener("wheel", handleWheel, { passive: false });
-    }
-  
-    return () => {
-      if (swiperContainer) {
-        swiperContainer.removeEventListener("wheel", handleWheel);
-      }
-    };
-  }, [swiperInstance, visibleCards, activities.length]);
+    swiperInstance.on("transitionStart", () => {
+      console.log("[Debug] Transition started");
+      document.body.style.overflow = "hidden";
+    });
 
-  useEffect(() => {
-    if (!swiperInstance) return;
+    swiperInstance.on("transitionEnd", () => {
+      console.log("[Debug] Transition ended");
+      const activeIndex = swiperInstance.activeIndex;
+      document.body.style.overflow = activeIndex === 2 ? "auto" : "hidden";
+    });
 
     swiperInstance.on("slideChange", () => {
       const activeIndex = swiperInstance.activeIndex;
+      console.log("[Debug] Slide changed to:", activeIndex);
+
+      slideRefs.current.forEach((slide, index) => {
+        if (slide) {
+          slide.style.overflowY = index === 2 && activeIndex === 2 ? "auto" : "hidden";
+        }
+      });
 
       if (activeIndex !== 2) {
         if (headerRef.current) {
@@ -239,12 +193,10 @@ const MainSection = () => {
           footerRef.current.style.display = "none";
           footerRef.current.classList.remove(styles.fadeInDown);
         }
-      }
-
-      if (activeIndex === 2) {
+      } else if (activeIndex === 2) {
         if (headerRef.current) {
           headerRef.current.style.display = "block";
-          headerRef.current.classList.add(styles.fadeInUp);
+          headerRef.current.classList.add(styles.fadeInUp); // 修正 className 為 classList
         }
         if (breadcrumbRef.current) {
           breadcrumbRef.current.style.display = "block";
@@ -252,7 +204,12 @@ const MainSection = () => {
         }
       }
 
-      if (activeIndex !== 0) setVisibleCards(0);
+      if (activeIndex === 0) {
+        setVisibleCards(activities.length > 0 ? 1 : 0);
+      } else {
+        setVisibleCards(0);
+      }
+
       if (activeIndex === 1) {
         setVisibleProducts(products.map(() => true));
       } else {
@@ -261,28 +218,32 @@ const MainSection = () => {
         setProductPositions(products.map(() => null));
       }
 
-      if (activeIndex === 2) {
-        const slide = document.querySelector(`.${styles.slide}:nth-child(3)`);
-        if (slide) {
-          slide.addEventListener(
-            "scroll",
-            () => {
-              const scrollTop = slide.scrollTop;
-              const clientHeight = slide.clientHeight;
-              const scrollHeight = slide.scrollHeight;
-              if (scrollTop + clientHeight >= scrollHeight - 10) {
-                if (footerRef.current) {
-                  footerRef.current.style.display = "block";
-                  footerRef.current.classList.add(styles.fadeInDown);
-                }
-              }
-            },
-            { once: true }
-          );
-        }
+      if (activeIndex === 2 && slideRefs.current[2]) {
+        slideRefs.current[2].addEventListener("scroll", () => {
+          const scrollTop = slideRefs.current[2].scrollTop;
+          const clientHeight = slideRefs.current[2].clientHeight;
+          const scrollHeight = slideRefs.current[2].scrollHeight;
+          if (scrollTop + clientHeight >= scrollHeight - 10) {
+            if (footerRef.current) {
+              footerRef.current.style.display = "block";
+              footerRef.current.classList.add(styles.fadeInDown);
+            }
+          }
+        }, { once: true });
       }
     });
-  }, [swiperInstance, products]);
+
+    const swiperContainer = swiperRef.current;
+    if (swiperContainer) {
+      swiperContainer.addEventListener("wheel", handleWheel, { passive: false });
+    }
+
+    return () => {
+      if (swiperContainer) {
+        swiperContainer.removeEventListener("wheel", handleWheel);
+      }
+    };
+  }, [swiperInstance, visibleCards, activities.length, products, scrollToSection]);
 
   const getImagePath = (item, category) => {
     const defaultImage = "/image/rent/no-img.png";
@@ -323,30 +284,22 @@ const MainSection = () => {
     <section className={styles.mainSection}>
       {swiperInstance?.activeIndex === 2 && (
         <>
-          <Header
-            ref={headerRef}
-            className={`${styles.header} ${styles.fadeInUp}`}
-          />
-          <Breadcrumb
-            ref={breadcrumbRef}
-            className={`${styles.breadcrumb} ${styles.fadeInUp}`}
-          />
+          <Header ref={headerRef} className={`${styles.header} ${styles.fadeInUp}`} />
+          <Breadcrumb ref={breadcrumbRef} className={`${styles.breadcrumb} ${styles.fadeInUp}`} />
         </>
       )}
 
       <Swiper
         ref={swiperRef}
-        direction="vertical" // 確保滑動方向正確
-        speed={1200} // 調整滑動速度
-        slidesPerView={1} // 確保每次只顯示一個 slide
+        direction="vertical"
+        speed={1200}
+        slidesPerView={1}
         parallax={true}
         pagination={{ clickable: true }}
         modules={[Parallax, Pagination]}
         className={styles.swiperContainer}
         style={{ height: "100vh" }}
         onSwiper={handleSwiperInit}
-        onReachBeginning={() => console.log("Reached beginning")} // 檢查邊界
-        onReachEnd={() => console.log("Reached end")} // 檢查邊界
       >
         <div
           slot="container-start"
@@ -355,30 +308,19 @@ const MainSection = () => {
           data-swiper-parallax="-50%"
         ></div>
 
-        <SwiperSlide className={styles.slide}>
+        <SwiperSlide ref={(el) => (slideRefs.current[0] = el)} className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
             <h2>必試潛水冒險，精彩不容錯過</h2>
             <div className={styles.bubbleContainer} ref={bubbleContainerRef}>
               {activities.map((activity, index) => {
-                const { activityName, location } = splitActivityName(
-                  activity.name
-                );
+                const { activityName, location } = splitActivityName(activity.name);
                 const position = activityPositions[index];
                 return (
-                  <Link
-                    href={`/activity/${activity.id}`}
-                    key={index}
-                    className={styles.link}
-                  >
+                  <Link href={`/activity/${activity.id}`} key={index} className={styles.link}>
                     <div
-                      className={`${styles.bubble} ${
-                        index < visibleCards ? styles.visible : ""
-                      }`}
+                      className={`${styles.bubble} ${index < visibleCards ? styles.visible : ""}`}
                       style={{
-                        backgroundImage: `url(${getImagePath(
-                          activity,
-                          "activity"
-                        )})`,
+                        backgroundImage: `url(${getImagePath(activity, "activity")})`,
                         animationDelay: `${index * 0.3}s`,
                         top: position ? `${position.top}px` : "0",
                         left: position ? `${position.left}px` : "0",
@@ -397,7 +339,7 @@ const MainSection = () => {
           </div>
         </SwiperSlide>
 
-        <SwiperSlide className={styles.slide}>
+        <SwiperSlide ref={(el) => (slideRefs.current[1] = el)} className={styles.slide}>
           <div className={styles.content} data-swiper-parallax="-200">
             <h2>推薦商品</h2>
             <div className={styles.bubbleContainer} ref={bubbleContainerRef}>
@@ -408,14 +350,9 @@ const MainSection = () => {
                   <div key={index} className={styles.productWrapper}>
                     {!rentProduct && (
                       <div
-                        className={`${styles.productBubble} ${
-                          visibleProducts[index] ? styles.visible : ""
-                        }`}
+                        className={`${styles.productBubble} ${visibleProducts[index] ? styles.visible : ""}`}
                         style={{
-                          backgroundImage: `url(${getImagePath(
-                            product,
-                            "product"
-                          )})`,
+                          backgroundImage: `url(${getImagePath(product, "product")})`,
                           animationDelay: `${index * 0.3}s`,
                           top: position ? `${position.top}px` : "0",
                           left: position ? `${position.left}px` : "0",
@@ -430,17 +367,11 @@ const MainSection = () => {
                       </div>
                     )}
                     {rentProduct && (
-                      <Link
-                        href={`/rent/${rentProduct.id}`}
-                        className={styles.link}
-                      >
+                      <Link href={`/rent/${rentProduct.id}`} className={styles.link}>
                         <div
                           className={`${styles.productBubble} ${styles.visible}`}
                           style={{
-                            backgroundImage: `url(${getImagePath(
-                              rentProduct,
-                              "rent"
-                            )})`,
+                            backgroundImage: `url(${getImagePath(rentProduct, "rent")})`,
                             animationDelay: "0s",
                             top: position ? `${position.top}px` : "0",
                             left: position ? `${position.left}px` : "0",
@@ -448,13 +379,9 @@ const MainSection = () => {
                         >
                           <div className={styles.bubbleOverlay}></div>
                           <div className={styles.bubbleContent}>
-                            <h3 className={styles.productName}>
-                              {rentProduct.name}
-                            </h3>
+                            <h3 className={styles.productName}>{rentProduct.name}</h3>
                             <p className={styles.productTag}>可租借</p>
-                            <p className={styles.productPrice}>
-                              {getRentPrice(rentProduct)}
-                            </p>
+                            <p className={styles.productPrice}>{getRentPrice(rentProduct)}</p>
                           </div>
                         </div>
                       </Link>
@@ -466,7 +393,7 @@ const MainSection = () => {
           </div>
         </SwiperSlide>
 
-        <SwiperSlide className={styles.slide}>
+        <SwiperSlide ref={(el) => (slideRefs.current[2] = el)} className={styles.slide}>
           <div className={styles.welcomeContent} data-swiper-parallax="-200">
             <h2>歡迎來到我們的商城</h2>
             <p className={styles.welcomeDescription}>
@@ -477,10 +404,7 @@ const MainSection = () => {
       </Swiper>
 
       {swiperInstance?.activeIndex === 2 && (
-        <Footer
-          ref={footerRef}
-          className={`${styles.footer} ${styles.fadeInDown}`}
-        />
+        <Footer ref={footerRef} className={`${styles.footer} ${styles.fadeInDown}`} />
       )}
     </section>
   );
