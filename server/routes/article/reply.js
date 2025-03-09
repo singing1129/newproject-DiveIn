@@ -1,69 +1,90 @@
 import express from "express";
-import { pool } from "../../config/mysql.js";
+import { db } from "../../config/articleDb.js";
 
 const router = express.Router();
 
-// 獲取特定文章的留言
-router.get("/:articleId", async (req, res) => {
-  const { articleId } = req.params;
+/**
+ * 取得文章的留言與回覆 (兩層)
+ * GET /api/article/:article_id/replies
+ */
+router.get("/:article_id/replies", async (req, res) => {
+  const { article_id } = req.params;
+
   try {
-    const [replies] = await pool.execute(
-      "SELECT r.*, u.name AS author_name, " +
-      "COUNT(ld.is_like = TRUE) as likes, COUNT(ld.is_like = FALSE) as dislikes " +
-      "FROM article_reply r " +
-      "LEFT JOIN users u ON r.users_id = u.id " +
-      "LEFT JOIN article_likes_dislikes ld ON r.id = ld.reply_id " +
-      "WHERE r.article_id = ? AND r.is_deleted = FALSE " +
-      "GROUP BY r.id",
-      [articleId]
+    const { results: replies } = await db.query(
+      `
+      SELECT ar.*, u.name,
+          (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 1) AS likes,
+          (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 0) AS dislikes
+       FROM article_reply ar
+       LEFT JOIN users u ON ar.user_id = u.id
+       WHERE ar.article_id = ?
+       ORDER BY ar.created_at ASC`,
+      [article_id]
     );
-    res.json(replies);
+
+    if (!replies || !Array.isArray(replies)) {
+      return res.status(500).json({ message: "獲取留言失敗，查詢結果無效" });
+    }
+
+    const replyMap = {};
+    const structuredReplies = [];
+
+    replies.forEach((reply) => {
+      reply.replies = [];
+      replyMap[reply.id] = reply;
+      if (reply.parent_id === null) {
+        structuredReplies.push(reply);
+      } else {
+        if (replyMap[reply.parent_id]) {
+          replyMap[reply.parent_id].replies.push(reply);
+        }
+      }
+    });
+
+    res.json(structuredReplies);
   } catch (error) {
-    console.error("❌ 獲取留言失敗：", error);
-    res.status(500).json({ status: "error", message: "獲取留言失敗", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "取得留言失敗" });
   }
 });
 
-// 新增留言或回覆
-router.post("/:articleId", async (req, res) => {
-  const { articleId } = req.params;
-  const { content, parentId } = req.body;
-  const usersId = req.user?.id; // 假設有認證中間件
+/**
+ * 新增留言或回覆
+ * POST /api/article/:article_id/replies
+ */
+router.post("/:article_id/replies", async (req, res) => {
+  const { article_id } = req.params;
+  const { user_id, content, parent_id } = req.body;
 
-  if (!usersId) return res.status(401).json({ status: "error", message: "未授權" });
+  if (!user_id || !content) {
+    return res.status(400).json({ message: "缺少必要參數" });
+  }
 
   try {
-    const level = parentId ? 2 : 1;
-    const replyNumber = parentId || 0;
+    // 確保 parent_id 是第一層留言（防止超過兩層）
+    if (parent_id) {
+      const { results: parent } = await db.query(
+        "SELECT parent_id FROM article_reply WHERE id = ?",
+        [parent_id]
+      );
+      if (!parent || parent.length === 0) {
+        return res.status(400).json({ message: "父留言不存在" });
+      }
+      if (parent[0].parent_id !== null) {
+        return res.status(400).json({ message: "只能回覆第一層留言" });
+      }
+    }
 
-    const [floorResult] = await pool.execute(
-      "SELECT COALESCE(MAX(floor_number), 0) + 1 as next_floor FROM article_reply WHERE article_id = ?",
-      [articleId]
+    const { results } = await db.query(
+      "INSERT INTO article_reply (article_id, user_id, content, parent_id) VALUES (?, ?, ?, ?)",
+      [article_id, user_id, content, parent_id || null]
     );
-    const floorNumber = floorResult[0].next_floor;
 
-    await pool.execute(
-      "INSERT INTO article_reply (article_id, users_id, content, floor_number, level, reply_number) " +
-      "VALUES (?, ?, ?, ?, ?, ?)",
-      [articleId, usersId, content, floorNumber, level, replyNumber]
-    );
-
-    await pool.execute("UPDATE article SET reply_count = reply_count + 1 WHERE id = ?", [articleId]);
-
-    const [updatedReplies] = await pool.execute(
-      "SELECT r.*, u.name AS author_name, " +
-      "COUNT(ld.is_like = TRUE) as likes, COUNT(ld.is_like = FALSE) as dislikes " +
-      "FROM article_reply r " +
-      "LEFT JOIN users u ON r.users_id = u.id " +
-      "LEFT JOIN article_likes_dislikes ld ON r.id = ld.reply_id " +
-      "WHERE r.article_id = ? AND r.is_deleted = FALSE " +
-      "GROUP BY r.id",
-      [articleId]
-    );
-    res.json(updatedReplies);
+    res.json({ message: "留言成功", reply_id: results.insertId });
   } catch (error) {
-    console.error("❌ 新增留言失敗：", error);
-    res.status(500).json({ status: "error", message: "新增留言失敗", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "留言失敗" });
   }
 });
 

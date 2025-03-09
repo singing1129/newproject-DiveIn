@@ -2,7 +2,7 @@ import express from "express";
 import { pool } from "../../config/mysql.js";
 import articleSidebarRouter from "./sidebar.js";
 import articleCreateRouter from "./create.js";
-import articleUpdateRouter from "./update.js"; 
+import articleUpdateRouter from "./update.js";
 import articleReplyRouter from "./reply.js";
 import articleLikeRouter from "./like.js"; // 文章 & 留言按讚
 
@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.use("/sidebar", articleSidebarRouter);
 router.use("/create", articleCreateRouter);
-router.use("/update", articleUpdateRouter); 
+router.use("/update", articleUpdateRouter);
 router.use("/reply", articleReplyRouter);
 router.use("/like", articleLikeRouter);
 
@@ -190,14 +190,14 @@ router.get("/:id", async (req, res) => {
     // 查詢文章留言
     const [replyRows] = await pool.execute(
       `
-      SELECT 
-        ar.*,
-        u.name AS author_name
-      FROM article_reply ar
-      LEFT JOIN users u ON ar.users_id = u.id
-      WHERE ar.article_id = ? AND ar.is_deleted = FALSE
-      ORDER BY ar.floor_number ASC, ar.reply_number ASC
-      `,
+  SELECT 
+    ar.*,
+    u.name AS author_name
+  FROM article_reply ar
+  LEFT JOIN users u ON ar.user_id = u.id
+  WHERE ar.article_id = ?
+  ORDER BY ar.created_at ASC
+  `,
       [articleId]
     );
 
@@ -377,13 +377,7 @@ router.delete("/:id", async (req, res) => {
       [id]
     );
 
-    // 4. 更新 article_reply 表中的 is_deleted 為 1
-    await connection.execute(
-      `UPDATE article_reply SET is_deleted = 1 WHERE article_id = ?`,
-      [id]
-    );
-
-    // 5. 刪除 article_tag_big 表中的資料
+    // 4. 刪除 article_tag_big 表中的資料
     await connection.execute(
       `DELETE FROM article_tag_big WHERE article_id = ?`,
       [id]
