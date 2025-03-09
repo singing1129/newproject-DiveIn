@@ -16,6 +16,8 @@ import categoriesRouter from "../routes/categories/index.js";
 import brandRouter from "../routes/brands/index.js";
 // jimmy
 import jimmyRouter from "../routes/jimmy/index.js";
+// 評價相關路由
+import reviewRouter from "../routes/reviews/index.js";
 // 活動相關路由
 import activityRouter from "../routes/activity/index.js";
 import activityDetailRouter from "../routes/activity/detail.js";
@@ -26,8 +28,8 @@ import groupDetailRouter from "../routes/group/detail.js";
 import groupCreate from "../routes/group/create.js";
 import groupJoin from "../routes/group/join.js";
 import "../cron.js"; //    排程自動檢查並更新揪團狀態
-import groupUpdate from "../routes/group/update.js"
-import createWebsocketRomm from "../routes/webSocket/index.js"
+import groupUpdate from "../routes/group/update.js";
+import createWebsocketRomm from "../routes/webSocket/index.js";
 // 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
@@ -145,6 +147,8 @@ apiRouter.use("/order", orderRouter);
 apiRouter.use("/passwordReset", passwordResetRouter);
 // jimmy
 apiRouter.use("/jimmy", jimmyRouter);
+// 評價相關路由
+apiRouter.use("/reviews", reviewRouter);
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);
