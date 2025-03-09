@@ -57,6 +57,7 @@ import memberRouter from "../routes/admin/index.js";
 import memberMyGroupRouter from "../routes/admin/mygroup.js";
 import memberUpdateRouter from "../routes/admin/updateForm.js";
 // import shipmentRouter from "../routes/ship/index.js"; // 運送相關路由
+import searchRouter from "../routes/search/index.js"; // 搜索相关路由
 import checkoutRouter from "../routes/checkout/index.js";
 //ecpay
 import ecpayRouter from "../routes/ecpay/index.js";
@@ -131,6 +132,8 @@ apiRouter.use("/bundle", bundleRouter);
 apiRouter.use("/favorites", favoritesRouter);
 // 購物車相關路由
 apiRouter.use("/cart", cartRouter);
+// 搜尋相關路由
+apiRouter.use("/search", searchRouter);
 // 分類相關路由
 apiRouter.use("/categories", categoriesRouter);
 // 品牌相關路由

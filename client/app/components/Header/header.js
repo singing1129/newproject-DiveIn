@@ -1,14 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaSearch, FaBars } from "react-icons/fa";
 import User from "./user";
 import { FiShoppingCart } from "react-icons/fi";
 import Link from "next/link";
 import HeaderPop from "./headerPop"; // 引入 HeaderPop 組件
+import Search from "./Search"; // 引入 Search 組件
 
 export default function Header() {
   const [showPop, setShowPop] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [showSearch, setShowSearch] = useState(false); // 控制搜索框显示
 
   const handleMouseEnter = (menu) => {
     setShowPop(true);
@@ -19,6 +21,38 @@ export default function Header() {
     setShowPop(false);
     setActiveMenu(null);
   };
+
+  // 切换搜索框显示状态
+  const toggleSearch = () => {
+    setShowSearch(!showSearch);
+  };
+
+  // 关闭搜索框
+  const closeSearch = () => {
+    setShowSearch(false);
+  };
+
+  // 添加全局快捷键监听
+  useEffect(() => {
+    function handleKeyDown(event) {
+      // 检测 Ctrl+K 或 Command+K
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+        event.preventDefault(); // 阻止默认行为
+        setShowSearch((prevState) => !prevState); // 切换搜索框显示状态
+      }
+
+      // 按ESC键关闭搜索
+      if (event.key === "Escape" && showSearch) {
+        setShowSearch(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showSearch]);
+
   return (
     <header className="sticky-top">
       <nav className="container" onMouseLeave={handleMouseLeave}>
@@ -88,6 +122,15 @@ export default function Header() {
                   論壇
                 </Link>
               </li>
+              <li className="px-3 py-2">
+                <button
+                  className="btn btn-link p-0 border-0"
+                  onClick={toggleSearch}
+                  aria-label="搜索"
+                >
+                  <FaSearch size={18} />
+                </button>
+              </li>
             </ul>
           </div>
           <HeaderPop show={showPop} activeMenu={activeMenu} />
@@ -109,6 +152,9 @@ export default function Header() {
           </div>
         </div>
 
+        {/* 搜索组件 */}
+        {showSearch && <Search onClose={closeSearch} />}
+
         {/* 手機板 navbar*/}
         <div className="w-100 d-flex d-sm-none justify-content-between align-items-center">
           <div>
@@ -123,9 +169,9 @@ export default function Header() {
             </button>
           </div>
           <div className="header-icon-container text-center">
-          <Link href="/">
-            <img src="/image/DiveIn-logo-dark-final.png" alt="Logo" />
-          </Link>
+            <Link href="/">
+              <img src="/image/DiveIn-logo-dark-final.png" alt="Logo" />
+            </Link>
           </div>
           <div className="mobile-cart fs-4">
             <Link href="/cart" className="a text-black">
@@ -337,7 +383,7 @@ export default function Header() {
                 </ul>
               </div>
             </li>
-{/*             
+            {/*             
             <li className="px-3 py-2">
               <a className="a text-reset" href="#">
                 活動
