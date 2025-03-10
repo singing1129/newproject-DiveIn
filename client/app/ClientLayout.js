@@ -2,7 +2,8 @@
 import { CartProvider } from "@/hooks/cartContext";
 import Header from "./components/Header/header";
 import Footer from "./components/Footer/footer";
-import { ToastContainer } from "react-toastify";
+// import { ToastContainer } from "react-toastify";
+import { Toaster } from "sonner";
 import "react-toastify/dist/ReactToastify.css";
 import { usePathname } from "next/navigation";
 // 聊天室用
@@ -19,7 +20,8 @@ export default function ClientLayout({ children }) {
       <CartProvider>
         {!isNoLayoutPage && <Header />}
         {children}
-        <ToastContainer />
+        {/* <ToastContainer /> */}
+        <Toaster position="top-right" offset={120} /> {/* 替換 ToastContainer */}
         {!isNoLayoutPage && <Footer />}
       </CartProvider>
     </WebSocketProvider>
