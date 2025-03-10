@@ -300,7 +300,7 @@ export default function RentProductDetail() {
           const deposit = Number(unitPrice * 0.3);
 
           // 計算總費用
-          const totalCost = (unitPrice + quantity) * daysDiff * quantity;
+          const totalCost = (unitPrice + deposit) * daysDiff * quantity;
 
           // 更新日期範圍文字的顯示
           dateRangeText.textContent = `租借日期： 自 ${displayStartDate} 至 ${displayEndDate}`;

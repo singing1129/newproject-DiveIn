@@ -49,6 +49,11 @@
   padding: 15px;
   /* background-color: var(--gray-200-color); */
 }
+.sidebar .sidebar-lists .sidebar-lists-select-title {
+  border-bottom: 1px solid var(--gray-50-color);
+  display: flex;
+  justify-content: space-between;
+}
 
 .sidebar .sidebar-lists .sidebar-lists-title.open {
   background: var(--gray-20-color);
@@ -79,11 +84,12 @@
   width: 100%;
   /* max-width: 300px; */
   position: relative; /* 新增這行，確保內部的 .search-box i 可以正確定位 */
+  border-radius: 0;
 }
 
 .search-box input {
   width: 100%;
-  padding: 10px 35px 10px 10px; /* 增加右側內距，避免圖示重疊輸入內容 */
+  padding: 10px 35px 10px 15px; /* 增加右側內距，避免圖示重疊輸入內容 */
   border: 1px solid #ccc;
   font-size: 14px;
   outline: none;
@@ -102,6 +108,7 @@
   color: #aaa;
   cursor: pointer;
 }
+
 
 /* 隱藏內建的清除按鈕 */
 input[type="search"]::-webkit-search-cancel-button {
@@ -184,15 +191,24 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .sidebar .sidebar-selectBtn {
-  background-color: var(--white);
+  /* background-color: var(--white); */
+  background: var(--gray-500-color);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* transition: all 0.3s ease;
   border: none;
   border-radius: 4px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease; */
 }
-.sidebar .sidebar-selectBtn:hover {
+/* .sidebar .sidebar-selectBtn:hover {
   background-color: var(--gray-50-color);
   box-shadow: inset 0 0 0 1px var(--gray-50-color);
-}
+  transform: scale(1.1);
+} */
 
 .sidebar .sidebar-selectBtn.active {
   background-color: var(--gray-100-color);
@@ -203,7 +219,9 @@ input[type="search"]::-webkit-search-cancel-button {
   font-size: 14px;
 }
 
-.sidebar .product-filter .product-filter-price,
+.sidebar .product-filter .product-filter-price{
+  padding: 15px 15px;
+}
 .sidebar .product-filter .product-filter-brand,
 .sidebar .product-filter .product-filter-color,
 .sidebar .product-filter .product-filter-wetsuit {
@@ -714,6 +732,10 @@ input[type="search"]::-webkit-search-cancel-button {
   color: #333;
 }
 
+
+.select-order{
+  padding: 15px 0;
+}
 .main .main-select .show-per-page-btn,
 .main .main-select .select-order-btn {
   border: 0.5px solid var(--gray-200-color);
@@ -885,7 +907,8 @@ input[type="search"]::-webkit-search-cancel-button {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transform: scale(1); /* 默認狀態，確保取消以後不會維持scale(1.1)的放大狀態 */
+  transition: transform 0.2s ease, background-color 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -907,7 +930,7 @@ input[type="search"]::-webkit-search-cancel-button {
 /* 已收藏狀態 */
 .hover-action-btn.favorited:hover {
   background: var(--primary-color);
-  transform: scale(1);
+  transform: scale(1.1);
 }
 
 .hover-action-btn.favorited {
