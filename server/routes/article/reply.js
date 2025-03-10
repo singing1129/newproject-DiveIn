@@ -1,87 +1,90 @@
 import express from "express";
-import { pool } from "../../config/mysql.js";
+import { db } from "../../config/articleDb.js";
 
 const router = express.Router();
 
-// 获取文章留言
-router.get("/", async (req, res) => {
-  const { articleId } = req.params;
+/**
+ * 取得文章的留言與回覆 (兩層)
+ * GET /api/article/:article_id/replies
+ */
+router.get("/:article_id/replies", async (req, res) => {
+  const { article_id } = req.params;
 
   try {
-    // 查询留言
-    const [replies] = await pool.execute(`
-      SELECT 
-        r.id, r.content, r.floor_number, r.reply_number, r.level, r.created_at, r.member_id,
-        m.username AS member_name
-      FROM article_reply r
-      JOIN member m ON r.member_id = m.id
-      WHERE r.article_id = ? AND r.is_deleted = FALSE
-      ORDER BY r.created_at DESC
-    `, [articleId]);
+    const { results: replies } = await db.query(
+      `
+      SELECT ar.*, u.name,
+          (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 1) AS likes,
+          (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 0) AS dislikes
+       FROM article_reply ar
+       LEFT JOIN users u ON ar.user_id = u.id
+       WHERE ar.article_id = ?
+       ORDER BY ar.created_at ASC`,
+      [article_id]
+    );
 
-    res.json({
-      status: "success",
-      replies
+    if (!replies || !Array.isArray(replies)) {
+      return res.status(500).json({ message: "獲取留言失敗，查詢結果無效" });
+    }
+
+    const replyMap = {};
+    const structuredReplies = [];
+
+    replies.forEach((reply) => {
+      reply.replies = [];
+      replyMap[reply.id] = reply;
+      if (reply.parent_id === null) {
+        structuredReplies.push(reply);
+      } else {
+        if (replyMap[reply.parent_id]) {
+          replyMap[reply.parent_id].replies.push(reply);
+        }
+      }
     });
+
+    res.json(structuredReplies);
   } catch (error) {
-    console.error("❌ 获取留言失败：", error);
-    res.status(500).json({
-      status: "error",
-      message: "获取留言失败",
-      error: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ message: "取得留言失敗" });
   }
 });
 
-// 新增文章留言
-router.post("/:articleId", async (req, res) => {
-  const { articleId } = req.params;
-  const { content, memberId } = req.body;
+/**
+ * 新增留言或回覆
+ * POST /api/article/:article_id/replies
+ */
+router.post("/:article_id/replies", async (req, res) => {
+  const { article_id } = req.params;
+  const { user_id, content, parent_id } = req.body;
 
-  try {
-    // 新增留言
-    const [result] = await pool.execute(`
-      INSERT INTO article_reply (article_id, content, member_id, floor_number, level, created_at)
-      VALUES (?, ?, ?, 1, 1, NOW())
-    `, [articleId, content, memberId]);
-
-    res.json({
-      status: "success",
-      replyId: result.insertId
-    });
-  } catch (error) {
-    console.error("❌ 新增留言失败：", error);
-    res.status(500).json({
-      status: "error",
-      message: "新增留言失败",
-      error: error.message,
-    });
+  if (!user_id || !content) {
+    return res.status(400).json({ message: "缺少必要參數" });
   }
-});
-
-// 回复留言
-router.post("/:articleId/:replyId", async (req, res) => {
-  const { articleId, replyId } = req.params;
-  const { content, memberId } = req.body;
 
   try {
-    // 回复留言
-    const [result] = await pool.execute(`
-      INSERT INTO article_reply (article_id, content, member_id, reply_number, level, created_at)
-      VALUES (?, ?, ?, ?, 2, NOW())
-    `, [articleId, content, memberId, replyId]);
+    // 確保 parent_id 是第一層留言（防止超過兩層）
+    if (parent_id) {
+      const { results: parent } = await db.query(
+        "SELECT parent_id FROM article_reply WHERE id = ?",
+        [parent_id]
+      );
+      if (!parent || parent.length === 0) {
+        return res.status(400).json({ message: "父留言不存在" });
+      }
+      if (parent[0].parent_id !== null) {
+        return res.status(400).json({ message: "只能回覆第一層留言" });
+      }
+    }
 
-    res.json({
-      status: "success",
-      replyId: result.insertId
-    });
+    const { results } = await db.query(
+      "INSERT INTO article_reply (article_id, user_id, content, parent_id) VALUES (?, ?, ?, ?)",
+      [article_id, user_id, content, parent_id || null]
+    );
+
+    res.json({ message: "留言成功", reply_id: results.insertId });
   } catch (error) {
-    console.error("❌ 回复留言失败：", error);
-    res.status(500).json({
-      status: "error",
-      message: "回复留言失败",
-      error: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ message: "留言失敗" });
   }
 });
 

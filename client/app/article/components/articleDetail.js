@@ -1,16 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
-import DOMPurify from "dompurify"; // 用於清理 HTML 內容
+import DOMPurify from "dompurify";
+import { useAuth } from "../../hooks/useAuth";
 import "./article.css";
 
-// ArticleContent 組件：用於顯示 CKEditor 的 HTML 內容
+// ArticleContent 組件
 const ArticleContent = ({ article }) => {
   const [sanitizedContent, setSanitizedContent] = useState("");
 
-  // 當 article.content 變化時，清理 HTML 內容
   useEffect(() => {
     if (article.content) {
       const cleanedContent = DOMPurify.sanitize(article.content);
@@ -25,47 +25,43 @@ const ArticleContent = ({ article }) => {
   );
 };
 
-// ArticleDetail 組件：用於顯示文章詳情
+// ArticleDetail 組件
 export default function ArticleDetail() {
-  const { id } = useParams(); // 從 URL 中獲取文章 ID
-  const [article, setArticle] = useState(null); // 文章數據
-  const [loading, setLoading] = useState(true); // 加載狀態
-  const [error, setError] = useState(null); // 錯誤狀態
-  const [relatedArticles, setRelatedArticles] = useState([]); // 相關文章
+  const { id } = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const [article, setArticle] = useState(null);
+  const [replies, setReplies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [relatedArticles, setRelatedArticles] = useState([]);
+  const [newReply, setNewReply] = useState(""); // 文章留言輸入框
+  const [replyInputs, setReplyInputs] = useState({}); // 每個回覆的輸入框狀態
+  const [likedReplies, setLikedReplies] = useState({});
 
   const backendURL = "http://localhost:3005";
-  const defaultImage = `${backendURL}/uploads/article/no_is_main.png`; // 定義預設圖片
-  const [imageUrl, setImageUrl] = useState(defaultImage); // 圖片 URL 狀態
+  const defaultImage = `${backendURL}/uploads/article/no_is_main.png`;
+  const [imageUrl, setImageUrl] = useState(defaultImage);
 
-  // 設置main-photo圖片 URL
-  useEffect(() => {
-    if (article && article.img_url) {
-      const fullImageUrl = article.img_url.startsWith("http")
-        ? article.img_url
-        : `${backendURL}${article.img_url || defaultImage}`;
-      setImageUrl(fullImageUrl);
-    }
-  }, [article]);
-
-  // 獲取相關文章數據
+  // 獲取文章詳情和相關文章
   useEffect(() => {
     const fetchArticle = async () => {
       try {
         const res = await axios.get(`${backendURL}/api/article/${id}`);
         const data = res.data.data;
 
-        // 將 tags 字串轉為陣列
-        const formattedRelatedArticles = data.relatedArticles.map(
-          (article) => ({
-            ...article,
-            tags: article.tags
-              ? article.tags.split(",").map((tag) => tag.trim())
-              : [],
-          })
-        );
+        const formattedRelatedArticles = data.relatedArticles.map((article) => ({
+          ...article,
+          tags: article.tags ? article.tags.split(",").map((tag) => tag.trim()) : [],
+        }));
 
         setArticle(data);
-        setRelatedArticles(formattedRelatedArticles); // 更新相關文章
+        setRelatedArticles(formattedRelatedArticles);
+        setImageUrl(
+          data.img_url?.startsWith("http")
+            ? data.img_url
+            : `${backendURL}${data.img_url || defaultImage}`
+        );
       } catch (err) {
         setError(err.message);
       } finally {
@@ -76,95 +72,274 @@ export default function ArticleDetail() {
     fetchArticle();
   }, [id]);
 
-  // 渲染回覆
-  const renderReplies = () => {
-    if (!article.replies || article.replies.length === 0) {
-      return <div>目前沒有留言</div>;
+  // 獲取留言並初始化用戶點讚/倒讚狀態
+  useEffect(() => {
+    const fetchReplies = async () => {
+      try {
+        const res = await axios.get(`${backendURL}/api/article/${id}/replies`);
+        setReplies(res.data);
+
+        if (user && user.id) {
+          const likedStatus = {};
+          const fetchUserLikes = res.data.map(async (reply) => {
+            const response = await axios.get(
+              `${backendURL}/api/article/reply/${reply.id}/user-like`,
+              { params: { user_id: user.id } }
+            );
+            if (response.data.success) {
+              if (response.data.hasLiked) {
+                likedStatus[reply.id] = true;
+              } else if (response.data.hasDisliked) {
+                likedStatus[reply.id] = false;
+              }
+            }
+            if (reply.replies && reply.replies.length > 0) {
+              for (const subReply of reply.replies) {
+                const subResponse = await axios.get(
+                  `${backendURL}/api/article/reply/${subReply.id}/user-like`,
+                  { params: { user_id: user.id } }
+                );
+                if (subResponse.data.success) {
+                  if (subResponse.data.hasLiked) {
+                    likedStatus[subReply.id] = true;
+                  } else if (subResponse.data.hasDisliked) {
+                    likedStatus[subReply.id] = false;
+                  }
+                }
+              }
+            }
+          });
+          await Promise.all(fetchUserLikes);
+          setLikedReplies(likedStatus);
+        }
+      } catch (err) {
+        console.error("Failed to fetch replies or user likes", err);
+      }
+    };
+
+    fetchReplies();
+  }, [id, user]);
+
+  // 處理按讚/倒讚
+  const handleLike = async (replyId, isLike) => {
+    if (!user || !user.id) {
+      const choice = window.confirm(
+        "您尚未登入！\n[確定] 前往登入\n[取消] 返回當前頁面"
+      );
+      if (choice) {
+        router.push("/admin/login");
+      }
+      return;
     }
 
-    return article.replies.map((reply) => (
-      <div key={reply.id}>
-        {/* 層級1回覆 */}
-        {Number(reply.level) === 1 && (
-          <div className="reply1">
-            <img
-              src="../img/article/reply2.jpg"
-              className="reply-avatar2"
-              alt=""
-            />
-            <div className="reply-details1">
-              <div className="reply-header1">
-                <div>
-                  <span className="reply-author1">{reply.author_name}</span>
-                  {reply.level === 1 && (
-                    <span className="popular-reply1">熱門留言</span>
-                  )}
-                </div>
-                <div className="reply-publish-time1">{reply.created_at}</div>
-              </div>
-              <div className="reply-content1">{reply.content}</div>
-              <div className="others-reply-area1">
-                <div className="good1">
-                  <i className="fa-regular fa-thumbs-up"></i>{" "}
-                  {reply.likes_count}
-                </div>
-                <div className="bad1">
-                  <i className="fa-regular fa-thumbs-down"></i>{" "}
-                  {reply.dislikes_count}
-                </div>
-                <div className="others-reply1">回覆</div>
-              </div>
-            </div>
-          </div>
-        )}
+    try {
+      const postResponse = await axios.post(
+        `${backendURL}/api/article/reply/${replyId}/like`,
+        {
+          user_id: user.id,
+          is_like: isLike,
+        }
+      );
 
-        {/* 層級2回覆 */}
-        {Number(reply.level) === 2 && (
-          <div className="reply2">
+      if (postResponse.data.success) {
+        const getResponse = await axios.get(
+          `${backendURL}/api/article/reply/${replyId}/likes`
+        );
+
+        if (getResponse.data.success) {
+          setReplies((prevReplies) =>
+            prevReplies.map((reply) =>
+              reply.id === replyId
+                ? {
+                    ...reply,
+                    likes: getResponse.data.likes,
+                    dislikes: getResponse.data.dislikes,
+                  }
+                : {
+                    ...reply,
+                    replies: reply.replies.map((subReply) =>
+                      subReply.id === replyId
+                        ? {
+                            ...subReply,
+                            likes: getResponse.data.likes,
+                            dislikes: getResponse.data.dislikes,
+                          }
+                        : subReply
+                    ),
+                  }
+            )
+          );
+
+          setLikedReplies((prev) => {
+            const currentState = prev[replyId];
+            if (currentState === isLike) {
+              const { [replyId]: _, ...rest } = prev;
+              return rest;
+            } else {
+              return { ...prev, [replyId]: isLike };
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to like/dislike reply", err);
+      alert("操作失敗，請稍後再試！");
+    }
+  };
+
+  // 處理文章留言提交（parent_id = null）
+  const handleArticleReplySubmit = async () => {
+    if (!newReply.trim()) return;
+
+    try {
+      const res = await axios.post(`${backendURL}/api/article/${id}/replies`, {
+        article_id: id,
+        user_id: user?.id || 1,
+        content: newReply,
+        parent_id: null,
+      });
+
+      const newReplyData = {
+        id: res.data.reply_id,
+        article_id: id,
+        user_id: user?.id || 1,
+        content: newReply,
+        parent_id: null,
+        created_at: new Date().toISOString(),
+        name: user?.name || "匿名",
+        likes: 0,
+        dislikes: 0,
+        replies: [],
+      };
+
+      setReplies((prevReplies) => [...prevReplies, newReplyData]);
+      setNewReply("");
+    } catch (err) {
+      console.error("Failed to post article reply", err);
+    }
+  };
+
+  // 處理回覆輸入框顯示
+  const handleShowReplyInput = (replyId) => {
+    setReplyInputs((prev) => ({
+      ...prev,
+      [replyId]: prev[replyId] ? "" : "", // 切換顯示時清空輸入框
+    }));
+  };
+
+  // 處理回覆提交
+  const handleReplySubmit = async (parentId) => {
+    const content = replyInputs[parentId];
+    if (!content || !content.trim()) return;
+
+    try {
+      const res = await axios.post(`${backendURL}/api/article/${id}/replies`, {
+        article_id: id,
+        user_id: user?.id || 1,
+        content,
+        parent_id: parentId,
+      });
+
+      const newReplyData = {
+        id: res.data.reply_id,
+        article_id: id,
+        user_id: user?.id || 1,
+        content,
+        parent_id: parentId,
+        created_at: new Date().toISOString(),
+        name: user?.name || "匿名",
+        likes: 0,
+        dislikes: 0,
+      };
+
+      setReplies((prevReplies) =>
+        prevReplies.map((reply) =>
+          reply.id === parentId
+            ? { ...reply, replies: [...reply.replies, newReplyData] }
+            : reply
+        )
+      );
+      setReplyInputs((prev) => ({ ...prev, [parentId]: "" })); // 清空輸入框
+    } catch (err) {
+      console.error("Failed to post reply", err);
+    }
+  };
+
+  // 渲染留言
+  const renderReplies = (replies, level = 1) => {
+    return replies.map((reply) => (
+      <div key={reply.id} className={`reply-container reply-level-${level}`}>
+        <div className="reply-details">
+          <div className="reply-area">
             <img
               src="../img/article/reply2.jpg"
-              className="reply-avatar2"
-              alt=""
+              className="reply-avatar"
+              alt="avatar"
             />
-            <div className="reply-details2">
-              <div className="reply-header2">
-                <div>
-                  <span className="reply-author2">{reply.author_name}</span>
-                </div>
-                <div className="reply-publish-time2">{reply.created_at}</div>
+            <div className="reply-text">
+              <div className="reply-header">
+                <span className="reply-author">{reply.name || "匿名"}</span>
+                <span className="reply-publish-time">
+                  {new Date(reply.created_at).toLocaleString()}
+                </span>
               </div>
-              <div className="reply-content2">{reply.content}</div>
-              <div className="others-reply-area2">
-                <div className="good2">
-                  <i className="fa-regular fa-thumbs-up"></i>{" "}
-                  {reply.likes_count}
-                </div>
-                <div className="bad2">
-                  <i className="fa-regular fa-thumbs-down"></i>{" "}
-                  {reply.dislikes_count}
-                </div>
-                <div className="others-reply2">回覆</div>
-              </div>
+              <div className="reply-content">{reply.content}</div>
             </div>
           </div>
+          <div className="others-reply-area">
+            <span
+              className={`good ${likedReplies[reply.id] === true ? "liked" : ""}`}
+              onClick={() => handleLike(reply.id, true)}
+            >
+              <i className="fa-regular fa-thumbs-up"></i> {reply.likes || 0}
+            </span>
+            <span
+              className={`bad ${likedReplies[reply.id] === false ? "disliked" : ""}`}
+              onClick={() => handleLike(reply.id, false)}
+            >
+              <i className="fa-regular fa-thumbs-down"></i> {reply.dislikes || 0}
+            </span>
+            {level === 1 && ( // 僅第一層顯示回覆按鈕
+              <span
+                className="others-reply"
+                onClick={() => handleShowReplyInput(reply.id)}
+              >
+                回覆
+              </span>
+            )}
+          </div>
+          {replyInputs[reply.id] !== undefined && (
+            <div className="reply-input-area">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="輸入回覆..."
+                value={replyInputs[reply.id] || ""}
+                onChange={(e) =>
+                  setReplyInputs((prev) => ({
+                    ...prev,
+                    [reply.id]: e.target.value,
+                  }))
+                }
+              />
+              <button onClick={() => handleReplySubmit(reply.id)}>送出</button>
+            </div>
+          )}
+        </div>
+        {reply.replies?.length > 0 && (
+          <div className="reply-children">{renderReplies(reply.replies, 2)}</div>
         )}
       </div>
     ));
   };
 
-  // 加載中顯示 Loading
   if (loading) return <div>Loading...</div>;
-
-  // 錯誤時顯示錯誤訊息
   if (error) return <div>Error: {error}</div>;
-
-  // 如果沒有數據，顯示提示
   if (!article) return <div>No article found</div>;
 
   return (
-    <div className="article col-9">
+    <div className="article">
       <div className="articleDetail">
-        {/* 文章標題 */}
         <div className="title">
           <div className="text-area">{article.title}</div>
           <div className="author-area">
@@ -176,8 +351,6 @@ export default function ArticleDetail() {
             {article.publish_at}
           </div>
         </div>
-
-        {/* 文章主圖 */}
         <div className="main-photo">
           <Image
             src={imageUrl}
@@ -185,18 +358,12 @@ export default function ArticleDetail() {
             fill
             style={{ objectFit: "cover" }}
             sizes="(max-width: 768px) 100vw, 50vw"
-            onError={() => setImageUrl(defaultImage)} // 若圖片加載失敗則使用預設圖片
+            onError={() => setImageUrl(defaultImage)}
           />
         </div>
-
-        {/* 文章內容 */}
-        {article && (
-          <div className="article-content-area">
-            <ArticleContent article={article} />
-          </div>
-        )}
-
-        {/* 文章標籤 */}
+        <div className="article-content-area">
+          <ArticleContent article={article} />
+        </div>
         <div className="tag-area">
           {Array.isArray(article.tags) ? (
             article.tags.map((tag, index) => (
@@ -208,43 +375,31 @@ export default function ArticleDetail() {
             <span>No tags available</span>
           )}
         </div>
-
-        {/* 留言區 */}
-        <div className="replyArea">
-          <div className="replyFilter">
-            <div className="totalReply">共10筆留言</div>
-            <div className="timeSort">
-              新舊排序<i className="fa-solid fa-arrows-up-down"></i>
-            </div>
+        <div className="replies-section">
+          <h3>留言</h3>
+          {replies.length > 0 ? renderReplies(replies) : <p>尚無留言</p>}
+          <div className="more-reply">
+            <img
+              src="../img/article/reply3.jpg"
+              className="reply-avatar"
+              alt=""
+            />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="對文章留言..."
+              value={newReply}
+              onChange={(e) => setNewReply(e.target.value)}
+            />
+            <button onClick={handleArticleReplySubmit}>提交</button>
           </div>
-          <div className="articleDetail">
-            <div className="replyArea">{renderReplies()}</div>
-          </div>
         </div>
-
-        {/* 更多留言輸入框 */}
-        <div className="more-reply">
-          <img
-            src="../img/article/reply3.jpg"
-            className="reply-avatar1"
-            alt=""
-          />
-          <input type="search" className="form-control" placeholder="留言..." />
-        </div>
-        <div className="button-container">
-          <button className="more-btn">更多</button>
-        </div>
-
-        {/* 相關文章 */}
         <div className="related-article-area-title">相關文章</div>
         <div className="related-article-area row row-cols-1 row-cols-md-2">
           {relatedArticles.map((relatedArticle, index) => {
             const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
               ? relatedArticle.img_url
               : `${backendURL}${relatedArticle.img_url || defaultImage}`;
-            {
-              /* relatedArticles content 去掉標籤樣式 */
-            }
             const sanitizedContent = DOMPurify.sanitize(relatedArticle.content);
 
             return (
@@ -278,17 +433,6 @@ export default function ArticleDetail() {
                     ) : (
                       <span>No tags available</span>
                     )}
-                  </div>
-                  <div className="others-reply-area">
-                    <div className="good1">
-                      <i className="fa-regular fa-thumbs-up"></i>
-                      {relatedArticle.likes_count || 0}
-                    </div>
-                    <div className="comment">
-                      <i className="fa-regular fa-thumbs-down"></i>
-                      {relatedArticle.dislikes_count || 0}
-                    </div>
-                    <div className="others-reply">回覆</div>
                   </div>
                 </div>
               </div>
