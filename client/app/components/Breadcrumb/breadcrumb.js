@@ -12,6 +12,13 @@ export default function Breadcrumb() {
   const lastSegment = pathSegments[pathSegments.length - 1];
   const isRentDetail = pathname.includes("/rent/"); // 檢查是否為商品詳情頁
   const [productName, setProductName] = useState(null); // 用來存儲商品名稱
+
+  // 文章用：檢查是否為文章詳情頁，並存儲文章標題
+  const isArticleDetail =
+    pathname.startsWith("/article/") &&
+    !["list", "create", "update"].includes(lastSegment); // 判斷是否為文章詳情頁
+  const [articleTitle, setArticleTitle] = useState(null); // 用來存儲文章標題
+
   // 麵包屑名稱對應表
   const breadcrumbNames = {
     activity: {
@@ -35,6 +42,7 @@ export default function Breadcrumb() {
       list: "文章列表",
       detail: "文章詳情",
       create: "建立文章",
+      update: "編輯文章",
     },
     admin: {
       "": "會員中心",
@@ -49,9 +57,9 @@ export default function Breadcrumb() {
       account: "個人資料",
       login: "用戶登入",
       coupon: "我的優惠券",
-      "coupon-claim":"領取專屬優惠",
-      "coupon-history":"歷史紀錄"
-    }
+      "coupon-claim": "領取專屬優惠",
+      "coupon-history": "歷史紀錄",
+    },
   };
 
   // 租借用：在商品詳情頁獲取商品名稱
@@ -86,6 +94,34 @@ export default function Breadcrumb() {
     }
   }, [isRentDetail, lastSegment]);
 
+  // 文章用：在文章詳情頁獲取文章標題
+  useEffect(() => {
+    if (isArticleDetail) {
+      const fetchArticleTitle = async () => {
+        try {
+          const API_BASE_URL =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005";
+          const response = await fetch(
+            `${API_BASE_URL}/api/article/${encodeURIComponent(lastSegment)}`
+          );
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          const data = await response.json();
+          if (data.status === "success" && data.data) {
+            setArticleTitle(data.data.title || "暫無標題"); // 設定文章標題
+          } else {
+            setArticleTitle("暫無標題");
+          }
+        } catch (error) {
+          console.error("Failed to fetch article title:", error);
+          setArticleTitle("暫無標題");
+        }
+      };
+      fetchArticleTitle();
+    }
+  }, [isArticleDetail, lastSegment]);
+
   return (
     <div className="bread container d-none d-sm-block">
       <nav aria-label="breadcrumb">
@@ -110,6 +146,15 @@ export default function Breadcrumb() {
               return (
                 <li key={index} className="breadcrumb-item active">
                   <span>{productName || `${lastSegment}`}</span>{" "}
+                </li>
+              );
+            }
+
+            // 處理文章詳情頁面的標題顯示
+            if (isArticleDetail && isLast) {
+              return (
+                <li key={index} className="breadcrumb-item active">
+                  <span>{articleTitle || `${lastSegment}`}</span>
                 </li>
               );
             }
