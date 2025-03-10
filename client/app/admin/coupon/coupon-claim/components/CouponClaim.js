@@ -26,6 +26,8 @@ export default function CouponClaim() {
   });
   // 儲存所有優惠券的檔期活動
   const [campaignOptions, setCampaignOptions] = useState([]);
+  // 儲存每頁顯示的數量
+  const [displayCount, setDisplayCount] = useState("全部顯示");
   // 載入狀態與錯誤訊息
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,17 +39,21 @@ export default function CouponClaim() {
     claim_status: "全部",
   });
 
+  // 儲存排序條件
+  const [sort, setSort] = useState("latest");
+
   // 根據分頁與篩選條件呼叫後端 API，取得優惠券資料
-  const fetchCoupons = async (page = 1, filters = {}) => {
+  const fetchCoupons = async (page = 1, filters = {}, sort = "latest", limit = "全部顯示") => {
     console.log("fetchCoupons");
     setLoading(true);
     setError(null);
     try {
-      // 組合 query 參數，包含分頁與篩選條件
+      // 組合 query 參數，包含分頁、篩選條件和排序條件
       const params = {
         page,
-        limit: 10,
+        limit: limit === "全部顯示" ? Infinity : limit,
         ...filters,
+        sort,
         userId: user.id,
       };
       // 呼叫後端 /api/coupon/claim API
@@ -80,6 +86,9 @@ export default function CouponClaim() {
   const fetchCampaignOptions = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/campaignOptions`, {
+        params: {
+          userId: user.id, // 傳入 user ID
+        },
         headers: {
           Authorization: `Bearer ${token}`, // 在請求標頭中加入認證 token
         },
@@ -96,18 +105,28 @@ export default function CouponClaim() {
   };
 
   useEffect(() => {
-    fetchCoupons(1, filters);
+    fetchCoupons(1, filters, sort, displayCount);
     fetchCampaignOptions();
-  }, [filters]);
+  }, [filters, sort, displayCount]);
 
   // 當篩選條件改變時，更新 filters 狀態並重新呼叫 API（從第一頁開始）
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
   };
 
+  // 當排序條件改變時，更新 sort 狀態並重新呼叫 API（從第一頁開始）
+  const handleSortChange = (newSort) => {
+    setSort(newSort);
+  };
+
   // 當分頁切換時呼叫此回呼
   const handlePageChange = (newPage) => {
-    fetchCoupons(newPage, filters);
+    fetchCoupons(newPage, filters, sort, displayCount);
+  };
+
+  // 當每頁顯示數量改變時呼叫此回呼
+  const handleDisplayChange = (newDisplayCount) => {
+    setDisplayCount(newDisplayCount);
   };
 
   // 當使用者在搜尋框輸入或點擊搜尋時，根據搜尋字串呼叫 /search API
@@ -157,7 +176,7 @@ export default function CouponClaim() {
         throw new Error(data.error || "伺服器錯誤");
       }
       // 領取成功後重新取得最新優惠券資料
-      fetchCoupons(1, filters);
+      fetchCoupons(1, filters, sort, displayCount);
       return data;
     } catch (error) {
       console.error("領取失敗:", error.message);
@@ -183,19 +202,26 @@ export default function CouponClaim() {
           onFilterChange={handleFilterChange}
           campaignOptions={campaignOptions}
         />
-        <CouponSortPagination />
+        <CouponSortPagination 
+          onSortChange={handleSortChange} 
+          onDisplayChange={handleDisplayChange} // 傳入 handleDisplayChange
+        />
         {/* 優惠券列表 */}
-        <CouponClaimList
+        <div className="coupon-list-container">
+        <CouponClaimList 
           coupons={coupons}
           loading={loading}
           onClaim={handleClaim}
         />
+        </div>
         {/* 分頁元件 */}
-        <Pagination
-          currentPage={pagination.page}
-          totalPages={pagination.totalPages}
-          onPageChange={handlePageChange}
-        />
+        {displayCount !== "全部顯示" && (
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
     </div>
   );

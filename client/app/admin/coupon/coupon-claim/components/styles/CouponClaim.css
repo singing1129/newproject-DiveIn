@@ -86,3 +86,7 @@
   color: #000; /* 讓省略號的顏色與其他按鈕一致 */
   cursor: default;
 }
+
+.coupon-list-container{
+  min-height: 50vh;
+}

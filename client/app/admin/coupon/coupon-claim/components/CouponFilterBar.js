@@ -64,7 +64,7 @@ const CouponFilterBar = ({
   const handleScrollRight = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: 300, behavior: "smooth" });
-    }
+    } 
   };
 
   const handleScrollLeft = () => {

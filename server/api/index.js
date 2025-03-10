@@ -46,8 +46,8 @@ import rentIdColorRouter from "../routes/rent/idcolors.js";
 import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態文章頁
 import articleCreateRouter from "../routes/article/create.js"; // 取得新建文章所需的分類/標籤 & 新增文章
 import articleUpdateRouter from "../routes/article/update.js"; // 文章修改
-// import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
-// import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
+import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
+import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
 // 優惠券相關路由
 import myCouponRouter from "../routes/coupon/myCoupon.js";
 import couponClaimRouter from "../routes/coupon/couponClaim.js";
@@ -185,8 +185,8 @@ apiRouter.use("/rent", rentIdColorRouter); // 負責 `/api/rent/:id/colors`
 apiRouter.use("/article", articleRouter); // `/api/article` 文章列表 & 文章內容
 apiRouter.use("/article", articleCreateRouter); // `/api/article/create` 新增文章、取得新建文章所需數據
 apiRouter.use("/article", articleUpdateRouter); // `/api/article/update`
-// apiRouter.use("/article", articleReplyRouter); // `/api/article/reply` 留言 & 回覆
-// apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
+apiRouter.use("/article", articleReplyRouter); // `/api/article/reply` 留言 & 回覆
+apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
 
 // 優惠券相關路由
 apiRouter.use("/coupon", myCouponRouter); // 負責 `/api/coupon/myCoupon`

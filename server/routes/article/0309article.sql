@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-03-02 15:03:48
+-- 產生時間： 2025-03-10 07:35:29
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.0.30
 
@@ -47,10 +47,10 @@ CREATE TABLE `article` (
 --
 
 INSERT INTO `article` (`id`, `title`, `content`, `created_at`, `updated_at`, `status`, `publish_at`, `article_category_small_id`, `view_count`, `users_id`, `reply_count`, `is_deleted`) VALUES
-(1, '第一次潛水的奇妙體驗', '第一次潛水是一種難以形容的體驗，當你慢慢沉入水中，周圍的世界變得安靜而神秘。水下的光線透過水面灑下來，形成一道道美麗的光束。魚群在你身邊游來游去，彷彿進入了另一個世界。這種感覺讓人上癮，也讓我決定要繼續學習潛水。', '2025-02-16 02:19:58', '2025-03-01 04:20:45', 'published', '2025-02-15 03:37:49', 1, 150, 54, 5, 0),
-(2, '如何選擇適合的體驗潛水地點', '選擇體驗潛水地點時，需要考慮水質、能見度、海洋生物種類以及教練的專業程度。例如，東南亞的潛點以珊瑚礁和豐富的海洋生物聞名，而地中海則以清澈的水質和歷史沉船吸引潛水愛好者。', '2025-02-16 02:19:58', '2025-03-01 04:20:48', 'published', '2025-02-14 02:37:49', 1, 200, 54, 8, 0),
-(3, '體驗潛水前的準備工作', '在進行體驗潛水之前，需要做好充分的準備工作。首先，確保身體健康，沒有感冒或耳部問題。其次，學習基本的潛水知識和手勢，以便與教練溝通。最後，準備好適合的泳衣和毛巾，確保潛水後的舒適。', '2025-02-16 02:19:58', '2025-03-01 04:20:50', 'published', '2025-02-13 01:37:49', 1, 180, 54, 6, 0),
-(4, '體驗潛水的常見問題解答', '許多人在第一次體驗潛水時會有各種疑問，例如「我會不會呼吸困難？」或「水下會不會很冷？」其實，潛水裝備可以確保你正常呼吸，而潛水服則能保持體溫。只要放鬆心情，享受水下世界即可。', '2025-02-16 02:19:58', '2025-02-16 02:33:49', 'published', '2025-02-12 00:37:49', 1, 220, 4, 10, 0),
+(1, '第一次潛水', '<p>第一次潛水第一次潛水第一次潛水</p>', '2025-02-16 02:19:58', '2025-03-03 23:45:40', 'published', '2025-02-15 03:37:49', 1, 150, 1, 5, 0),
+(2, '如何選擇適合的體驗潛水地點', '選擇體驗潛水地點時，需要考慮水質、能見度、海洋生物種類以及教練的專業程度。例如，東南亞的潛點以珊瑚礁和豐富的海洋生物聞名，而地中海則以清澈的水質和歷史沉船吸引潛水愛好者。', '2025-02-16 02:19:58', '2025-03-01 04:20:48', 'published', '2025-02-14 02:37:49', 1, 200, 1, 8, 0),
+(3, '體驗潛水前的準備工作', '在進行體驗潛水之前，需要做好充分的準備工作。首先，確保身體健康，沒有感冒或耳部問題。其次，學習基本的潛水知識和手勢，以便與教練溝通。最後，準備好適合的泳衣和毛巾，確保潛水後的舒適。', '2025-02-16 02:19:58', '2025-03-01 04:20:50', 'draft', '2025-02-13 01:37:49', 1, 180, 1, 6, 0),
+(4, '體驗潛水的常見問題解答', '許多人在第一次體驗潛水時會有各種疑問，例如「我會不會呼吸困難？」或「水下會不會很冷？」其實，潛水裝備可以確保你正常呼吸，而潛水服則能保持體溫。只要放鬆心情，享受水下世界即可。', '2025-02-16 02:19:58', '2025-02-16 02:33:49', 'draft', '2025-02-12 00:37:49', 1, 220, 1, 10, 0),
 (5, '體驗潛水 vs 正式潛水課程', '體驗潛水適合想要嘗試潛水的人，而正式潛水課程則適合想要深入學習並獲得潛水證書的人。體驗潛水通常由教練全程陪同，而正式課程則需要學習更多的理論知識和技巧。', '2025-02-16 02:19:58', '2025-02-16 02:33:55', 'published', '2025-02-10 23:37:49', 1, 170, 5, 7, 0),
 (6, '體驗潛水的安全注意事項', '體驗潛水雖然有趣，但安全永遠是第一位的。確保聽從教練的指示，不要單獨行動，並隨時注意自己的呼吸和身體狀況。如果感到不適，應立即告知教練。', '2025-02-16 02:19:58', '2025-02-16 02:34:00', 'published', '2025-02-09 22:37:49', 1, 190, 6, 9, 0),
 (7, '體驗潛水的最佳季節', '不同地區的潛水季節有所不同。例如，馬爾代夫的最佳潛水季節是11月至4月，而泰國則是12月至3月。選擇合適的季節可以確保良好的能見度和豐富的海洋生物。', '2025-02-16 02:19:58', '2025-02-16 02:34:06', 'published', '2025-02-08 21:37:49', 1, 210, 7, 12, 0),
@@ -64,9 +64,9 @@ INSERT INTO `article` (`id`, `title`, `content`, `created_at`, `updated_at`, `st
 (15, '潛水課程的學習心得分享', '參加潛水課程是一次非常有意義的經歷。不僅學到了許多潛水知識，還結識了一群志同道合的朋友。最重要的是，獲得了探索水下世界的資格。', '2025-02-16 02:19:58', '2025-02-16 02:35:14', 'published', '2025-01-31 13:37:49', 2, 290, 15, 35, 0),
 (16, '潛水課程的教練選擇指南', '選擇一位經驗豐富的潛水教練非常重要。可以通過查看教練的資質證書、教學經驗和學員評價來做出決定。', '2025-02-16 02:19:58', '2025-02-16 02:35:19', 'published', '2025-01-30 12:37:49', 2, 300, 16, 40, 0),
 (17, '潛水課程的常見問題', '許多人在參加潛水課程時會有疑問，例如「課程難不難？」或「需要多長時間？」其實，只要認真學習並按照教練的指示操作，大多數人都能順利完成課程。', '2025-02-16 02:19:58', '2025-02-16 02:35:25', 'published', '2025-01-29 11:37:49', 2, 310, 17, 45, 0),
-(18, '潛水課程的未來發展', '隨著潛水運動的普及，潛水課程的內容和形式也在不斷創新。未來可能會出現更多線上課程和虛擬實境教學，讓學習更加便捷。', '2025-02-16 02:19:58', '2025-02-16 02:35:31', 'published', '2025-01-28 10:37:49', 2, 320, 18, 50, 0),
-(19, '潛水課程的國際認證', '國際潛水組織如PADI、SSI和NAUI提供全球認可的潛水課程和證書。選擇有國際認證的課程可以確保你的潛水資格被廣泛接受。', '2025-02-16 02:19:58', '2025-02-16 02:35:37', 'published', '2025-01-27 09:37:49', 2, 330, 19, 55, 0),
-(20, '潛水課程的線上學習資源', '許多潛水中心提供線上學習資源，例如理論課程影片和模擬測驗。這些資源可以幫助你在正式上課前做好準備，提升學習效率。', '2025-02-16 02:19:58', '2025-02-16 02:35:42', 'published', '2025-01-26 08:37:49', 2, 340, 20, 60, 0);
+(18, '潛水課程的未來發展', '隨著潛水運動的普及，潛水課程的內容和形式也在不斷創新。未來可能會出現更多線上課程和虛擬實境教學，讓學習更加便捷。', '2025-02-16 02:19:58', '2025-03-05 20:45:25', 'published', '2025-01-28 10:37:49', 2, 320, 80, 50, 0),
+(19, '潛水課程的國際認證', '國際潛水組織如PADI、SSI和NAUI提供全球認可的潛水課程和證書。選擇有國際認證的課程可以確保你的潛水資格被廣泛接受。', '2025-02-16 02:19:58', '2025-03-05 20:45:22', 'published', '2025-01-27 09:37:49', 2, 330, 80, 55, 0),
+(20, '潛水課程的線上學習資源', '許多潛水中心提供線上學習資源，例如理論課程影片和模擬測驗。這些資源可以幫助你在正式上課前做好準備，提升學習效率。', '2025-02-16 02:19:58', '2025-03-05 20:45:19', 'draft', '2025-01-26 08:37:49', 2, 340, 80, 60, 0);
 
 -- --------------------------------------------------------
 
@@ -126,7 +126,7 @@ INSERT INTO `article_category_small` (`id`, `name`, `category_big_id`) VALUES
 --
 
 CREATE TABLE `article_image` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `article_id` int(11) DEFAULT NULL,
   `img_url` varchar(255) NOT NULL,
   `is_main` tinyint(1) DEFAULT 0,
@@ -139,8 +139,8 @@ CREATE TABLE `article_image` (
 
 INSERT INTO `article_image` (`id`, `article_id`, `img_url`, `is_main`, `is_deleted`) VALUES
 (1, 1, '/uploads/article/001.jpg', 1, 0),
-(2, 2, '/uploads/article/002.jpg', 1, 0),
-(3, 3, '/uploads/article/003.jpg', 1, 0),
+(2, 2, '/uploads/article/002.jpg', 1, 1),
+(3, 3, '/uploads/article/003.jpg', 1, 1),
 (4, 4, '/uploads/article/004.jpg', 1, 0),
 (5, 5, '/uploads/article/005.jpg', 1, 0),
 (6, 6, '/uploads/article/006.jpg', 1, 0),
@@ -156,8 +156,9 @@ INSERT INTO `article_image` (`id`, `article_id`, `img_url`, `is_main`, `is_delet
 --
 
 CREATE TABLE `article_likes_dislikes` (
-  `article_id` int(11) NOT NULL,
-  `users_id` int(10) UNSIGNED NOT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `reply_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
   `is_like` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -165,17 +166,19 @@ CREATE TABLE `article_likes_dislikes` (
 -- 傾印資料表的資料 `article_likes_dislikes`
 --
 
-INSERT INTO `article_likes_dislikes` (`article_id`, `users_id`, `is_like`) VALUES
-(1, 1, 1),
-(1, 2, 0),
-(1, 3, 1),
-(1, 4, 0),
-(1, 5, 0),
-(2, 1, 1),
-(2, 2, 0),
-(2, 3, 1),
-(2, 4, 0),
-(2, 5, 1);
+INSERT INTO `article_likes_dislikes` (`id`, `reply_id`, `user_id`, `is_like`) VALUES
+(1, 1, 1, 1),
+(2, 1, 2, 1),
+(3, 2, 3, 0),
+(4, 3, 1, 1),
+(5, 3, 2, 1),
+(6, 4, 3, 0),
+(7, 5, 1, 1),
+(8, 6, 1, 1),
+(9, 6, 3, 1),
+(10, 7, 2, 0),
+(11, 8, 1, 1),
+(12, 9, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -184,32 +187,29 @@ INSERT INTO `article_likes_dislikes` (`article_id`, `users_id`, `is_like`) VALUE
 --
 
 CREATE TABLE `article_reply` (
-  `id` int(11) NOT NULL,
-  `article_id` int(11) DEFAULT NULL,
-  `users_id` int(10) UNSIGNED DEFAULT NULL,
+  `id` int(10) UNSIGNED NOT NULL,
+  `article_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
   `content` text NOT NULL,
-  `floor_number` int(11) DEFAULT NULL,
-  `reply_number` int(11) DEFAULT 0,
-  `level` enum('1','2') DEFAULT '1',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `is_deleted` tinyint(1) DEFAULT 0
+  `parent_id` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- 傾印資料表的資料 `article_reply`
 --
 
-INSERT INTO `article_reply` (`id`, `article_id`, `users_id`, `content`, `floor_number`, `reply_number`, `level`, `created_at`, `is_deleted`) VALUES
-(1, 1, 1, '這篇文章寫得真好，讓我對潛水有了更深的認識！', 1, 0, '1', '2025-02-15 16:37:49', 0),
-(2, 1, 2, '我也好想去潛水，請問初學者該如何開始？', 2, 0, '1', '2025-02-15 17:26:49', 0),
-(3, 1, 3, '回覆2樓：建議先找專業教練學習基礎技巧哦！', 2, 1, '2', '2025-02-15 18:15:49', 0),
-(4, 1, 3, '潛水真的是一種很棒的體驗，推薦大家試試！', 3, 0, '1', '2025-02-15 19:04:49', 0),
-(5, 1, 2, '請問潛水裝備大概需要多少預算？', 4, 0, '1', '2025-02-15 19:53:49', 0),
-(6, 1, 1, '回覆5樓：初學者建議先租裝備，等熟悉後再考慮購買。', 4, 1, '2', '2025-02-15 20:42:49', 0),
-(7, 1, 1, '潛水時遇到鯊魚怎麼辦？有點害怕...', 5, 0, '1', '2025-02-15 21:31:49', 0),
-(8, 1, 2, '回覆7樓：鯊魚其實並不可怕，保持冷靜就好！', 5, 1, '2', '2025-02-15 22:20:49', 0),
-(9, 1, 3, '潛水後耳朵會痛，這是正常的嗎？', 6, 0, '1', '2025-02-15 23:09:49', 0),
-(10, 1, 2, '回覆9樓：可能是耳壓平衡沒做好，建議多練習耳壓平衡技巧。', 6, 1, '2', '2025-02-15 23:58:49', 0);
+INSERT INTO `article_reply` (`id`, `article_id`, `user_id`, `content`, `parent_id`, `created_at`) VALUES
+(1, 1, 1, '這是文章1的留言1', NULL, '2025-03-01 10:00:00'),
+(2, 1, 2, '這是文章1的回覆1', 1, '2025-03-01 10:05:00'),
+(3, 1, 3, '這是文章1的留言2', NULL, '2025-03-01 10:10:00'),
+(4, 1, 1, '這是文章1的回覆2', 3, '2025-03-01 10:15:00'),
+(5, 1, 2, '這是文章1的回覆3', 3, '2025-03-01 10:20:00'),
+(6, 2, 1, '這是文章2的留言1', NULL, '2025-03-01 11:00:00'),
+(7, 2, 3, '這是文章2的回覆1', 1, '2025-03-01 11:05:00'),
+(8, 2, 2, '這是文章2的留言2', NULL, '2025-03-01 11:10:00'),
+(9, 2, 1, '這是文章2的回覆2', 2, '2025-03-01 11:15:00'),
+(10, 2, 3, '這是文章2的回覆3', 2, '2025-03-01 11:20:00');
 
 -- --------------------------------------------------------
 
@@ -227,19 +227,18 @@ CREATE TABLE `article_tag_big` (
 --
 
 INSERT INTO `article_tag_big` (`article_id`, `article_tag_small_id`) VALUES
-(1, 1),
-(1, 5),
-(1, 8),
 (2, 3),
 (2, 7),
 (2, 8),
-(27, 14),
-(29, 14),
-(30, 15),
-(33, 14),
-(36, 15),
-(37, 16),
-(42, 14);
+(3, 2),
+(3, 6),
+(3, 8),
+(4, 3),
+(4, 6),
+(4, 8),
+(1, 1),
+(1, 2),
+(1, 3);
 
 -- --------------------------------------------------------
 
@@ -264,10 +263,7 @@ INSERT INTO `article_tag_small` (`id`, `tag_name`) VALUES
 (5, '海洋生物'),
 (6, '攝影技巧'),
 (7, '旅遊攻略'),
-(8, '活動分享'),
-(14, '123'),
-(15, '1'),
-(16, '111');
+(8, '活動分享');
 
 --
 -- 已傾印資料表的索引
@@ -280,18 +276,6 @@ ALTER TABLE `article`
   ADD PRIMARY KEY (`id`);
 
 --
--- 資料表索引 `article_category_big`
---
-ALTER TABLE `article_category_big`
-  ADD PRIMARY KEY (`id`);
-
---
--- 資料表索引 `article_category_small`
---
-ALTER TABLE `article_category_small`
-  ADD PRIMARY KEY (`id`);
-
---
 -- 資料表索引 `article_image`
 --
 ALTER TABLE `article_image`
@@ -301,19 +285,18 @@ ALTER TABLE `article_image`
 -- 資料表索引 `article_likes_dislikes`
 --
 ALTER TABLE `article_likes_dislikes`
-  ADD PRIMARY KEY (`article_id`,`users_id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_like` (`reply_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- 資料表索引 `article_reply`
 --
 ALTER TABLE `article_reply`
-  ADD PRIMARY KEY (`id`);
-
---
--- 資料表索引 `article_tag_big`
---
-ALTER TABLE `article_tag_big`
-  ADD PRIMARY KEY (`article_id`,`article_tag_small_id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `article_id` (`article_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `parent_id` (`parent_id`);
 
 --
 -- 資料表索引 `article_tag_small`
@@ -329,37 +312,50 @@ ALTER TABLE `article_tag_small`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `article`
 --
 ALTER TABLE `article`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
-
---
--- 使用資料表自動遞增(AUTO_INCREMENT) `article_category_big`
---
-ALTER TABLE `article_category_big`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- 使用資料表自動遞增(AUTO_INCREMENT) `article_category_small`
---
-ALTER TABLE `article_category_small`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `article_image`
 --
 ALTER TABLE `article_image`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- 使用資料表自動遞增(AUTO_INCREMENT) `article_likes_dislikes`
+--
+ALTER TABLE `article_likes_dislikes`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `article_reply`
 --
 ALTER TABLE `article_reply`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- 使用資料表自動遞增(AUTO_INCREMENT) `article_tag_small`
 --
 ALTER TABLE `article_tag_small`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
+-- 已傾印資料表的限制式
+--
+
+--
+-- 資料表的限制式 `article_likes_dislikes`
+--
+ALTER TABLE `article_likes_dislikes`
+  ADD CONSTRAINT `article_likes_dislikes_ibfk_1` FOREIGN KEY (`reply_id`) REFERENCES `article_reply` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `article_likes_dislikes_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- 資料表的限制式 `article_reply`
+--
+ALTER TABLE `article_reply`
+  ADD CONSTRAINT `article_reply_ibfk_1` FOREIGN KEY (`article_id`) REFERENCES `article` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `article_reply_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `article_reply_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `article_reply` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

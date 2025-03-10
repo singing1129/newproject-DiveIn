@@ -100,194 +100,168 @@
   color: rgba(0, 0, 0, 0.5);
 }
 
-.timeSort {
-  font-size: 1rem;
-  color: rgba(0, 0, 0, 0.7);
-  cursor: pointer;
+
+/* 留言 */
+
+
+/* 留言區域整體樣式 */
+.replies-section {
+  margin-top: 20px;
 }
 
-.timeSort i {
-  margin-left: 5px;
+.replies-section h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
 }
 
-/* 層級1回覆 */
-.reply1 {
+/* 留言容器 */
+.reply-container {
+  width: 100%; /* 確保佔據整行 */
+  margin-bottom: 15px;
+  padding: 15px 0 5px 15px;
+}
+
+/* 第一層留言 */
+.reply-level-1 {
+  margin-left: 0; /* 無內縮 */
+}
+
+/* 第二層留言 - 向右內縮 50px */
+.reply-level-2 {
+  margin-left: 50px; /* 向右內縮 50px */
+  width: calc(100% - 50px); /* 寬度減少 50px，與 level-1 右邊界對齊 */
+}
+
+/* 留言詳情 */
+.reply-details {
+  display: block; /* 垂直排列內容 */
+}
+
+/* 留言區域（頭像 + 文字） */
+.reply-area {
   display: flex;
   align-items: flex-start;
-  margin: 30px 0;
 }
 
-/* 層級2回覆 */
-.reply2 {
-  display: flex;
-  align-items: flex-start;
-  margin: 20px 0;
-  margin-left: 30px; /* 增加左邊距，使其有縮排效果 */
-}
-
-/* reply1 */
-
-.reply1 {
-  display: flex;
-  align-items: flex-start;
-  margin: 30px 0;
-}
-
-.reply-avatar1 {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  margin-right: 15px;
-}
-
-.reply-details1 {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.reply-header1 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.reply-author1,
-.popular-reply1,
-.author-reply {
-  margin-right: 10px;
-}
-
-.reply-author1,
-.popular-reply1,
-.author-reply,
-.reply-publish-time1 {
-  font-size: 14px;
-  color: #666;
-}
-
-.reply-content1 {
-  margin-top: 10px;
-  font-size: 16px;
-}
-
-.others-reply-area1 {
-  display: flex;
-  gap: 15px;
-  margin-top: 15px;
-  align-items: center;
-}
-
-.others-reply1 {
-  cursor: pointer;
-}
-
-/* reply2 */
-.reply-avatar2 {
-  height: 40px;
+/* 頭像 */
+.reply-avatar {
   width: 40px;
-  margin-left: 65px; /*平移頭像，與 .reply-header2 左邊對齊*/
-}
-
-.reply2 {
-  display: flex;
-  align-items: flex-start;
-  margin: 30px 0;
-}
-
-.reply-avatar2 {
-  width: 50px;
-  height: 50px;
+  height: 40px;
   border-radius: 50%;
-  margin-right: 15px;
-  margin-left: 65px; /*平移頭像*/
-}
-
-.reply-details2 {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.reply-header2 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.reply-author2,
-.popular-reply2 {
   margin-right: 10px;
 }
 
-.reply-author2,
-.popular-reply2,
-.reply-publish-time2 {
-  font-size: 14px;
+/* 文字區域 */
+.reply-text {
+  flex: 1; /* 佔據剩餘空間 */
+}
+
+/* 留言頭部 */
+.reply-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.reply-author {
+  font-weight: bold;
+  color: #333;
+}
+
+.reply-publish-time {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+/* 留言內容 */
+.reply-content {
+  margin-bottom: 10px;
+  color: #555;
+}
+
+/* 操作區域 */
+.others-reply-area {
+  display: flex;
+  gap: 15px;
+}
+
+.good, .bad, .others-reply {
+  cursor: pointer;
   color: #666;
 }
 
-.reply-content2 {
+.good:hover, .bad:hover, .others-reply:hover {
+  color: #007bff;
+}
+
+/* 已點讚狀態 */
+.good.liked {
+  color: #007bff;
+}
+
+/* 已倒讚狀態 */
+.bad.disliked {
+  color: #007bff;
+}
+
+/* 子回覆容器 */
+.reply-children {
+  width: 100%; /* 確保子回覆佔據整行 */
+  display: block; /* 垂直排列子回覆 */
+}
+
+
+/* 回覆輸入框區域 */
+.reply-input-area {
   margin-top: 10px;
-  font-size: 16px;
-}
-
-.others-reply-area2 {
   display: flex;
-  gap: 15px;
-  margin-top: 15px;
-  align-items: center;
+  gap: 10px;
 }
 
-.others-reply2 {
+.reply-input-area input {
+  flex: 1;
+}
+
+.reply-input-area button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
 }
 
-/* more-reply */
+.reply-input-area button:hover {
+  background-color: #0056b3;
+}
 
+/* 新留言輸入區域 */
 .more-reply {
   display: flex;
-  align-items: flex-start;
-  margin: 30px 0;
-}
-
-.more-reply img {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  margin-right: 15px;
-  margin-left: 65px; /* 平移頭像，與 reply2 的 img 對齊 */
+  align-items: center;
+  margin-top: 20px;
 }
 
 .more-reply input {
   flex: 1;
-  height: 50px; /* 與圖片高度對齊 */
-  padding: 0 15px;
-  border: 1px solid #c0c0c0;
-  font-size: 16px;
-  color: #666;
-  outline: none;
+  margin-right: 10px;
 }
-.button-container {
-  display: flex;
-  justify-content: center; /* 讓按鈕在水平方向居中 */
-  width: 100%; /* 確保容器佔滿整個畫面 */
-  margin: 50px 0 30px;
+
+.more-reply button {
+  padding: 5px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
-.more-btn {
-  color: #a3a3a3;
-  font-size: 16px;
-  font-weight: 400;
-  display: flex;
-  width: 102px;
-  height: 35px;
-  padding: 10px 0px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  border: 1px solid #c0c0c0;
+
+.more-reply button:hover {
+  background-color: #0056b3;
 }
+
+
 
 /* related-article-area */
 .related-article-area-title {
