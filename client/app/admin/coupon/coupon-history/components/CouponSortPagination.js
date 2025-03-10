@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 const CouponSortPagination = ({ onSortChange, onDisplayChange }) => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showDisplayDropdown, setShowDisplayDropdown] = useState(false);
-  const [selectedSort, setSelectedSort] = useState({ text: '最新發佈', value: 'latest' });
+  const [selectedSort, setSelectedSort] = useState({ text: '領取時間', value: 'latest' });
   const [selectedDisplay, setSelectedDisplay] = useState("全部顯示");
 
   const handleSortChange = (value, text) => {
@@ -33,7 +33,7 @@ const CouponSortPagination = ({ onSortChange, onDisplayChange }) => {
             <li>
               <button
                 className="dropdown-item"
-                onClick={() => handleDisplayChange("全部顯示", "全部顯示")}
+                onClick={() => handleDisplayChange("全部顯示", "Infinity")}
               >
                 全部顯示
               </button>
@@ -77,17 +77,17 @@ const CouponSortPagination = ({ onSortChange, onDisplayChange }) => {
             <li>
               <button
                 className="dropdown-item"
-                onClick={() => handleSortChange('latest', '最新發佈')}
+                onClick={() => handleSortChange('latest', '領取時間')}
               >
-                最新發佈
+                領取時間
               </button>
             </li>
             <li>
               <button
                 className="dropdown-item"
-                onClick={() => handleSortChange('expiry', '即將到期')}
+                onClick={() => handleSortChange('expiry', '到期時間')}
               >
-                即將到期
+                到期時間
               </button>
             </li>
             <li>
@@ -112,4 +112,5 @@ const CouponSortPagination = ({ onSortChange, onDisplayChange }) => {
     </div>
   );
 };
+
 export default CouponSortPagination;

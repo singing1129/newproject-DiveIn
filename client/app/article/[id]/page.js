@@ -10,8 +10,12 @@ export default function ArticlePage() {
   return (
     <div className="container mt-4">
       <div className="row">
+      <div className="col-3">
         <Sidebar />
+        </div>
+        <div className="col-9">
         <ArticleDetail />
+        </div>
       </div>
     </div>
   );

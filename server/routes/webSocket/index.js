@@ -1,9 +1,10 @@
 import { pool } from "../../config/mysql.js";
 
-const clients = new Map();
-const rooms = new Map();
 
 function createWebsocketRoom(wss) {
+  // 將 clients 設為全局變數
+  global.clients = new Map();
+  const rooms = new Map();
   wss.on("connection", (ws, request) => {
     console.log("新的使用者已連線，URL:", request.url);
 
@@ -26,15 +27,69 @@ function createWebsocketRoom(wss) {
         return;
       }
 
+      // 處理用戶加入
       if (msg.type === "join") {
-        clients.set(msg.userId, ws);
+        global.clients.set(msg.userId, ws);
         ws.userId = msg.userId;
         console.log(`用戶 ${msg.userId} 已加入`);
-      } else if (msg.type === "joinRoom") {
+        const [notifications] = await pool.execute(
+          "SELECT id, content, created_at FROM system_notifications WHERE user_id IS NULL OR user_id = ? ORDER BY created_at DESC LIMIT 1",
+          [msg.userId]
+        );
+        if (notifications.length > 0) {
+          ws.send(JSON.stringify({
+            type: "system",
+            id: notifications[0].id,
+            content: notifications[0].content,
+            timestamp: notifications[0].created_at,
+          }));
+        }
+      }
+
+      // 處理系統通知
+      else if (msg.type === "sendSystemNotification") {
+        const { userId, content } = msg;
+        const timestamp = new Date().toISOString();
+        const [result] = await pool.execute(
+          "INSERT INTO system_notifications (user_id, content) VALUES (?, ?)",
+          [userId || null, content]
+        );
+        const notificationId = result.insertId;
+        console.log("即將發送系統通知，當前連線用戶:", [...global.clients.keys()]);
+        const systemMsg = {
+          type: "system",
+          id: notificationId,
+          content,
+          timestamp,
+          isNew: true, // 新增 isNew 屬性
+        };
+        console.log("準備推送通知，當前連線數量:", global.clients.size);
+        if (userId) {
+          const targetWs = global.clients.get(userId);
+          if (targetWs && targetWs.readyState === targetWs.OPEN) {
+            console.log(`推送給特定用戶 ${userId}`);
+            try {
+              targetWs.send(JSON.stringify(systemMsg));
+            } catch (error) {
+              console.error(`發送通知給用戶 ${userId} 失敗:`, error);
+            }
+          }
+        } else {
+          global.clients.forEach((client) => {
+            if (client.readyState === client.OPEN) {
+              console.log("推送給客戶端:", client.userId || "未註冊用戶");
+              client.send(JSON.stringify(systemMsg));
+            }
+          });
+        }
+      }
+
+      // 處理加入聊天室並讀取歷史紀錄
+      else if (msg.type === "joinRoom") {
         const groupId = msg.groupId;
 
         if (msg.userId && !ws.userId) {
-          clients.set(msg.userId, ws);
+          global.clients.set(msg.userId, ws);
           ws.userId = msg.userId;
           console.log(`用戶 ${msg.userId} 已加入（從joinRoom設定）`);
         }
@@ -86,19 +141,21 @@ function createWebsocketRoom(wss) {
           ws.send(JSON.stringify({ type: "error", message: "伺服器錯誤，請稍後再試" }));
           return;
         }
-      } else if (msg.type === "chat") {
+      }
+
+      // 處理聊天訊息
+      else if (msg.type === "chat") {
         if (!ws.userId) {
           ws.send(JSON.stringify({ type: "error", message: "請先提供userId" }));
           return;
         }
-        // 查詢發送者的名字
         const [userRows] = await pool.execute("SELECT name FROM users WHERE id = ?", [ws.userId]);
         const userName = userRows.length > 0 ? userRows[0].name : "未知用戶";
         const chatMsg = {
           groupId: msg.groupId,
           userId: ws.userId,
           content: msg.content,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(), // 改用 ISO 格式與系統通知一致
           role: ws.role || "未知身份",
           userName: userName || "已刪除的用戶",
         };
@@ -122,7 +179,7 @@ function createWebsocketRoom(wss) {
 
     ws.on("close", () => {
       console.log(`使用者 ${ws.userId} 已斷開連線，groupId: ${ws.groupId}`);
-      clients.delete(ws.userId);
+      global.clients.delete(ws.userId);
       if (ws.groupId && rooms.has(ws.groupId)) {
         const room = rooms.get(ws.groupId);
         room.delete(ws);
@@ -133,15 +190,22 @@ function createWebsocketRoom(wss) {
         }
       }
     });
+
+    ws.on("error", (error) => {
+      console.error("WebSocket 伺服器錯誤:", error);
+    });
+  });
+
+  wss.on("error", (error) => {
+    console.error("WebSocket 伺服器全局錯誤:", error);
   });
 }
 
-// saveToDatabase 和 loadChatHistory 保持不變
 async function saveToDatabase(db, chatMsg) {
   console.log("存進資料庫:", chatMsg);
-  const sql = `INSERT INTO chat_messages (group_id, user_id, content, created_at) VALUES (?, ?, ?, ?)`;
+  const sql = `INSERT INTO chat_messages (group_id, user_id, content) VALUES (?, ?, ?)`;
   try {
-    await db.execute(sql, [chatMsg.groupId, chatMsg.userId, chatMsg.content, chatMsg.timestamp]);
+    await db.execute(sql, [chatMsg.groupId, chatMsg.userId, chatMsg.content]);
     console.log("訊息已成功存入資料庫");
   } catch (error) {
     console.error("資料庫儲存錯誤:", error);
@@ -176,8 +240,8 @@ async function loadChatHistory(db, groupId) {
       userName: row.user_name,
       userId: row.user_id,
       content: row.content,
-      timestamp: row.created_at,
-      role: row.role, // 新增role
+      timestamp: row.created_at, // 改用 ISO 格式
+      role: row.role,
     }));
   } catch (error) {
     console.error("載入歷史訊息錯誤:", error);

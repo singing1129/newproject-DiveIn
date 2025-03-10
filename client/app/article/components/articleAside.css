@@ -1,3 +1,6 @@
+aside {
+  padding: 0; /* 移除可能的預設內邊距 */
+}
 /* article aside */
 .aside-category {
   padding: 0 15px 30px 0;
@@ -164,3 +167,62 @@
 .breadcrumb-btns .btn:hover {
   background-color: #02818b; 
 } */
+
+/* article-search-box */
+.article-search-box {
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: 15px; /* 與 .aside-category 的 padding-right 一致 */
+  margin-bottom: 21px;
+}
+
+.article-search-box input {
+  width: 100%;
+  padding: 10px 35px 10px 15px; /* 右側 35px 給圖標空間 */
+  border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+  border-radius: 30px;
+  height: 40px;
+}
+
+.article-search-box input:focus {
+  border-color: #029cad;
+}
+
+/* 清除圖標 */
+.article-search-box .clear-icon {
+  position: absolute;
+  right: 30px; /* 與 .aside-category 的 padding-right 對齊 */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.article-search-box .clear-icon:hover {
+  color: #333;
+}
+
+/* 搜尋圖標 */
+.article-search-box .search-icon {
+  position: absolute;
+  right: 30px; /* 與 .aside-category 的 padding-right 對齊 */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.article-search-box .search-icon:hover {
+  color: #333;
+}
+
+/* 隱藏瀏覽器內建的清除按鈕 */
+.article-search-box input[type="text"]::-webkit-search-cancel-button {
+  display: none;
+}

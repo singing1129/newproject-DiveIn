@@ -2,32 +2,13 @@
 .article-controls {
   width: 100%;
   height: 60px;
-  margin-bottom: 20px; /* 添加底部间距 */
+  margin-bottom: 20px;
   display: flex;
-  justify-content: space-between; /* 将筛选器和按钮区域分开 */
-  padding: 0 15px 15px 0; /* 添加一些内边距 */
-  background-color: #fff; /* 设置背景颜色 */
-  margin: 0 8px;
-}
-
-.article-search-box {
-  display: flex;
-  align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  overflow: hidden; /* 防止內部元素溢出 */
+  justify-content: space-between;
+  padding: 0;
   background-color: #fff;
-  width: 100%;
-  max-width: 400px; /* 控制最大寬度 */
 }
 
-.article-search-box input {
-  flex: 1;
-  border: none;
-  outline: none;
-  padding: 7px 15px;
-  font-size: 16px;
-  border-radius: 30px; /* 讓 input 也有圓角 */
-}
 
 .clear-button {
   background: none;
@@ -42,81 +23,104 @@
   color: #333;
 }
 
-.article-search-box .search-button {
-  background-color: #029cad; /* 背景顏色 */
-  color: white;
-  border: none;
-  padding: 7px 20px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.article-search-box .search-button:hover {
-  background-color: #02818b; /* 滑鼠懸停時改變背景顏色 */
-}
 
 .article-controls-btn {
   display: flex;
-  justify-content: flex-end; /* 将按钮区域置于右侧 */
-  gap: 10px; /* 按钮之间的间距 */
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .article-controls-btn .btn-icon {
   margin-right: 10px;
 }
+
 .article-controls-btn .btn {
   width: 120px;
   height: 40px;
-  display: inline-block; /* 按鈕為行內區塊元素 */
-  align-items: center; /* 垂直居中对齐内容 */
-  padding: 8px 19px; /* 內邊距 */
-  background-color: #029cad; /* 背景顏色 */
-  color: #fff; /* 文字顏色為白色 */
-  text-align: center; /* 文字置中 */
-  font-size: 14px; /* 字體大小 */
-  border: none; /* 移除邊框 */
-  border-radius: 4px; /* 圓角邊框 */
-  cursor: pointer; /* 設置為點擊樣式 */
-  box-sizing: border-box; /* 讓內邊距和邊框算在內 */
+  display: inline-block;
+  align-items: center;
+  padding: 8px 19px;
+  background-color: #029cad;
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
 .article-controls-btn .btn:hover {
-  background-color: #02818b; /* 滑鼠懸停時改變背景顏色 */
-  color: #fff; /* 文字顏色為白色 */
+  background-color: #02818b;
+  color: #fff;
 }
 
-/* card */
+/* article-list 和 cards-container */
 .article-list {
-  grid-template-columns: repeat(2, 1fr); /* 设定两列布局，每列占 1fr */
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start; /* 确保内容从上往下排列 */
-  min-height: auto; /* 让容器自动适应高度 */
-  text-align: left; /* 避免 inline-block 触发居中 */
-  padding-bottom: 100px; /* 確保底部有足夠的間距 */
+  padding: 0;
+}
+
+.cards-container {
+  display: flex;
+  flex-wrap: wrap; /* 恢復 flex-wrap */
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0;
+}
+
+.article-list-card-link {
+  display: block; /* 修正 <Link> 的顯示問題 */
+  width: calc(50% - 30px); /* 與卡片寬度一致 */
+  margin: 0; /* 移除間距 */
+  text-decoration: none; /* 移除下劃線 */
+  color: inherit; /* 繼承文字顏色 */
+  margin: 0 10px 30px 10px;
 }
 
 .article-list-card {
-  display: inline-block;
-  width: 48%; /* 让每个卡片占 48%，留一点间距 */
-  margin: 8px 1% 25px 1%; /* 水平间距 */
-  vertical-align: top; /* 避免 inline-block 造成的对齐问题 */
+  min-width: 0;
+  width: 100%; /* 填充父容器 .article-list-card-link */
   height: 300px;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease-in-out;
+  cursor: pointer;
+}
+
+.article-list-card:hover {
+  box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.08);
+  transform: scale(1.05);
 }
 
 .article-list-card-photo {
   position: relative;
-  height: 40%; /* 图片区域占卡片高度的40% */
-  overflow: hidden; /* 隐藏超出部分 */
-  object-fit: cover;
-  object-position: center;
+  height: 40%;
+  overflow: hidden;
+}
+
+.article-list-card-photo::after {
+  content: "";
+  position: absolute;
+  top: 40%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.4));
+  filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.article-list-card:hover .article-list-card-photo::after {
+  opacity: 1;
 }
 
 .article-list-card-text {
-  flex: 3; /* 占据 3 份 */
+  flex: 3;
   display: flex;
   flex-direction: column;
-  padding-bottom: 10px; /* 添加内边距 */
+  padding-bottom: 10px;
 }
 
 .article-list-card-title {
@@ -127,8 +131,8 @@
 }
 
 .article-list-icon {
-  margin-right: 6px; /* 調整數值來改變距離 */
-  display: inline-flex; /* 保持圖標與文字對齊 */
+  margin-right: 6px;
+  display: inline-flex;
   align-items: center;
   font-size: 15px;
 }
@@ -150,7 +154,7 @@
 }
 
 .article-list-card-comment {
-  margin-left: auto; /* 置于右侧 */
+  margin-left: auto;
 }
 
 .article-list-card-content {
@@ -158,49 +162,50 @@
   font-size: 14px;
   font-weight: 400;
   padding: 5px 0;
-  display: -webkit-box; /* 必须使用 -webkit-box */
-  -webkit-line-clamp: 3; /* 限制显示三行 */
-  -webkit-box-orient: vertical; /* 垂直排列 */
-  overflow: hidden; /* 隐藏超出部分 */
-  text-overflow: ellipsis; /* 显示省略号 */
-  white-space: normal; /* 确保文本可以换行 */
-  max-height: calc(3 * 1.7em); /* 根据行高限制最大高度，1.2em 为行高 */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  max-height: calc(3 * 1.7em);
 }
 
 .article-list-card-btn {
   display: flex;
-  justify-content: flex-end; /* 按钮置右 */
+  justify-content: flex-end;
   padding-right: 10px;
   padding: 5px 0;
-  margin-top: auto; /* 将按钮区域推到父容器底部 */
+  margin-top: auto;
 }
 
 .article-list-card-btn .btn {
   margin: 5px;
-  text-align: center; /* 文字置中 */
-  font-size: 14px; /* 字體大小 */
-  border: none; /* 移除邊框 */
-  border-radius: 4px; /* 圓角邊框 */
-  padding: 8px 19px; /* 內邊距 */
+  text-align: center;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 19px;
   border: 1px solid rgba(0, 0, 0, 0.3);
-  color: black; /* 文字顏色為白色 */
-  text-align: center; /* 文字置中 */
-  padding: 4px 33px; /* 上下 5px，高度更扁，左右 30px，宽度更长 */
+  color: black;
+  text-align: center;
+  padding: 4px 33px;
 }
 
 .article-list-card-btn .btn:hover {
-  background-color: #029cad; /* 背景顏色 */
-  color: #fff; /* 文字顏色為白色 */
+  background-color: #029cad;
+  color: #fff;
 }
 
 /* Pagination 分页 */
 .custom-pagination {
   display: flex;
-  justify-content: flex-end; /* 让分页按钮置中 */
+  justify-content: flex-end;
   background-color: white;
   list-style: none;
   width: 100%;
   margin-top: 60px;
+  padding: 0;
 }
 
 .page-item {
@@ -238,9 +243,8 @@
   cursor: not-allowed;
 }
 
-/* 翻页器项目 hover 效果 */
 .page-item:hover {
-  background-color: rgba(255, 213, 0, 0.3); /* 黄色透明 */
+  background-color: rgba(255, 213, 0, 0.3);
 }
 
 .page-link:hover {

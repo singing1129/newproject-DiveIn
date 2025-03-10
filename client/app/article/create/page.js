@@ -9,7 +9,9 @@ export default function ArticleCreate() {
   return (
     <div className="container mt-4">
       <div className="row">
+      <div className="col-3">
         <Sidebar />
+        </div>
         <div className="article-create col-9">
           <ArticleForm />
         </div>

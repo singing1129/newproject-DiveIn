@@ -1,0 +1,84 @@
+:global(:root) {
+    --primary-color: #219ebc;
+    --primary-deep-color: #023047;
+    --primary-light-color: #8ecae6;
+    --secondary-color: #ffd500;
+    --secondary-deep-color: #ffb703;
+    --secondary-light-color: #f1d691;
+    --white: #ffffff;
+    --black: #000000;
+    --gray-20-color: #f8f9fa;
+    --gray-50-color: #e5e5e5;
+    --gray-100-color: #dedede;
+    --gray-200-color: #e5e5e5;
+    --gray-300-color: #cfcfcf;
+    --gray-400-color: #b2b2b2;
+    --gray-500-color: #a3a3a3;
+    --gray-600-color: #898989;
+    --gray-700-color: #6f6f6f;
+    --gray-800-color: #555555;
+    --gray-900-color: #3b3b3b;
+}
+
+:global(*) {
+    font-family: "Noto Sans TC", serif;
+    font-size: 16px;
+}
+
+:global(*:focus) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.chatRoomPage {
+    gap: 20px;
+    margin: 10px auto;
+}
+.chatSection {
+    background-color: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    padding: 20px;
+    height: calc(100vh - 100px - 44px - 24px - 42px - 10px - 36px - 20px) ;
+    overflow-y: auto; /* 啟用垂直滾動 */
+    overflow-x: hidden; /* 避免水平滾動 */
+}
+/* 可選：美化滾動條 */
+.chatSection::-webkit-scrollbar {
+  width: 8px;
+}
+.chatSection::-webkit-scrollbar-thumb {
+  background: var(--primary-light-color);
+  border-radius: 4px;
+}
+.chatSection::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color);
+}
+.message {
+    padding: 10px 15px;
+    border-radius: 6px;
+    max-width: 70%; /* 限制最大寬度，避免過寬 */
+  word-break: break-word; /* 長文字自動換行 */
+  overflow-wrap: break-word; /* 兼容性更好 */
+  white-space: normal; /* 確保文字換行，而不是單行 */
+}
+.selfMessage {
+    border:1px solid var(--primary-color);
+    /* color: #fff; */
+}
+.otherMessage {
+    border: 1px solid var(--secondary-color);
+    background-color: var(--secondary-color);
+}
+.sendBtn{
+  background-color: var(--secondary-color) !important;
+  border: 1px solid var(--secondary-color);
+  padding: 0px 15px;
+  border-radius: 6px;
+}
+.time{
+  font-size: 14px;
+  /* padding: 0px 5px; */
+  color: var(--gray-600-color);
+}

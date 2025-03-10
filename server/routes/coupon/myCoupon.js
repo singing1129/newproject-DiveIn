@@ -11,11 +11,13 @@ router.get("/my-coupons", async (req, res) => {
   try {
     const userId = req.query.userId;
     const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const offset = (page - 1) * limit;
+    const limitPerPage =
+      req.query.limit === "Infinity"
+        ? Infinity
+        : parseInt(req.query.limit, 10) || 10;
     const couponType = req.query.type || "all";
     const statusFilter = req.query.status || "all";
-    const sortOrder = req.query.sort || "latest";
+    const sort = req.query.sort || "latest";
 
     // 基礎查詢條件
     let baseQuery = `
@@ -53,31 +55,53 @@ router.get("/my-coupons", async (req, res) => {
       queryParams.push(now);
     }
 
-    // 先查詢總筆數
-    const countQuery = `SELECT COUNT(*) as count ${baseQuery}`;
-    const [[{ count }]] = await pool.query(countQuery, queryParams);
-    const total = count;
-    const totalPages = Math.ceil(total / limit);
+    // 查詢所有符合條件的優惠券
+    const query = `SELECT cu.*, cu.status as cu_status, c.* ${baseQuery}`;
+    const [results] = await pool.query(query, queryParams);
 
-    // 排序條件
-    let orderByClause = "ORDER BY c.start_date DESC";
-    if (sortOrder === "expiry") {
-      orderByClause = "ORDER BY c.end_date ASC";
-    } else if (sortOrder === "discount") {
-      orderByClause = "ORDER BY c.discount DESC";
+    let filteredCoupons = results;
+
+    // 排序邏輯
+    const discountValue = (coupon) => {
+      if (coupon.discount_type === "金額") {
+        return coupon.discount;
+      } else if (coupon.discount_type === "折扣%") {
+        return (1 - coupon.discount) * coupon.min_spent;
+      }
+      return 0;
+    };
+
+    if (sort === "expiry") {
+      filteredCoupons.sort(
+        (a, b) => new Date(a.end_date) - new Date(b.end_date)
+      );
+    } else if (sort === "discount") {
+      filteredCoupons.sort(
+        (a, b) => discountValue(b) - discountValue(a)
+      );
+    } else if (sort === "min_spent") {
+      filteredCoupons.sort((a, b) => a.min_spent - b.min_spent);
+    } else {
+      filteredCoupons.sort(
+        (a, b) => new Date(b.start_date) - new Date(a.start_date)
+      );
     }
 
-    // 最終查詢
-    const query = `SELECT cu.*, c.* ${baseQuery} ${orderByClause} LIMIT ? OFFSET ?`;
-    queryParams.push(limit, offset);
-    const [results] = await pool.query(query, queryParams);
+    const total = filteredCoupons.length;
+    const totalPages =
+      limitPerPage === Infinity ? 1 : Math.ceil(total / limitPerPage);
+    const startIndex = (page - 1) * limitPerPage;
+    const paginatedCoupons =
+      limitPerPage === Infinity
+        ? filteredCoupons
+        : filteredCoupons.slice(startIndex, startIndex + limitPerPage);
 
     return res.json({
       success: true,
       total,
       page,
       totalPages,
-      coupons: results,
+      coupons: paginatedCoupons,
     });
   } catch (error) {
     console.error("Error fetching user coupons:", error);
@@ -87,7 +111,7 @@ router.get("/my-coupons", async (req, res) => {
 
 /**
  * POST /code-claim
- * 功能：處理使用者領取優惠券的動作
+ * 處理使用者領取優惠券的動作
  */
 router.post("/code-claim", async (req, res) => {
   console.log("接收到的請求資料:", req.body);
@@ -97,7 +121,7 @@ router.post("/code-claim", async (req, res) => {
       return res.status(400).json({ error: "缺少優惠券代碼或使用者 ID" });
     }
 
-    // 從 users 資料表查詢該使用者的基本資料
+    // 從 users 資料表查詢使用者基本資料
     const [userResults] = await pool.query(
       "SELECT birthday, level_id FROM users WHERE id = ?",
       [userId]
@@ -132,7 +156,7 @@ router.post("/code-claim", async (req, res) => {
       return res.status(400).json({ error: "優惠券已全數領取" });
     }
 
-    // 查詢使用者已領取此優惠券的次數
+    // 查詢使用者已領取次數
     const [userUsageResults] = await pool.query(
       "SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ? AND users_id = ? AND is_deleted = FALSE",
       [coupon.id, userId]
@@ -142,15 +166,15 @@ router.post("/code-claim", async (req, res) => {
       return res.status(400).json({ error: "您已達到領取上限" });
     }
 
-    // 計算使用者還可領取的張數
+    // 可領取張數
     const remainingToClaim = coupon.max_per_user - userClaimed;
 
-    // 檢查剩餘優惠券數量是否足夠
+    // 檢查剩餘數量
     if (totalClaimed + remainingToClaim > coupon.total_issued) {
       return res.status(400).json({ error: "剩餘優惠券數量不足" });
     }
 
-    // 逐筆寫入領取記錄
+    // 寫入領取記錄
     for (let i = 0; i < remainingToClaim; i++) {
       await pool.query(
         "INSERT INTO coupon_usage (coupon_id, users_id, status, used_at, is_deleted) VALUES (?, ?, ?, NULL, FALSE)",
@@ -158,7 +182,6 @@ router.post("/code-claim", async (req, res) => {
       );
     }
 
-    // 返回領取的優惠券資料
     return res.json({
       success: true,
       message: `優惠券領取成功，您共領取了 ${remainingToClaim} 張優惠券`,
