@@ -386,7 +386,7 @@ const CartItem = ({ item, type = "products" }) => {
           </div>
           <div className="product-image">
             <img
-              src={item.image || "/article-5ae9687eec0d4.jpg"}
+              src={`/image/product/${item.image}`}
               alt={item.name || "商品圖片"}
               className="img-thumbnail"
               width={80}

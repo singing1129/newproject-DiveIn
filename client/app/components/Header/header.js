@@ -6,11 +6,14 @@ import { FiShoppingCart } from "react-icons/fi";
 import Link from "next/link";
 import HeaderPop from "./headerPop"; // 引入 HeaderPop 組件
 import Search from "./Search"; // 引入 Search 組件
+import { useCart } from "@/hooks/cartContext";
 
 export default function Header() {
   const [showPop, setShowPop] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
-  const [showSearch, setShowSearch] = useState(false); // 控制搜索框显示
+  const [showSearch, setShowSearch] = useState(false); // 控制搜尋框顯示
+  const { cartData } = useCart();
+  const [cartCount, setCartCount] = useState(0);
 
   const handleMouseEnter = (menu) => {
     setShowPop(true);
@@ -22,26 +25,43 @@ export default function Header() {
     setActiveMenu(null);
   };
 
-  // 切换搜索框显示状态
+  // 切換搜尋框顯示狀態
   const toggleSearch = () => {
     setShowSearch(!showSearch);
   };
 
-  // 关闭搜索框
+  // 關閉搜尋框
   const closeSearch = () => {
     setShowSearch(false);
   };
 
-  // 添加全局快捷键监听
+  // 計算購物車中的總商品數量
+  const cartItemCount = () => {
+    if (!cartData) return 0;
+
+    const productCount = cartData.products?.length || 0;
+    const activityCount = cartData.activities?.length || 0;
+    const rentalCount = cartData.rentals?.length || 0;
+    const bundleCount = cartData.bundles?.length || 0;
+
+    return productCount + activityCount + rentalCount + bundleCount;
+  };
+
+  // 監聽購物車數據變化
+  useEffect(() => {
+    setCartCount(cartItemCount());
+  }, [cartData]);
+
+  // 添加全局快捷鍵監聽
   useEffect(() => {
     function handleKeyDown(event) {
-      // 检测 Ctrl+K 或 Command+K
+      // 檢測 Ctrl+K 或 Command+K
       if ((event.ctrlKey || event.metaKey) && event.key === "k") {
-        event.preventDefault(); // 阻止默认行为
-        setShowSearch((prevState) => !prevState); // 切换搜索框显示状态
+        event.preventDefault(); // 阻止預設行為
+        setShowSearch((prevState) => !prevState); // 切換搜尋框顯示狀態
       }
 
-      // 按ESC键关闭搜索
+      // 按ESC鍵關閉搜尋
       if (event.key === "Escape" && showSearch) {
         setShowSearch(false);
       }
@@ -145,14 +165,40 @@ export default function Header() {
                 <FaSearch className="text-secondary vstack text-center" />
               </button>
             </form>
-            <a href="/cart/step1" className="header-cart a" id="cart-icon">
+            <a
+              href="/cart/step1"
+              className="header-cart a"
+              id="cart-icon"
+              style={{ position: "relative" }}
+            >
               <FiShoppingCart />
+              {cartCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    background: "#e74c3c",
+                    color: "white",
+                    borderRadius: "50%",
+                    width: "18px",
+                    height: "18px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {cartCount}
+                </span>
+              )}
             </a>
             <User />
           </div>
         </div>
 
-        {/* 搜索组件 */}
+        {/* 搜尋组件 */}
         {showSearch && <Search onClose={closeSearch} />}
 
         {/* 手機板 navbar*/}
@@ -406,7 +452,6 @@ export default function Header() {
             </li> */}
           </ul>
 
-          
           <div className="border-bottom">
             <h5 className="px-3 pt-4 py-2 text-secondary">帳戶</h5>
             <ul className="m-0 px-4 list-unstyled">

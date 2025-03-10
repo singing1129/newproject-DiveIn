@@ -21,6 +21,7 @@ export const CartProvider = ({ children }) => {
     rentals: [],
     bundles: [], // 新增 bundles 陣列
   });
+  console.log("cartData", cartData);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const [error, setError] = useState(null);
