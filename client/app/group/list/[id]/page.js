@@ -141,7 +141,7 @@ export default function GroupDetailPage() {
       if (res.data.status == "success") {
         // alert("成功跟團");
         success("成功跟團！")
-        setTimeout(window.location = `/admin/group`,3000)
+        setTimeout(()=>window.location = `/admin/group`,3000)
         // window.location = `/admin/group`;
       } else {
         alert(res.data.message || "跟團失敗！請稍後再試");

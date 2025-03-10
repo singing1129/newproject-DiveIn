@@ -21,7 +21,7 @@ export default function ClientLayout({ children }) {
         {!isNoLayoutPage && <Header />}
         {children}
         {/* <ToastContainer /> */}
-        <Toaster position="top-right" offset={120} /> {/* 替換 ToastContainer */}
+        <Toaster position="bottom-right" /> {/* 替換 ToastContainer */}
         {!isNoLayoutPage && <Footer />}
       </CartProvider>
     </WebSocketProvider>
