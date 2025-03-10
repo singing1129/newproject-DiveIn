@@ -17,6 +17,8 @@ import Script from "next/script";
 import { Noto_Sans_TC } from "next/font/google";
 import { FavoriteProvider } from "@/hooks/useFavorite";
 
+
+
 const notoSansTC = Noto_Sans_TC({
   weight: ["400", "500", "600", "700"], // 你可以選擇不同的字重
   subsets: ["latin", "chinese-traditional"], // 中文繁體字集

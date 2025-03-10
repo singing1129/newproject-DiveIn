@@ -263,6 +263,42 @@
 
 /* 登入方式區塊 */
 .providersSection {
+  .providersSection h3 {
+    font-size: 16px;
+    color: var(--gray-600-color);
+  }
+}
+
+.providerIcon {
+  font-size: 16px;
+  color: var(--primary-color);
+}
+
+.providerName {
+  font-size: 16px;
+  color: var(--gray-600-color);
+}
+
+/* 個人資訊區塊 */
+.accountForm {
+  flex: 2; /* 佔 2 份 */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formGroup label {
+  font-weight: regular;
+  color: var(--gray-800-color);
+}
+
+.formGroup input {
   width: 100%;
   margin-top: 20px;
 }
@@ -273,6 +309,68 @@
   margin-bottom: 10px;
 }
 
+
+/* 修改密碼 */
+.changePasswordLink {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.changePasswordLink:hover {
+  color: var(--primary-deep-color);
+}
+
+.buttonGroup {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.saveBtn {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.saveBtn:hover {
+  background-color: var(--primary-deep-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cancelBtn {
+  background-color: var(--secondary-color);
+  color: var(--white);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cancelBtn:hover {
+  background-color: var(--secondary-deep-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 魚博彥新家 */
 .providerList {
   list-style: none;
   padding: 0;

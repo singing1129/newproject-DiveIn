@@ -9,6 +9,9 @@ import { useRouter } from "next/router";
 import { useAuth } from "@/hooks/useAuth";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import useFavorite from "@/hooks/useFavorite";
+import CommentCard from "./_components/CommentCard";
+import RatingSummary from "./_components/RatingSummary";
+import CommentSortSelect from "./_components/CommentSortSelect";
 
 
 
@@ -277,6 +280,14 @@ export default function Home() {
       </div>
     </Gallery>
   );
+  // 評論排序
+  const [sortType, setSortType] = useState('new'); // 管理排序狀態
+
+  const handleSortChange = (value) => {
+    setSortType(value); // 更新排序方式
+    // 這裡你可以根據 value 對資料進行排序
+    console.log('排序方式變成：', value);
+  };
   return (
     <>
       <main className={styles.main}>
@@ -365,28 +376,7 @@ export default function Home() {
                       </a>
                     </div>
                     {/* 評論card */}
-                    <div className={`d-flex ${styles.commentCard} gap-3`}>
-                      <div className={`${styles.imgContainer} rounded-circle`}>
-                        <img src="/image/images.jpg" alt="" />
-                      </div>
-                      <div className={`d-flex flex-column gap-2`}>
-                        <h6 className={`m-0`}>Shu Hui</h6>
-                        <div className={styles.star}>
-                          <FaStar />
-                          <FaStar />
-                          <FaStar />
-                          <FaStar />
-                          <FaStar />
-                          <span className={styles.text}>2021/10/23</span>
-                        </div>
-                        <div className={styles.commentText}>
-                          <h6 className={`fw-bold`}>很開心</h6>
-                          <p className={`m-0`}>
-                            接待人員態度很親切，仔細解說、氣氛融洽、服務100分，浮潛裝備很齊全，裝口罩的防水罐很棒，有海龜在身邊共游，讓人回味無窮
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <CommentCard comment={1}/>
                   </div>
                 </div>
                 <div className={`d-none d-sm-block col-sm-1 text-center`}>
@@ -927,7 +917,8 @@ export default function Home() {
                   <div
                     className={`d-flex justify-content-between align-items-center`}
                   >
-                    <div className={`d-flex align-items-center`}>
+                  <RatingSummary />
+                    {/* <div className={`d-flex align-items-center`}>
                       <div className={`${styles.square} me-2`}>5</div>
                       <div
                         className={`d-flex flex-column justify-content-between`}
@@ -943,8 +934,9 @@ export default function Home() {
                         </div>
                         <p className={`m-0`}>999則旅客評價</p>
                       </div>
-                    </div>
-                    <select
+                    </div> */}
+                    <CommentSortSelect onSortChange={handleSortChange} defaultValue="new"/>
+                    {/* <select
                       className={`${styles.scoreSort} form-select`}
                       name="score-sort"
                       id=""
@@ -953,10 +945,15 @@ export default function Home() {
                       <option value="new">最新</option>
                       <option value="highToLow">評分由高到低</option>
                       <option value="lowToHigh">評分由低到高</option>
-                    </select>
+                    </select> */}
                   </div>
                 </div>
-                <div
+                <CommentCard comment={1}/>
+                <CommentCard comment={1}/>
+                <CommentCard comment={1}/>
+                <CommentCard comment={1}/>
+                <CommentCard comment={1}/>
+                {/* <div
                   className={`d-flex ${styles.commentCard} gap-3 activity-score ${styles.activityDescriptionBorder} py-5`}
                 >
                   <div className={`${styles.imgContainer} rounded-circle`}>
@@ -1075,7 +1072,7 @@ export default function Home() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </div> */}
                 {/* 分頁頁碼 */}
                 <div className={`d-flex justify-content-center pt-5`}>
                   <ul className={`pagination`}>

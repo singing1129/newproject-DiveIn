@@ -46,6 +46,7 @@
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",
     "particles.js": "^2.0.0",
+    "proj4": "^2.15.0",
     "rc-slider": "^11.1.8",
     "react": "^19.0.0",
     "react-calendar": "^5.1.0",
@@ -59,6 +60,7 @@
     "react-toastify": "^11.0.3",
     "rimraf": "^6.0.1",
     "sass": "^1.83.4",
+    "shapefile": "^0.6.6",
     "swiper": "^11.2.5",
     "zipcode-tw-react": "^1.2.0",
     "zxcvbn": "^4.4.2"

@@ -16,6 +16,14 @@ import zhTW from "date-fns/locale/zh-TW";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/material_blue.css";
+import "flatpickr/dist/flatpickr.min.css";
+import "../../rent/components/flatpickr.css"
+
+// 登入方式 icon
+import { AiFillGoogleSquare } from "react-icons/ai"; // Google
+import { FaLine } from "react-icons/fa"; // Line
+import { FaSquarePhone } from "react-icons/fa6"; // 手機
+import { IoMdMail } from "react-icons/io";
 
 export default function AccountForm() {
   const {
@@ -806,6 +814,58 @@ export default function AccountForm() {
     }
   }, [birthdayInputRef.current, formData.birthday]);
 
+  // 初始化 Flatpickr
+  useEffect(() => {
+    if (birthdayInputRef.current) {
+      flatpickr(birthdayInputRef.current, {
+        dateFormat: "Y年m月d日", // 日期格式
+        minDate: "today", // 限制選擇日期不能早於今天
+        locale: {
+          firstDayOfWeek: 1, // 每週的第一天是週一
+          weekdays: {
+            shorthand: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+            longhand: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+          },
+          months: {
+            shorthand: [
+              "1月",
+              "2月",
+              "3月",
+              "4月",
+              "5月",
+              "6月",
+              "7月",
+              "8月",
+              "9月",
+              "10月",
+              "11月",
+              "12月",
+            ],
+            longhand: [
+              "一月",
+              "二月",
+              "三月",
+              "四月",
+              "五月",
+              "六月",
+              "七月",
+              "八月",
+              "九月",
+              "十月",
+              "十一月",
+              "十二月",
+            ],
+          },
+        },
+        disableMobile: true, // 禁用移動設備的默認行為
+        onChange: (selectedDates, dateStr) => {
+          // 當用戶選擇日期時，更新 formData.birthday
+          setFormData((prev) => ({ ...prev, birthday: dateStr }));
+        },
+      });
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -1292,6 +1352,31 @@ export default function AccountForm() {
             </div>
           </div>
         </div>
+
+        {/* {provider === "email" && (
+            <>
+              <IoMdMail className={styles.providerIcon} />
+              <span className={styles.providerName}>電子郵件</span>
+            </>
+          )}
+          {provider === "phone" && (
+          <>
+            <FaSquarePhone className={styles.providerIcon} />
+            <span className={styles.providerName}>手機號碼</span>
+          </>
+        )}
+          {provider === "line" && (
+            <>
+              <FaLine className={styles.providerIcon} />
+              <span className={styles.providerName}>LINE</span>
+            </>
+          )}
+          {provider === "google" && (
+            <>
+              <AiFillGoogleSquare className={styles.providerIcon} />
+              <span className={styles.providerName}>Google</span>
+            </>
+          )} */}
 
         {/* 個人資訊區塊 */}
         <div className={styles.accountForm}>
