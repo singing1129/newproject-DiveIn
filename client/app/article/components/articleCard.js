@@ -2,7 +2,7 @@
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation"; // 引入 useRouter
+import { useRouter } from "next/navigation";
 import "./articleList.css";
 import axios from "axios";
 import DOMPurify from "dompurify";
@@ -16,10 +16,27 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
       ? article.img_url
       : `${backendURL}${article.img_url || "/uploads/article/no_is_main.png"}`
   );
+  const [tags, setTags] = useState([]); // 新增狀態來儲存標籤
 
   const { user } = useAuth();
-  const router = useRouter(); // 使用 useRouter
+  const router = useRouter();
   const sanitizedContent = DOMPurify.sanitize(article.content || "");
+
+  // 獲取單篇文章的標籤資料
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const res = await axios.get(`${backendURL}/api/article/${article.id}`);
+        const articleData = res.data.data;
+        setTags(articleData.tags || []); // 從單篇 API 獲取 tags
+      } catch (error) {
+        console.error(`無法獲取文章 ${article.id} 的標籤:`, error);
+        setTags([]); // 失敗時設置為空陣列
+      }
+    };
+
+    fetchTags();
+  }, [article.id]);
 
   const handleDelete = async () => {
     if (window.confirm("確定要刪除這篇文章嗎？")) {
@@ -90,18 +107,27 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
                 {article.reply_count} 則評論
               </div>
             </div>
+       
+          
             <div
               className="article-list-card-content"
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
+              <div className="article-list-card-tag">
+              {tags.map((tag, index) => (
+                <span key={index} className="tag">
+                  #{tag.trim()}
+                </span>
+              ))}
+            </div>
             <div className="article-list-card-btn">
               {isMyArticles && isAuthor && (
                 <>
                   <button
                     className="btn btn-card btn-edit"
                     onClick={(e) => {
-                      e.stopPropagation(); // 阻止事件冒泡
-                      router.push(`/article/${article.id}/update`); // 使用 router.push 導航
+                      e.stopPropagation();
+                      router.push(`/article/${article.id}/update`);
                     }}
                   >
                     編輯
