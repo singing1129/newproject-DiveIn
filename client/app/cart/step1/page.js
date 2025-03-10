@@ -8,7 +8,6 @@ import BatchActions from "../components/BatchActions";
 import CartItem from "../components/CartItem";
 import { useCart } from "@/hooks/cartContext";
 import { useAuth } from "@/hooks/useAuth";
-import BundleModal from "../components/bundleModal";
 
 export default function Cart1() {
   const router = useRouter();
@@ -42,18 +41,30 @@ export default function Cart1() {
   // 計算單個商品的小計
   const calculateItemSubtotal = (item, type) => {
     switch (type) {
+      case "product":
       case "products":
         return Number(item.price) * item.quantity;
+      case "activity":
       case "activities":
         return Number(item.price) * item.quantity;
+      case "rental":
       case "rentals":
         return Number(item.price_per_day) * item.rental_days * item.quantity;
+      case "bundle":
       case "bundles":
         return Number(item.discount_price) * item.quantity; // 添加bundle类型处理
       default:
         return 0;
     }
   };
+
+  useEffect(() => {
+    if (cartData.products?.length > 0) {
+      console.log("購物車商品數據:", cartData.products);
+    } else {
+      console.log("購物車沒有產品或產品數組為空");
+    }
+  }, [cartData.products]);
 
   // 使用 useMemo 計算所有金額
   const totals = useMemo(() => {
@@ -76,20 +87,20 @@ export default function Cart1() {
       ) || [];
 
     const productsTotal = selectedProducts.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "products"),
+      (sum, item) => sum + calculateItemSubtotal(item, "product"),
       0
     );
     const activitiesTotal = selectedActivities.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "activities"),
+      (sum, item) => sum + calculateItemSubtotal(item, "activity"),
       0
     );
     const rentalsTotal = selectedRentals.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "rentals"),
+      (sum, item) => sum + calculateItemSubtotal(item, "rental"),
       0
     );
     // 添加bundle總計計算
     const bundlesTotal = selectedBundles.reduce(
-      (sum, item) => sum + calculateItemSubtotal(item, "bundles"),
+      (sum, item) => sum + calculateItemSubtotal(item, "bundle"),
       0
     );
 
@@ -101,10 +112,10 @@ export default function Cart1() {
     );
 
     return {
-      products: productsTotal,
-      activities: activitiesTotal,
-      rentals: rentalsTotal,
-      bundles: bundlesTotal, // 添加bundles總額
+      product: productsTotal,
+      activity: activitiesTotal,
+      rental: rentalsTotal,
+      bundle: bundlesTotal, // 添加bundles總額
       depositTotal,
       subtotal: productsTotal + activitiesTotal + rentalsTotal + bundlesTotal,
       total:
@@ -170,17 +181,17 @@ export default function Cart1() {
                   />
                   <div className="card-body">
                     <BatchActions type="products" />
-                    {cartData.products.map((item) => (
+                    {cartData.products?.map((item) => (
                       <CartItem
-                        key={item.id}
+                        key={item.id || `product-${Math.random()}`}
                         item={{
                           ...item,
-                          image: "/article-5ae9687eec0d4.jpg",
-                          name: item.product_name,
-                          // 新增了stock
-                          stock: item.stock == null ? null : item.stock,
-                          color: item.color_name,
-                          size: item.size_name,
+                          image: item.image_url || "/article-5ae9687eec0d4.jpg",
+                          name: item.product_name || "未知商品",
+                          stock: item.stock === undefined ? null : item.stock,
+                          color: item.color_name || "標準",
+                          size: item.size_name || "標準",
+                          price: Number(item.price) || 0,
                         }}
                         type="products"
                       />
@@ -200,15 +211,17 @@ export default function Cart1() {
                     <BatchActions type="bundles" />
                     {cartData.bundles.map((bundle) => (
                       <CartItem
-                        key={bundle.id}
+                        key={bundle.id || `bundle-${Math.random()}`}
                         item={{
                           ...bundle,
                           image:
-                            bundle.items[0]?.image_url ||
-                            "/article-5ae9687eec0d4.jpg",
-                          name: bundle.name,
-                          price: bundle.discount_price,
-                          original_price: bundle.original_total,
+                            bundle.image_url ||
+                            (bundle.items && bundle.items[0]?.image_url
+                              ? bundle.items[0].image_url
+                              : "/article-5ae9687eec0d4.jpg"),
+                          name: bundle.name || "未知套組",
+                          price: Number(bundle.discount_price) || 0,
+                          original_price: Number(bundle.original_total) || 0,
                         }}
                         type="bundles"
                       />

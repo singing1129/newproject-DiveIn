@@ -6,6 +6,10 @@ import { useAuth } from "@/hooks/useAuth";
 export default function OrdersContent() {
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  // 控制各項目的評價視窗是否開啟，key 格式："orderId-itemId-type"
+  const [reviewWindows, setReviewWindows] = useState({});
+  // 儲存各項目評價輸入的文字內容
+  const [reviewTexts, setReviewTexts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
@@ -15,14 +19,11 @@ export default function OrdersContent() {
     fetchUserOrders();
   }, [userId]);
 
-  // 獲取用戶所有訂單的基本資訊
+  // 取得用戶所有訂單基本資訊
   const fetchUserOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `http://localhost:3005/api/order/user/${userId}`
-      );
-
+      const response = await axios.get(`http://localhost:3005/api/order/user/${userId}`);
       if (response.data.success) {
         setOrders(response.data.data);
       } else {
@@ -30,31 +31,23 @@ export default function OrdersContent() {
       }
       setLoading(false);
     } catch (err) {
-      console.error("獲取訂單資料失敗:", err);
-      setError(err.message || "獲取訂單資料時發生錯誤");
+      console.error("取得訂單資料失敗:", err);
+      setError(err.message || "取得訂單資料時發生錯誤");
       setLoading(false);
     }
   };
 
-  // 獲取特定訂單的詳細資訊
+  // 取得特定訂單詳情
   const fetchOrderDetails = async (orderId) => {
     if (expandedOrderId === orderId) {
-      // 如果已經展開，則收合
       setExpandedOrderId(null);
       return;
     }
-
     try {
-      const response = await axios.get(
-        `http://localhost:3005/api/order/${orderId}`
-      );
-
+      const response = await axios.get(`http://localhost:3005/api/order/${orderId}`);
       if (response.data.success) {
-        // 更新訂單列表中的特定訂單詳情
         const updatedOrders = orders.map((order) =>
-          order.id === orderId
-            ? { ...order, details: response.data.data }
-            : order
+          order.id === orderId ? { ...order, details: response.data.data } : order
         );
         setOrders(updatedOrders);
         setExpandedOrderId(orderId);
@@ -62,12 +55,11 @@ export default function OrdersContent() {
         throw new Error(response.data.message || "取得訂單詳情失敗");
       }
     } catch (err) {
-      console.error("獲取訂單詳情失敗:", err);
-      alert("獲取訂單詳情時發生錯誤: " + (err.message || "未知錯誤"));
+      console.error("取得訂單詳情失敗:", err);
+      alert("取得訂單詳情時發生錯誤: " + (err.message || "未知錯誤"));
     }
   };
 
-  // 根據訂單類型顯示對應的標籤
   const getTypeLabel = (type) => {
     switch (type) {
       case "product":
@@ -81,21 +73,30 @@ export default function OrdersContent() {
     }
   };
 
-  // 處理評價按鈕點擊
-  const handleRateOrder = (orderId) => {
-    // 這裡可以發送評價請求到後端或導向評價頁面
-    alert(`評價訂單 #${orderId}`);
-    // 更新訂單評價狀態
-    const updatedOrders = orders.map((order) =>
-      order.id === orderId ? { ...order, isRated: true } : order
-    );
-    setOrders(updatedOrders);
+  // 取得用於評價視窗的 key
+  const getReviewKey = (orderId, itemId, type) =>
+    `${orderId}-${itemId}-${type}`;
+
+  // 切換單一項目的評價視窗
+  const toggleReviewWindow = (orderId, itemId, type) => {
+    const key = getReviewKey(orderId, itemId, type);
+    setReviewWindows((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // 查看詳情按鈕處理
-  const handleViewDetails = (orderId) => {
-    // 可以導向詳情頁面，或者獲取並顯示詳情
-    fetchOrderDetails(orderId);
+  // 更新對應評價項目的輸入內容
+  const handleReviewTextChange = (key, value) => {
+    setReviewTexts((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // 處理提交評價
+  const handleReviewSubmit = (orderId, itemId, type) => {
+    const key = getReviewKey(orderId, itemId, type);
+    const reviewText = reviewTexts[key] || "";
+    // 這裡可調用 API 提交評論，這裡僅以 alert 示範
+    alert(`提交評論: ${reviewText} (訂單 ${orderId}, 項目 ${itemId}, 類型 ${type})`);
+    // 評論提交後，關閉視窗並清除輸入內容
+    setReviewWindows((prev) => ({ ...prev, [key]: false }));
+    setReviewTexts((prev) => ({ ...prev, [key]: "" }));
   };
 
   if (loading) {
@@ -108,20 +109,18 @@ export default function OrdersContent() {
 
   return (
     <div className={styles.ordersContent}>
-      {/* 訂單列表 */}
       <div className={styles.orderList}>
         {orders.length === 0 ? (
           <div className="text-center p-4">目前沒有訂單記錄</div>
         ) : (
           orders.map((order) => (
             <div key={order.id} className={styles.orderCard}>
-              {/* 訂單標題 - 始終顯示 */}
+              {/* 訂單標題與基本資訊 */}
               <div className={styles.orderHeader}>
                 <h3 className={styles.orderId}>
                   訂單 #{order.orderNumber || order.id}
                 </h3>
                 <p className={styles.orderStatus}>
-                  狀態: {/* 付款狀態   */}
                   {order.payment_status === "paid"
                     ? "已付款"
                     : order.status === "pending"
@@ -129,9 +128,13 @@ export default function OrdersContent() {
                     : "已取消"}
                 </p>
               </div>
+              <div className={styles.orderHeader}>
+                <p>{new Date(order.createdAt).toLocaleDateString()}</p>
+                <p>NT$ {order.total_price}</p>
+              </div>
 
-              {/* 訂單簡易資訊 - 收合時顯示 */}
-              {
+              {/* 當未展開時，顯示預覽摘要 */}
+              {expandedOrderId !== order.id && (
                 <div className={styles.orderSummary}>
                   <div className={styles.orderItem}>
                     {order.firstItem && (
@@ -143,26 +146,23 @@ export default function OrdersContent() {
                     )}
                     <div className={styles.orderDetails}>
                       <h4 className={styles.orderTitle}>
-                        {order.firstItem ? order.firstItem.name : "訂單項目"}
+                        {order.firstItem
+                          ? order.firstItem.name
+                          : "訂單項目"}
                       </h4>
-                      <p className={styles.orderDescription}>
-                        訂單金額: NT$ {order.total_price} | 日期:{" "}
-                        {new Date(order.createdAt).toLocaleDateString()} | 共{" "}
-                        {order.totalItems || "多"} 項商品 | 付款方式:{" "}
-                        {order.payment_method === "ecpay"
-                          ? "信用卡"
-                          : order.payment_method === "linepay"
-                          ? "LINE Pay"
-                          : "其他"}
-                      </p>
+                      {order.totalItems > 1 && (
+                        <p className={styles.orderDescription}>
+                          共 {order.totalItems} 項商品
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
-              }
+              )}
 
-              {/* 訂單詳細資訊 - 展開時顯示 */}
+              {/* 當展開時，顯示各區塊詳細內容（不重複預覽） */}
               {expandedOrderId === order.id && order.details && (
-                <div className={styles.orderDetails}>
+                <div className={styles.orderExpanded}>
                   {/* 商品區塊 */}
                   {order.details.items.products &&
                     order.details.items.products.length > 0 && (
@@ -173,29 +173,77 @@ export default function OrdersContent() {
                           {getTypeLabel("product")}
                         </div>
                         <div className={styles.orderItems}>
-                          {order.details.items.products.map((product) => (
-                            <div key={product.id} className={styles.orderItem}>
-                              <img
-                                src={product.image || "/placeholder.jpg"}
-                                alt={product.name}
-                                className={styles.orderImage}
-                              />
-                              <div className={styles.orderDetails}>
-                                <h4 className={styles.orderTitle}>
-                                  {product.name}
-                                </h4>
-                                <p className={styles.orderDescription}>
-                                  {product.color && product.size
-                                    ? `${product.color} / ${product.size}`
-                                    : "標準款式"}
-                                </p>
-                                <p className={styles.orderDescription}>
-                                  數量: {product.quantity} | 單價: NT${" "}
-                                  {product.price}
-                                </p>
+                          {order.details.items.products.map((product) => {
+                            const reviewKey = getReviewKey(
+                              order.id,
+                              product.id,
+                              "product"
+                            );
+                            return (
+                              <div key={product.id} className={styles.orderItem}>
+                                <img
+                                  src={product.image || "/placeholder.jpg"}
+                                  alt={product.name}
+                                  className={styles.orderImage}
+                                />
+                                <div className={styles.orderDetails}>
+                                  <h4 className={styles.orderTitle}>
+                                    {product.name}
+                                  </h4>
+                                  <p className={styles.orderDescription}>
+                                    {product.color && product.size
+                                      ? `${product.color} / ${product.size}`
+                                      : "標準款式"}
+                                  </p>
+                                  <p className={styles.orderDescription}>
+                                    數量: {product.quantity} | 單價: NT$
+                                    {product.price}
+                                  </p>
+                                  <button
+                                    className={styles.orderButton}
+                                    onClick={() =>
+                                      toggleReviewWindow(
+                                        order.id,
+                                        product.id,
+                                        "product"
+                                      )
+                                    }
+                                  >
+                                    {reviewWindows[reviewKey]
+                                      ? "取消評價"
+                                      : "評價"}
+                                  </button>
+                                  {reviewWindows[reviewKey] && (
+                                    <div className={styles.reviewWindow}>
+                                      <textarea
+                                        className={styles.reviewTextarea}
+                                        placeholder="請輸入評論"
+                                        value={reviewTexts[reviewKey] || ""}
+                                        onChange={(e) =>
+                                          handleReviewTextChange(
+                                            reviewKey,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
+                                      <button
+                                        className={styles.orderButton}
+                                        onClick={() =>
+                                          handleReviewSubmit(
+                                            order.id,
+                                            product.id,
+                                            "product"
+                                          )
+                                        }
+                                      >
+                                        提交評論
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -204,31 +252,81 @@ export default function OrdersContent() {
                   {order.details.items.activities &&
                     order.details.items.activities.length > 0 && (
                       <div className={styles.orderSection}>
-                        <div className={`${styles.orderType} ${styles.events}`}>
+                        <div
+                          className={`${styles.orderType} ${styles.events}`}
+                        >
                           {getTypeLabel("activity")}
                         </div>
                         <div className={styles.orderItems}>
-                          {order.details.items.activities.map((activity) => (
-                            <div key={activity.id} className={styles.orderItem}>
-                              <img
-                                src={activity.image || "/placeholder.jpg"}
-                                alt={activity.name}
-                                className={styles.orderImage}
-                              />
-                              <div className={styles.orderDetails}>
-                                <h4 className={styles.orderTitle}>
-                                  {activity.name}
-                                </h4>
-                                <p className={styles.orderDescription}>
-                                  {activity.projectName}
-                                </p>
-                                <p className={styles.orderDescription}>
-                                  日期: {activity.date} | 時間: {activity.time}{" "}
-                                  | 人數: {activity.quantity}
-                                </p>
+                          {order.details.items.activities.map((activity) => {
+                            const reviewKey = getReviewKey(
+                              order.id,
+                              activity.id,
+                              "activity"
+                            );
+                            return (
+                              <div key={activity.id} className={styles.orderItem}>
+                                <img
+                                  src={activity.image || "/placeholder.jpg"}
+                                  alt={activity.name}
+                                  className={styles.orderImage}
+                                />
+                                <div className={styles.orderDetails}>
+                                  <h4 className={styles.orderTitle}>
+                                    {activity.name}
+                                  </h4>
+                                  <p className={styles.orderDescription}>
+                                    {activity.projectName}
+                                  </p>
+                                  <p className={styles.orderDescription}>
+                                    日期: {activity.date} | 時間: {activity.time} | 人數:{" "}
+                                    {activity.quantity}
+                                  </p>
+                                  <button
+                                    className={styles.orderButton}
+                                    onClick={() =>
+                                      toggleReviewWindow(
+                                        order.id,
+                                        activity.id,
+                                        "activity"
+                                      )
+                                    }
+                                  >
+                                    {reviewWindows[reviewKey]
+                                      ? "取消評價"
+                                      : "評價"}
+                                  </button>
+                                  {reviewWindows[reviewKey] && (
+                                    <div className={styles.reviewWindow}>
+                                      <textarea
+                                        className={styles.reviewTextarea}
+                                        placeholder="請輸入評論"
+                                        value={reviewTexts[reviewKey] || ""}
+                                        onChange={(e) =>
+                                          handleReviewTextChange(
+                                            reviewKey,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
+                                      <button
+                                        className={styles.orderButton}
+                                        onClick={() =>
+                                          handleReviewSubmit(
+                                            order.id,
+                                            activity.id,
+                                            "activity"
+                                          )
+                                        }
+                                      >
+                                        提交評論
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -243,57 +341,88 @@ export default function OrdersContent() {
                           {getTypeLabel("rental")}
                         </div>
                         <div className={styles.orderItems}>
-                          {order.details.items.rentals.map((rental) => (
-                            <div key={rental.id} className={styles.orderItem}>
-                              <img
-                                src={rental.image || "/placeholder.jpg"}
-                                alt={rental.name}
-                                className={styles.orderImage}
-                              />
-                              <div className={styles.orderDetails}>
-                                <h4 className={styles.orderTitle}>
-                                  {rental.name}
-                                </h4>
-                                <p className={styles.orderDescription}>
-                                  租借期間: {rental.startDate} 至{" "}
-                                  {rental.endDate}
-                                </p>
-                                <p className={styles.orderDescription}>
-                                  數量: {rental.quantity} | 租金: NT${" "}
-                                  {rental.rentalFee} | 押金: NT${" "}
-                                  {rental.deposit}
-                                </p>
+                          {order.details.items.rentals.map((rental) => {
+                            const reviewKey = getReviewKey(
+                              order.id,
+                              rental.id,
+                              "rental"
+                            );
+                            return (
+                              <div key={rental.id} className={styles.orderItem}>
+                                <img
+                                  src={rental.image || "/placeholder.jpg"}
+                                  alt={rental.name}
+                                  className={styles.orderImage}
+                                />
+                                <div className={styles.orderDetails}>
+                                  <h4 className={styles.orderTitle}>
+                                    {rental.name}
+                                  </h4>
+                                  <p className={styles.orderDescription}>
+                                    租借期間: {rental.startDate} 至 {rental.endDate}
+                                  </p>
+                                  <p className={styles.orderDescription}>
+                                    數量: {rental.quantity} | 租金: NT$ {rental.rentalFee} | 押金: NT$ {rental.deposit}
+                                  </p>
+                                  <button
+                                    className={styles.orderButton}
+                                    onClick={() =>
+                                      toggleReviewWindow(
+                                        order.id,
+                                        rental.id,
+                                        "rental"
+                                      )
+                                    }
+                                  >
+                                    {reviewWindows[reviewKey]
+                                      ? "取消評價"
+                                      : "評價"}
+                                  </button>
+                                  {reviewWindows[reviewKey] && (
+                                    <div className={styles.reviewWindow}>
+                                      <textarea
+                                        className={styles.reviewTextarea}
+                                        placeholder="請輸入評論"
+                                        value={reviewTexts[reviewKey] || ""}
+                                        onChange={(e) =>
+                                          handleReviewTextChange(
+                                            reviewKey,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
+                                      <button
+                                        className={styles.orderButton}
+                                        onClick={() =>
+                                          handleReviewSubmit(
+                                            order.id,
+                                            rental.id,
+                                            "rental"
+                                          )
+                                        }
+                                      >
+                                        提交評論
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                 </div>
               )}
 
-              {/* 下方按鈕 */}
+              {/* 切換展開/收合 */}
               <div className={styles.buttonGroup}>
                 <button
                   className={styles.orderButton}
-                  onClick={() => handleViewDetails(order.id)}
+                  onClick={() => fetchOrderDetails(order.id)}
                 >
                   {expandedOrderId === order.id ? "收合" : "查看詳情"}
                 </button>
-                <div className={styles.tooltipContainer}>
-                  <button
-                    className={`${styles.orderButton} ${
-                      order.isRated ? styles.disabledButton : ""
-                    }`}
-                    onClick={() => handleRateOrder(order.id)}
-                    disabled={order.isRated}
-                  >
-                    {order.isRated ? "已評價" : "評價訂單"}
-                  </button>
-                  {!order.isRated && (
-                    <span className={styles.tooltipText}>評價可得點數！</span>
-                  )}
-                </div>
               </div>
             </div>
           ))

@@ -31,7 +31,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
-  const { addToCart, fetchCart } = useCart();
+  const { addToCart } = useCart();
   const {
     isFavorite,
     toggleFavorite,
@@ -61,7 +61,9 @@ export default function ProductDetail() {
         id: product.id,
         name: product.name,
         price: product.variants[0].price,
-        image: `/img/product/${product.main_image}`,
+        image: product.main_image
+          ? `/image/product/${product.main_image}`
+          : "/image/product/no-img.png",
       },
       ...storedHistory.filter((item) => item.id !== product.id),
     ].slice(0, 10); // 限制只保留最近 10 筆
@@ -77,14 +79,53 @@ export default function ProductDetail() {
     }
   }, [selectedColor, selectedSize]);
 
-  // 取得當前選擇的變體
-  const getCurrentVariant = () => {
-    if (!product || !selectedColor || !selectedSize) return null;
+  // 範例：改寫 getCurrentVariant
+const getCurrentVariant = () => {
+  if (!product) return null;
+
+  // 如果既沒有顏色也沒有尺寸，就直接回傳唯一或第一個變體
+  if (
+    (!product.colors || product.colors.length === 0) &&
+    (!product.sizes || product.sizes.length === 0) &&
+    product.variants &&
+    product.variants.length > 0
+  ) {
+    return product.variants[0];
+  }
+
+  // 如果只有顏色，沒有尺寸
+  if (product.colors && product.colors.length > 0 && product.sizes.length === 0) {
+    // user 必須選了顏色之後才找得到
+    if (!selectedColor) return null;
+
+    // 只靠 color_id 來找
+    return product.variants.find((v) => v.color_id === selectedColor.id);
+  }
+
+  // 如果只有尺寸，沒有顏色
+  if (product.sizes && product.sizes.length > 0 && product.colors.length === 0) {
+    if (!selectedSize) return null;
+
+    return product.variants.find((v) => v.size_id === selectedSize.id);
+  }
+
+  // 如果既有顏色又有尺寸
+  if (
+    product.colors &&
+    product.colors.length > 0 &&
+    product.sizes &&
+    product.sizes.length > 0
+  ) {
+    if (!selectedColor || !selectedSize) return null;
 
     return product.variants.find(
       (v) => v.color_id === selectedColor.id && v.size_id === selectedSize.id
     );
-  };
+  }
+
+  return null; 
+};
+
 
   // 處理數量變更
   const handleQuantityChange = (value) => {
@@ -104,10 +145,21 @@ export default function ProductDetail() {
     });
   };
 
-  // 加入購物車
+  // 修改加入購物車函數
   const handleAddToCart = async () => {
-    if (!selectedColor || !selectedSize) {
-      alert("請選擇商品尺寸和顏色");
+    // 檢查是否有顏色和尺寸選項
+    const hasColors = product.colors && product.colors.length > 0;
+    const hasSizes = product.sizes && product.sizes.length > 0;
+
+    // 根據實際情況檢查是否選擇了必要的選項
+    if ((hasColors && !selectedColor) || (hasSizes && !selectedSize)) {
+      alert(
+        hasColors && hasSizes
+          ? "請選擇商品尺寸和顏色"
+          : hasColors
+          ? "請選擇商品顏色"
+          : "請選擇商品尺寸"
+      );
       return;
     }
 
@@ -136,66 +188,180 @@ export default function ProductDetail() {
     }
   };
 
-  // 修改尺寸選擇的處理
+  // 修改 handleSizeSelect 函數以處理沒有顏色的情況
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
     setQuantity(1);
 
+    let variant;
     if (selectedColor) {
-      const variant = product.variants.find(
+      variant = product.variants.find(
         (v) => v.color_id === selectedColor.id && v.size_id === size.id
       );
-      if (variant) {
-        setCurrentPrice(variant.price);
-        setCurrentOriginalPrice(variant.original_price);
-        setCurrentStock(variant.stock);
+    } else {
+      variant = product.variants.find((v) => v.size_id === size.id);
+    }
 
-        // 如果變體有圖片，切換到對應圖片
-        if (variant.images?.[0]) {
-          const imageIndex = allImages.findIndex(
-            (img) => img === variant.images[0]
-          );
-          if (imageIndex !== -1 && mainSwiperRef.current) {
-            mainSwiperRef.current.slideTo(imageIndex);
-            if (thumbsSwiper) {
-              thumbsSwiper.slideTo(imageIndex);
-            }
+    if (variant) {
+      setCurrentPrice(variant.price);
+      setCurrentOriginalPrice(variant.original_price);
+      setCurrentStock(variant.stock);
+
+      // 如果變體有圖片，切換到對應圖片
+      if (variant.images && variant.images.length > 0) {
+        const imageIndex = allImages.findIndex(
+          (img) => img === variant.images[0]
+        );
+        if (imageIndex !== -1 && mainSwiperRef.current) {
+          mainSwiperRef.current.slideTo(imageIndex);
+          if (thumbsSwiper) {
+            thumbsSwiper.slideTo(imageIndex);
           }
         }
       }
     }
   };
-
   // 修改顏色選擇的處理
+  // const handleColorSelect = (color) => {
+  //   setSelectedColor(color);
+  //   setQuantity(1);
+
+  //   if (selectedSize) {
+  //     const variant = product.variants.find(
+  //       (v) => v.color_id === color.id && v.size_id === selectedSize.id
+  //     );
+  //     if (variant) {
+  //       setCurrentPrice(variant.price);
+  //       setCurrentOriginalPrice(variant.original_price);
+  //       setCurrentStock(variant.stock);
+
+  //       // 如果變體有圖片，切換到對應圖片
+  //       if (variant.images?.[0]) {
+  //         const imageIndex = allImages.findIndex(
+  //           (img) => img === variant.images[0]
+  //         );
+  //         if (imageIndex !== -1 && mainSwiperRef.current) {
+  //           mainSwiperRef.current.slideTo(imageIndex);
+  //           if (thumbsSwiper) {
+  //             thumbsSwiper.slideTo(imageIndex);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // };
+  // 修改 handleColorSelect 函數以處理沒有尺寸的情況
   const handleColorSelect = (color) => {
     setSelectedColor(color);
     setQuantity(1);
 
+    let variant;
     if (selectedSize) {
-      const variant = product.variants.find(
+      variant = product.variants.find(
         (v) => v.color_id === color.id && v.size_id === selectedSize.id
       );
-      if (variant) {
-        setCurrentPrice(variant.price);
-        setCurrentOriginalPrice(variant.original_price);
-        setCurrentStock(variant.stock);
+    } else {
+      variant = product.variants.find((v) => v.color_id === color.id);
+    }
 
-        // 如果變體有圖片，切換到對應圖片
-        if (variant.images?.[0]) {
-          const imageIndex = allImages.findIndex(
-            (img) => img === variant.images[0]
-          );
-          if (imageIndex !== -1 && mainSwiperRef.current) {
-            mainSwiperRef.current.slideTo(imageIndex);
-            if (thumbsSwiper) {
-              thumbsSwiper.slideTo(imageIndex);
-            }
+    if (variant) {
+      setCurrentPrice(variant.price);
+      setCurrentOriginalPrice(variant.original_price);
+      setCurrentStock(variant.stock);
+
+      // 如果變體有圖片，切換到對應圖片
+      if (variant.images && variant.images.length > 0) {
+        const imageIndex = allImages.findIndex(
+          (img) => img === variant.images[0]
+        );
+        if (imageIndex !== -1 && mainSwiperRef.current) {
+          mainSwiperRef.current.slideTo(imageIndex);
+          if (thumbsSwiper) {
+            thumbsSwiper.slideTo(imageIndex);
           }
         }
       }
     }
   };
+  // useEffect(() => {
+  //   const fetchProduct = async () => {
+  //     try {
+  //       const productId = Number(params.id);
+  //       if (!productId) {
+  //         setError("無效的商品 ID");
+  //         return;
+  //       }
 
+  //       const response = await axios.get(
+  //         `${API_BASE_URL}/products/${productId}`
+  //       );
+
+  //       if (response.data.status === "success" && response.data.data) {
+  //         const productData = response.data.data;
+  //         console.log("現在測試", productData);
+
+  //         // 收集所有變體的圖片
+  //         const variantImages = productData.variants.flatMap(
+  //           (variant) => variant.images || []
+  //         );
+  //         // 合併主圖片和變體圖片
+  //         const images = [...productData.images, ...variantImages];
+
+  //         setAllImages(images);
+  //         console.log("images", images);
+  //         setProduct(productData);
+
+  //         // 但是也會有商品沒有尺寸和顏色的時候啊
+  //         // 設置初始選中的尺寸和顏色
+  //         if (productData.sizes?.length > 0 && productData.colors?.length > 0) {
+  //           const initialSize = productData.sizes[0];
+  //           const initialColor = productData.colors[0];
+
+  //           setSelectedSize(initialSize);
+  //           setSelectedColor(initialColor);
+
+  //           // 找到對應的變體
+  //           const initialVariant = productData.variants.find(
+  //             (v) =>
+  //               v.color_id === initialColor.id && v.size_id === initialSize.id
+  //           );
+
+  //           if (initialVariant) {
+  //             setCurrentPrice(initialVariant.price);
+  //             setCurrentOriginalPrice(initialVariant.original_price);
+  //             setCurrentStock(initialVariant.stock);
+
+  //             // 如果初始變體有圖片，設置初始圖片位置
+  //             if (initialVariant.images?.[0]) {
+  //               const imageIndex = images.findIndex(
+  //                 (img) => img === initialVariant.images[0]
+  //               );
+  //               // 等待 Swiper 初始化完成後再設置位置
+  //               setTimeout(() => {
+  //                 if (imageIndex !== -1 && mainSwiperRef.current) {
+  //                   mainSwiperRef.current.slideTo(imageIndex);
+  //                   if (thumbsSwiper) {
+  //                     thumbsSwiper.slideTo(imageIndex);
+  //                   }
+  //                 }
+  //               }, 100);
+  //             }
+  //           }
+  //         }
+  //       } else {
+  //         setError("找不到商品");
+  //       }
+  //     } catch (err) {
+  //       console.error("獲取商品詳情失敗:", err);
+  //       setError(err.response?.data?.message || "商品獲取失敗");
+  //     }
+  //   };
+
+  //   if (params.id) {
+  //     fetchProduct();
+  //   }
+  // }, [params.id]);
+  // Modify the useEffect that fetches the product data
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -211,51 +377,83 @@ export default function ProductDetail() {
 
         if (response.data.status === "success" && response.data.data) {
           const productData = response.data.data;
+          console.log("現在測試", productData);
 
           // 收集所有變體的圖片
           const variantImages = productData.variants.flatMap(
             (variant) => variant.images || []
           );
           // 合併主圖片和變體圖片
-          const images = [...productData.images, ...variantImages];
+          const images = [...(productData.images || []), ...variantImages];
+
+          if (images.length === 0) {
+            // 如果沒有圖片，增加一個預設圖片路徑
+            images.push("no-img.png");
+          }
 
           setAllImages(images);
+          console.log("images", images);
           setProduct(productData);
 
-          // 設置初始選中的尺寸和顏色
-          if (productData.sizes?.length > 0 && productData.colors?.length > 0) {
-            const initialSize = productData.sizes[0];
+          // 檢查是否有顏色和尺寸
+          const hasColors = productData.colors && productData.colors.length > 0;
+          const hasSizes = productData.sizes && productData.sizes.length > 0;
+
+          // 設置初始選中的尺寸和顏色 (如果有的話)
+          if (hasColors) {
             const initialColor = productData.colors[0];
-
-            setSelectedSize(initialSize);
             setSelectedColor(initialColor);
+          }
 
-            // 找到對應的變體
-            const initialVariant = productData.variants.find(
+          if (hasSizes) {
+            const initialSize = productData.sizes[0];
+            setSelectedSize(initialSize);
+          }
+
+          // 找到對應的變體
+          let initialVariant;
+
+          if (hasColors && hasSizes) {
+            // 如果既有顏色又有尺寸
+            initialVariant = productData.variants.find(
               (v) =>
-                v.color_id === initialColor.id && v.size_id === initialSize.id
+                v.color_id === productData.colors[0].id &&
+                v.size_id === productData.sizes[0].id
             );
+          } else if (hasColors) {
+            // 如果只有顏色
+            initialVariant = productData.variants.find(
+              (v) => v.color_id === productData.colors[0].id
+            );
+          } else if (hasSizes) {
+            // 如果只有尺寸
+            initialVariant = productData.variants.find(
+              (v) => v.size_id === productData.sizes[0].id
+            );
+          } else {
+            // 如果既沒有顏色也沒有尺寸，選擇第一個變體
+            initialVariant = productData.variants[0];
+          }
 
-            if (initialVariant) {
-              setCurrentPrice(initialVariant.price);
-              setCurrentOriginalPrice(initialVariant.original_price);
-              setCurrentStock(initialVariant.stock);
+          if (initialVariant) {
+            setCurrentPrice(initialVariant.price);
+            setCurrentOriginalPrice(initialVariant.original_price);
+            setCurrentStock(initialVariant.stock);
 
-              // 如果初始變體有圖片，設置初始圖片位置
-              if (initialVariant.images?.[0]) {
-                const imageIndex = images.findIndex(
-                  (img) => img === initialVariant.images[0]
-                );
-                // 等待 Swiper 初始化完成後再設置位置
-                setTimeout(() => {
-                  if (imageIndex !== -1 && mainSwiperRef.current) {
-                    mainSwiperRef.current.slideTo(imageIndex);
-                    if (thumbsSwiper) {
-                      thumbsSwiper.slideTo(imageIndex);
-                    }
+            // 如果初始變體有圖片，設置初始圖片位置
+            if (initialVariant.images && initialVariant.images.length > 0) {
+              const imageIndex = images.findIndex(
+                (img) => img === initialVariant.images[0]
+              );
+              // 等待 Swiper 初始化完成後再設置位置
+              setTimeout(() => {
+                if (imageIndex !== -1 && mainSwiperRef.current) {
+                  mainSwiperRef.current.slideTo(imageIndex);
+                  if (thumbsSwiper) {
+                    thumbsSwiper.slideTo(imageIndex);
                   }
-                }, 100);
-              }
+                }
+              }, 100);
             }
           }
         } else {
@@ -271,7 +469,6 @@ export default function ProductDetail() {
       fetchProduct();
     }
   }, [params.id]);
-
   return (
     <div className="container">
       {error && <div className="alert alert-danger">{error}</div>}
@@ -297,7 +494,10 @@ export default function ProductDetail() {
                     <SwiperSlide key={index}>
                       <div className="product-img-wrapper">
                         <Image
-                          src={`/img/product/${image}`}
+                          src={
+                            `/image/product/${image}` ||
+                            "/image/product/no-img.png"
+                          }
                           alt={`${product?.name}-${index + 1}`}
                           width={500}
                           height={500}
@@ -327,7 +527,11 @@ export default function ProductDetail() {
                     <SwiperSlide key={index}>
                       <div className="thumb-wrapper">
                         <Image
-                          src={`/img/product/${image}`}
+                          src={
+                            image
+                              ? `/image/product/${image}`
+                              : "/image/product/no-img.png"
+                          }
                           alt={`${product?.name}-${index + 1}`}
                           width={100}
                           height={100}
@@ -393,51 +597,64 @@ export default function ProductDetail() {
 
                 <div>{product.description}</div>
 
-                {/* 尺寸選擇 */}
-                <div className="my-2">產品尺寸</div>
-                <div className="d-flex gap-2">
-                  {product.sizes?.map((size) => (
-                    <div
-                      key={size.id}
-                      className={`sizeBox ${
-                        selectedSize?.id === size.id ? "active" : ""
-                      }`}
-                      onClick={() => handleSizeSelect(size)}
-                    >
-                      {size.name}
+                {/* 尺寸選擇 - 只在有尺寸時顯示 */}
+                {product.sizes && product.sizes.length > 0 && (
+                  <>
+                    <div className="my-2">產品尺寸</div>
+                    <div className="d-flex gap-2">
+                      {product.sizes.map((size) => (
+                        <div
+                          key={size.id}
+                          className={`sizeBox ${
+                            selectedSize?.id === size.id ? "active" : ""
+                          }`}
+                          onClick={() => handleSizeSelect(size)}
+                        >
+                          {size.name}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
 
-                {/* 顏色選擇 */}
-                <div className="my-2">
-                  產品顏色 :::{" "}
-                  <span style={{ color: selectedColor?.code }}>
-                    {selectedColor?.name}
-                  </span>
-                </div>
-                <div className="d-flex gap-2 flex-wrap">
-                  {product.colors?.map((color) => (
-                    <div
-                      key={color.id}
-                      className={`circle ${
-                        selectedColor?.id === color.id ? "active" : ""
-                      }`}
-                      style={{
-                        backgroundColor: color.code,
-                        border: `2px solid ${
-                          selectedColor?.id === color.id ? "#007bff" : "#dee2e6"
-                        }`,
-                      }}
-                      onClick={() => handleColorSelect(color)}
-                      title={color.name}
-                    >
-                      {selectedColor?.id === color.id && (
-                        <div className="check-mark">✓</div>
+                {/* 顏色選擇 - 只在有顏色時顯示 */}
+                {product.colors && product.colors.length > 0 && (
+                  <>
+                    <div className="my-2">
+                      產品顏色
+                      {selectedColor && (
+                        <span style={{ color: selectedColor.code }}>
+                          {" ::: "}
+                          {selectedColor.name}
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
+                    <div className="d-flex gap-2 flex-wrap">
+                      {product.colors.map((color) => (
+                        <div
+                          key={color.id}
+                          className={`circle ${
+                            selectedColor?.id === color.id ? "active" : ""
+                          }`}
+                          style={{
+                            backgroundColor: color.code,
+                            border: `2px solid ${
+                              selectedColor?.id === color.id
+                                ? "#007bff"
+                                : "#dee2e6"
+                            }`,
+                          }}
+                          onClick={() => handleColorSelect(color)}
+                          title={color.name}
+                        >
+                          {selectedColor?.id === color.id && (
+                            <div className="check-mark">✓</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {/* 數量選擇 */}
                 <div className="my-2">
@@ -471,12 +688,15 @@ export default function ProductDetail() {
                   </button>
                 </div>
 
-                {/* 購買按鈕 */}
+                {/* 購買按鈕 - 更新按鈕禁用邏輯 */}
                 <div className="d-flex mt-4">
                   <button
                     onClick={handleAddToCart}
                     className="btn btn-info addCartButton flex-grow-1"
-                    disabled={!selectedColor || !selectedSize}
+                    disabled={
+                      (product.colors?.length > 0 && !selectedColor) ||
+                      (product.sizes?.length > 0 && !selectedSize)
+                    }
                   >
                     加入購物車
                   </button>

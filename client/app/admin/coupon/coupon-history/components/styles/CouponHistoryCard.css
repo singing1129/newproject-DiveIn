@@ -156,15 +156,6 @@
     color: var(--white-color) !important;
 }
 
-.coupon-max {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  color: var(--primary-color);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .coupon-code {
   font-size: 12px;
 }

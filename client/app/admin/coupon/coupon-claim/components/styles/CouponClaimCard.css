@@ -28,8 +28,8 @@
 .coupon-card {
     border: 1px solid;                         /* 邊框樣式與寬度 */
     border-color: var(--light-gray-color);      /* 邊框顏色使用全域變數 */
-    border-radius: 5px;                         /* 卡片圓角 */
-    height: 9rem;                            /* 固定卡片高度*/
+    border-radius: 5px !important;                         /* 卡片圓角 */
+    height: 10rem !important;                            /* 固定卡片高度*/
     display: flex;                              /* Flex 排版 */
     align-items: center;                        /* 垂直置中 */
     background: #fff;                           /* 背景顏色：白色 */
@@ -43,13 +43,13 @@
 */
 .coupon-image {
     position: relative;                         /* 相對定位，方便內部圖片定位 */
-    width: 9rem;                              /* 固定寬度 */
-    height: 9rem;                               /* 高度填滿父容器 */
+    width: 10rem !important;                              /* 固定寬度 */
+    height: 10rem !important;                               /* 高度填滿父容器 */
     object-fit: cover;                          /* 圖片覆蓋容器且保持比例 */
 }
 
 .coupon-image img {
-  border-radius: 5px 0 0 5px;                  /* 左側圓角 */
+  border-radius: 5px 0 0 5px !important;                  /* 左側圓角 */
 }
 /* 
   優惠券資訊內容區設定：

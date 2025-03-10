@@ -3,13 +3,16 @@ import { useState, useEffect } from "react";
 import styles from "./Favorites.module.css";
 import axios from "axios";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import useFavorite from "@/hooks/useFavorite";
 import Link from "next/link";
 import useToast from "@/hooks/useToast";
 import { useAuth } from "@/hooks/useAuth";
 
 // 創建一個獨立的商品卡片組件
 const FavoriteCard = ({ item, itemType, onRemove }) => {
+  const { getToken } = useAuth(); // 從 useAuth 取得 token 方法
+  const { showToast } = useToast();
+  const [removed, setRemoved] = useState(false);
+
   // 根據不同類型獲取正確的 ID
   const getItemId = () => {
     switch (itemType) {
@@ -27,16 +30,14 @@ const FavoriteCard = ({ item, itemType, onRemove }) => {
   };
 
   const itemId = getItemId();
-  const { showToast } = useToast();
-  const [removed, setRemoved] = useState(false);
 
-  // 直接使用 axios 來處理收藏移除，而不是使用 useFavorite
+  // 使用 useAuth 的 getToken() 來取得 token
   const handleRemoveFavorite = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     try {
-      const token = localStorage.getItem("loginWithToken");
+      const token = getToken();
       if (!token) return;
 
       const response = await axios.post(
@@ -86,7 +87,7 @@ const FavoriteCard = ({ item, itemType, onRemove }) => {
       case "bundle":
         return item.image_url;
       default:
-        return "/default-image.jpg";
+        return "/image/product/default.jpg";
     }
   };
 
@@ -96,9 +97,9 @@ const FavoriteCard = ({ item, itemType, onRemove }) => {
       case "product":
         return `/products/${item.product_id}`;
       case "bundle":
-        return `/products/bundle/${item.bundle_id}`;
+        return `/products/${item.bundle_id}`;
       case "rental":
-        return `/rental/${item.rental_id}`;
+        return `/rent/${item.rental_id}`;
       case "activity":
         return `/activity/${item.activity_id}`;
       default:
@@ -139,18 +140,17 @@ export default function FavoritesContent() {
     rental: [],
     bundle: [],
   });
-  const { user } = useAuth();
-
+  const { user, getToken } = useAuth(); // 從 useAuth 同時取得 user 與 getToken
+  console.log("favorites", favorites);
   useEffect(() => {
     if (user && user !== -1) {
       fetchFavorites();
     }
   }, [user]);
 
-  const token = localStorage.getItem("loginWithToken");
-
   const fetchFavorites = async () => {
     try {
+      const token = getToken();
       const response = await axios.get("http://localhost:3005/api/favorites", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -159,6 +159,7 @@ export default function FavoritesContent() {
 
       if (response.data.success) {
         setFavorites(response.data.data);
+        console.log("response.data.data", response.data.data);
       }
     } catch (error) {
       console.error("取得收藏資料失敗:", error);

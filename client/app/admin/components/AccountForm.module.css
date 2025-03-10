@@ -114,6 +114,22 @@
   display: none; /* 隱藏文件輸入框 */
 }
 
+
+.providersSection h3 {
+  font-size: 16px;
+  color: var(--gray-600-color);
+}
+
+.providerIcon {
+  font-size: 16px;
+  color: var(--primary-color);
+}
+
+.providerName {
+  font-size: 16px;
+  color: var(--gray-600-color);
+}
+
 /* 個人資訊區塊 */
 .accountForm {
   flex: 2; /* 佔 2 份 */
@@ -145,6 +161,23 @@
 .formGroup input:focus {
   border-color: var(--primary-color);
   outline: none;
+}
+
+
+/* 修改密碼 */
+.changePasswordLink {
+  background: none;
+  border: none;
+  color: var(--primary-color); 
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.changePasswordLink:hover {
+  color: var(--primary-deep-color);
 }
 
 .buttonGroup {
@@ -192,3 +225,133 @@
 }
 
 /* 魚博彥新家 */
+.providerList {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.providerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: var(--gray-50-color);
+  border-radius: 5px;
+}
+
+.removeProviderBtn {
+  background-color: transparent;
+  color: var(--gray-700-color);
+  border: none;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.removeProviderBtn:hover {
+  background-color: var(--gray-300-color);
+  color: var(--gray-900-color);
+}
+
+.warningHint {
+  font-size: 0.85rem;
+  color: #c97336;
+  font-weight: normal;
+}
+
+.readonlyHint {
+  font-size: 0.85rem;
+  color: var(--gray-600-color);
+  font-weight: normal;
+}
+
+.addProviderSection {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.addProviderButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.addGoogleBtn,
+.addLineBtn,
+.addPhoneBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--gray-300-color);
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.addGoogleBtn:hover,
+.addLineBtn:hover,
+.addPhoneBtn:hover {
+  background-color: var(--gray-100-color);
+  transform: translateY(-2px);
+}
+
+.addGoogleBtn img,
+.addLineBtn img,
+.addPhoneBtn img {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.primaryBtn {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.secondaryBtn {
+  background-color: var(--gray-300-color);
+  color: var(--gray-800-color);
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

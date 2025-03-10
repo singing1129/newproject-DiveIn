@@ -4,76 +4,49 @@ import axios from "axios";
 import useToast from "@/hooks/useToast";
 import { useAuth } from "@/hooks/useAuth";
 
-// 用於儲存全局收藏狀態
+// 用於儲存全局收藏狀態，直接以單數作為 key
 const favoriteStore = {
-  products: new Set(),
-  activities: new Set(),
-  rentals: new Set(),
-  bundles: new Set(),
+  product: new Set(),
+  activity: new Set(),
+  rental: new Set(),
+  bundle: new Set(),
   listeners: new Set(),
+  initialized: false,
 
-  // 通知所有監聽器
   notify() {
     this.listeners.forEach((listener) => listener());
   },
 
-  // 更新收藏狀態
   updateFavorites(type, ids, action = "add") {
-    // 確保使用正確的 key
-    const storeKey = this.getStoreKey(type);
     if (action === "add") {
-      ids.forEach((id) => this[storeKey].add(id));
+      ids.forEach((id) => this[type].add(Number(id)));
     } else {
-      ids.forEach((id) => this[storeKey].delete(id));
+      ids.forEach((id) => this[type].delete(Number(id)));
     }
     this.notify();
   },
 
-  // 設置初始收藏
   setInitialFavorites(type, ids) {
-    const storeKey = this.getStoreKey(type);
-    this[storeKey] = new Set(ids);
+    this[type] = new Set(ids.map((id) => Number(id)));
     this.notify();
   },
 
-  // 檢查是否已收藏
   isFavorite(type, id) {
-    const storeKey = this.getStoreKey(type);
-    return this[storeKey] instanceof Set && this[storeKey].has(id);
-  },
-
-  // 獲取正確的存儲 key
-  getStoreKey(type) {
-    // 如果已經是複數形式，直接返回
-    if (type.endsWith("s")) {
-      return type;
-    }
-    // 否則加上 s
-    return `${type}s`;
-  },
-
-  // 轉換為後端需要的格式（單數形式）
-  getBackendType(type) {
-    // 如果是複數形式，移除最後的 s
-    if (type.endsWith("s")) {
-      return type.slice(0, -1);
-    }
-    return type;
+    return this[type] instanceof Set && this[type].has(Number(id));
   },
 };
 
-// type 可以是 'product'/'products', 'activity'/'activities', 或 'rental'/'rentals' 或 'bundle'/'bundles'
-export default function useFavorite(itemId, type = "products", options = {}) {
+export default function useFavorite(itemId, type = "product", options = {}) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { showToast } = useToast();
   const { user } = useAuth();
-  const { disableToast = false } = options; // 設置默認值為false
+  const { disableToast = false } = options;
 
   const API_BASE_URL = "http://localhost:3005/api/favorites";
 
-  // 獲取token
+  // 獲取 token
   const getToken = useCallback(() => {
     return localStorage.getItem("loginWithToken");
   }, []);
@@ -81,39 +54,37 @@ export default function useFavorite(itemId, type = "products", options = {}) {
   // 檢查收藏狀態
   const checkFavoriteStatus = useCallback(() => {
     if (itemId) {
-      setIsFavorite(favoriteStore.isFavorite(type, itemId));
+      const isItemFavorite = favoriteStore.isFavorite(type, itemId);
+      setIsFavorite(isItemFavorite);
     }
   }, [itemId, type]);
 
   // 檢查用戶是否已登入
   const isUserLoggedIn = useCallback(() => {
-    return user && user !== -1; // user不為null且不為-1(初始值)
+    return user && user !== -1;
   }, [user]);
 
   // 初始化收藏狀態
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        // 如果已經登入
         if (isUserLoggedIn()) {
           const token = getToken();
           if (token) {
             const response = await axios.get(API_BASE_URL, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             });
 
             if (response.data.success) {
-              // 更新全局收藏狀態
+              // 假設後端回傳的資料格式為 { product: [...], activity: [...], ... }
               Object.keys(response.data.data).forEach((key) => {
                 const items = response.data.data[key];
-                const ids = items.map((item) => {
-                  // 確保使用正確的的ID字段
-                  return item[`${key.slice(0, -1)}_id`]; // 例如：products -> product_id
-                });
+                // 取出單數 key 對應的 id 欄位，例如 key 為 "product"，則欄位名稱為 "product_id"
+                const ids = items.map((item) => Number(item[`${key}_id`]));
                 favoriteStore.setInitialFavorites(key, ids);
               });
+              favoriteStore.initialized = true;
+              checkFavoriteStatus();
             }
           }
         }
@@ -122,21 +93,24 @@ export default function useFavorite(itemId, type = "products", options = {}) {
       }
     };
 
-    fetchFavorites();
-  }, [getToken, isUserLoggedIn]); // 依赖isUserLoggedIn而不是直接依赖user
+    if (!favoriteStore.initialized) {
+      fetchFavorites();
+    } else {
+      checkFavoriteStatus();
+    }
+  }, [getToken, isUserLoggedIn, checkFavoriteStatus]);
 
-  // 監聽全局狀態變化
+  // 監聽全局收藏狀態變化
   useEffect(() => {
     checkFavoriteStatus();
     favoriteStore.listeners.add(checkFavoriteStatus);
     return () => favoriteStore.listeners.delete(checkFavoriteStatus);
   }, [checkFavoriteStatus]);
 
-  // 切換收藏狀態
+  // 切換單一收藏狀態
   const toggleFavorite = async () => {
     if (!itemId) return false;
 
-    // 檢查用戶是否已登入
     if (!isUserLoggedIn()) {
       if (!disableToast) {
         showToast("請先登入再收藏", { style: { backgroundColor: "orange" } });
@@ -155,47 +129,36 @@ export default function useFavorite(itemId, type = "products", options = {}) {
     try {
       setLoading(true);
       const endpoint = isFavorite ? "remove" : "add";
-      // 轉換為後端需要的格式
-      const backendType = favoriteStore.getBackendType(type);
 
       const response = await axios.post(
         `${API_BASE_URL}/${endpoint}`,
         {
-          type: backendType, // 使用轉換後的類型
-          itemIds: [itemId],
+          type: type, // 直接送出單數型態
+          itemIds: [Number(itemId)],
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
-        // 更新全局狀態（使用原始類型）
-        favoriteStore.updateFavorites(type, [itemId], endpoint);
+        favoriteStore.updateFavorites(type, [Number(itemId)], endpoint);
         setIsFavorite(!isFavorite);
-
         if (!disableToast) {
           showToast(
             isFavorite ? "已從收藏移除" : "已加入收藏",
             isFavorite ? { style: { backgroundColor: "red" } } : {}
           );
         }
-
         return true;
       }
       return false;
     } catch (err) {
       console.error("收藏操作失敗:", err);
-
       if (!disableToast) {
         showToast(
           err.response?.data?.message || "操作失敗，請稍後再試",
           "error"
         );
       }
-
       return false;
     } finally {
       setLoading(false);
@@ -206,7 +169,6 @@ export default function useFavorite(itemId, type = "products", options = {}) {
   const batchToggleFavorites = async (ids, action) => {
     if (!ids || ids.length === 0) return;
 
-    // 检查用户是否已登录
     if (!isUserLoggedIn()) {
       if (!disableToast) {
         showToast("請先登入再收藏", { style: { backgroundColor: "orange" } });
@@ -225,28 +187,21 @@ export default function useFavorite(itemId, type = "products", options = {}) {
     try {
       setLoading(true);
       setError(null);
-      // 轉換為後端需要的格式
-      const backendType = favoriteStore.getBackendType(type);
+      const numericIds = ids.map((id) => Number(id));
 
       const response = await axios.post(
         `${API_BASE_URL}/${action}`,
         {
-          type: backendType, // 使用轉換後的類型
-          itemIds: ids,
+          type: type, // 直接送單數
+          itemIds: numericIds,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
-        // 更新全局狀態（使用原始類型）
-        favoriteStore.updateFavorites(type, ids, action);
+        favoriteStore.updateFavorites(type, numericIds, action);
         return true;
       }
-
       throw new Error(response.data.message);
     } catch (err) {
       console.error("批量收藏操作失敗:", err);

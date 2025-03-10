@@ -150,7 +150,7 @@ export default function GroupListPage() {
     //     };
     //     getList();
     // }, []);
-    
+
     // 送出條件獲取資料的function
     const fetchGroups = async (
         currentPage,
@@ -160,8 +160,8 @@ export default function GroupListPage() {
         cnt,
         type,
         certificates,
-        status, 
-        startDate, 
+        status,
+        startDate,
         endDate
     ) => {
         try {
@@ -190,8 +190,8 @@ export default function GroupListPage() {
     };
     // 從 URL 同步篩選條件並獲取資料
     useEffect(() => {
-        fetchGroups(page, limit, selectedSort.value, location, country, type, certificates, status, startDate,endDate);
-    }, [page, limit, selectedSort.value, location, country, type, certificates, status, startDate,endDate]);
+        fetchGroups(page, limit, selectedSort.value, location, country, type, certificates, status, startDate, endDate);
+    }, [page, limit, selectedSort.value, location, country, type, certificates, status, startDate, endDate]);
 
 
     // 處理點擊外部關閉下拉選單
@@ -650,10 +650,147 @@ export default function GroupListPage() {
                         )}
                     </div>
 
+                    {/* 頁籤 */}
+                    <div className={`py-3 d-flex flex-column flex-md-row justify-content-between align-items-center ${styles.mainPage}`}>
+                        <div className="px-3 w-100 show-page text-center text-md-start">
+                            {/* 顯示 第 {(page - 1) * limit + 1}-
+                  {Math.min(page * limit, totalProducts)} 件 / 共{" "}
+                  {totalProducts} 件 商品
+                </div> */}
+                            <nav aria-label="Page navigation">
+                                <ul className="px-3 pagination justify-content-end">
+                                    {/* 第一頁按鈕 */}
+                                    {page > 1 && (
+                                        <li className="page-item">
+                                            <button
+                                                className={`page-link ${styles.pageLink}`}
+                                                onClick={() => handlePageChange(1)}
+                                                aria-label="FirstPage"
+                                            >
+                                                <span aria-hidden="true">
+                                                    <i className="bi bi-chevron-double-left"></i>
+                                                </span>
+                                            </button>
+                                        </li>
+                                    )}
 
-                    {/* 分頁 */}
+                                    {/* 上一頁按鈕 */}
+                                    {page > 1 && (
+                                        <li className="page-item">
+                                            <button
+                                                className="page-link"
+                                                onClick={() => handlePageChange(page - 1)}
+                                                aria-label="Previous"
+                                            >
+                                                <span aria-hidden="true">
+                                                    <i className="bi bi-chevron-left"></i>
+                                                </span>
+                                            </button>
+                                        </li>
+                                    )}
+
+                                    {/* 分頁按鈕 */}
+                                    {(() => {
+                                        const pageNumbers = [];
+                                        if (totalPages <= 4) {
+                                            // 如果總頁數小於等於 4，顯示所有頁碼
+                                            for (let i = 1; i <= totalPages; i++) {
+                                                pageNumbers.push(i);
+                                            }
+                                        } else {
+                                            // 動態顯示頁碼
+                                            if (page === 1 || page === 2) {
+                                                // 當前頁在第 1 頁或第 2 頁時
+                                                for (let i = 1; i <= 3; i++) {
+                                                    pageNumbers.push(i);
+                                                }
+                                                pageNumbers.push("...");
+                                                pageNumbers.push(totalPages);
+                                            } else if (page === 3) {
+                                                // 當前頁在第 3 頁時
+                                                for (let i = 1; i <= 4; i++) {
+                                                    pageNumbers.push(i);
+                                                }
+                                                pageNumbers.push("...");
+                                                pageNumbers.push(totalPages);
+                                            } else if (page >= totalPages - 2) {
+                                                // 當前頁在最後 3 頁時
+                                                pageNumbers.push(1);
+                                                pageNumbers.push("...");
+                                                for (let i = totalPages - 2; i <= totalPages; i++) {
+                                                    pageNumbers.push(i);
+                                                }
+                                            } else {
+                                                // 當前頁在中間時
+                                                pageNumbers.push(1);
+                                                pageNumbers.push("...");
+                                                for (
+                                                    let i = page - 1;
+                                                    i <= page + 1;
+                                                    i++
+                                                ) {
+                                                    pageNumbers.push(i);
+                                                }
+                                                pageNumbers.push("...");
+                                                pageNumbers.push(totalPages);
+                                            }
+                                        }
+
+                                        return pageNumbers.map((page1, index) => (
+                                            <li
+                                                key={index}
+                                                className={`page-item ${page1 === page ? "active" : ""
+                                                    } ${page1 === "..." ? "disabled" : ""}`}
+                                            >
+                                                {page1 === "..." ? (
+                                                    <span className="page-link ellipsis">...</span>
+                                                ) : (
+                                                    <button
+                                                        className="page-link"
+                                                        onClick={() => handlePageChange(page1)}
+                                                    >
+                                                        {page1}
+                                                    </button>
+                                                )}
+                                            </li>
+                                        ));
+                                    })()}
+
+                                    {/* 下一頁按鈕 */}
+                                    {page < totalPages && (
+                                        <li className="page-item">
+                                            <button
+                                                className="page-link"
+                                                onClick={() => handlePageChange(page + 1)}
+                                                aria-label="Next"
+                                            >
+                                                <span aria-hidden="true">
+                                                    <i className="bi bi-chevron-right"></i>
+                                                </span>
+                                            </button>
+                                        </li>
+                                    )}
+
+                                    {/* 最後一頁按鈕 */}
+                                    {page < totalPages && (
+                                        <li className="page-item">
+                                            <button
+                                                className="page-link"
+                                                onClick={() => handlePageChange(totalPages)}
+                                                aria-label="LastPage"
+                                            >
+                                                <span aria-hidden="true">
+                                                    <i className="bi bi-chevron-double-right"></i>
+                                                </span>
+                                            </button>
+                                        </li>
+                                    )}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+            </div>
+            );
 }

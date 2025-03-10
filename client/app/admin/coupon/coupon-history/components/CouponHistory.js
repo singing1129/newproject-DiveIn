@@ -5,12 +5,11 @@ import axios from "axios";
 import CouponHistoryList from "./CouponHistoryList"; // 引入新的 CouponList 組件
 import Pagination from "./Pagination"; // 引入 Pagination 組件
 import "./styles/CouponHistory.css";
-import '@fortawesome/fontawesome-free/css/all.min.css'
-import useAuth from '@/hooks/useAuth';
-
-const API_BASE_URL = "http://localhost:3005/api/coupon";
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CouponHistory() {
+  const { user } = useAuth(); // 取得使用者資訊
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,15 +17,16 @@ export default function CouponHistory() {
   const [sort, setSort] = useState("latest");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const API_BASE_URL = "http://localhost:3005/api/coupon";
 
-  
-
-  // 讀取優惠券資料
   useEffect(() => {
+    if (!user || !user.id) return; // 確保 user 存在且有 id 才發送請求
+
     setLoading(true);
+    setError(null); // 清除先前的錯誤狀態
     axios
       .get(`${API_BASE_URL}/history`, {
-        params: { status, sort, page, limit: 10 }
+        params: { userId: user.id, status, sort, page, limit: 10 }
       })
       .then((response) => {
         if (response.data.success) {
@@ -43,9 +43,10 @@ export default function CouponHistory() {
       .finally(() => {
         setLoading(false);
       });
-  }, [status, sort, page]);
+  }, [user, status, sort, page]);
 
-  if (loading) return <div>載入中...</div>;
+  if (!user) return <div>載入使用者資訊中...</div>; // 防止未登入時發送請求
+  if (loading) return <div>載入優惠券資料中...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
   // 優惠券列表（動態渲染）
@@ -56,25 +57,55 @@ export default function CouponHistory() {
           {/* 主要內容 */}
           <main>
             <div className="row">
-              <div className=" bg-white text-dark p-3">
-                <div style={{borderBottom: '1px solid lightgray'}}>
+              <div className="bg-white text-dark p-3">
+                <div style={{ borderBottom: "1px solid lightgray" }}>
                   <h1>歷史紀錄</h1>
                 </div>
                 {/* 歷史紀錄篩選列 */}
                 <div className="filter-group">
-                  <button type="button" className={status === "全部" ? "active" : ""} onClick={() => setStatus("全部")}>全部</button>
-                  <button type="button" className={status === "未使用" ? "active" : ""} onClick={() => setStatus("未使用")}>未使用</button>
-                  <button type="button" className={status === "已使用" ? "active" : ""} onClick={() => setStatus("已使用")}>已使用</button>
-                  <button type="button" className={status === "已過期" ? "active" : ""} onClick={() => setStatus("已過期")}>已過期</button>
+                  <button
+                    type="button"
+                    className={status === "全部" ? "active" : ""}
+                    onClick={() => setStatus("全部")}
+                  >
+                    全部
+                  </button>
+                  <button
+                    type="button"
+                    className={status === "未使用" ? "active" : ""}
+                    onClick={() => setStatus("未使用")}
+                  >
+                    未使用
+                  </button>
+                  <button
+                    type="button"
+                    className={status === "已使用" ? "active" : ""}
+                    onClick={() => setStatus("已使用")}
+                  >
+                    已使用
+                  </button>
+                  <button
+                    type="button"
+                    className={status === "已過期" ? "active" : ""}
+                    onClick={() => setStatus("已過期")}
+                  >
+                    已過期
+                  </button>
                 </div>
                 {/* 分頁與排序選單 */}
                 <div className="d-flex justify-content-between align-items-center mt-3">
                   {/* 分頁顯示 */}
-                  <div className="pagination">顯示 第{page}頁 / 共{totalPages}頁</div>
+                  <div className="pagination">
+                    顯示 第{page}頁 / 共{totalPages}頁
+                  </div>
                   {/* 排序選單 */}
                   <div className="d-flex align-items-center">
                     <span className="me-2">排序方式：</span>
-                    <select className="form-select form-select-sm rounded-pill custom-select-container" value={sort} onChange={(e) => setSort(e.target.value)}>
+                    <select
+                      className="form-select form-select-sm rounded-pill custom-select-container"
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value)}
+                    >
                       <option value="latest">最新</option>
                       <option value="expiry">即將到期</option>
                       <option value="discount">最高折扣</option>
@@ -82,9 +113,13 @@ export default function CouponHistory() {
                   </div>
                 </div>
                 {/* 優惠券列表 */}
-                <CouponHistoryList coupons={coupons} loading={loading} error={error} />
+                <CouponHistoryList coupons={coupons} loading={loading} /* error={error} */ />
                 {/* 分頁控制區：顯示優惠券總數與分頁按鈕 */}
-                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                />
               </div>
             </div>
           </main>

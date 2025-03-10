@@ -138,6 +138,7 @@ export function AuthProvider({ children }) {
 
   // 2 NextAuth
   useEffect(() => {
+    // 在 useAuth.js 中修改 handleSessionChange 函數
     const handleSessionChange = async () => {
       const session = await getSession();
       console.log("檢查session:", session);
@@ -147,7 +148,7 @@ export function AuthProvider({ children }) {
         console.log("檢測到社交登入會話，但沒有本地 token");
 
         try {
-          // 1. 明確確定當前登錄的提供者類型
+          // 確定當前登錄的提供者類型
           let currentProvider;
           if (session.provider) {
             currentProvider = session.provider;
@@ -160,25 +161,32 @@ export function AuthProvider({ children }) {
             currentProvider = "google";
           }
 
-          // 2. 獲取提供者特定ID
+          // 獲取提供者特定ID
           let providerId =
             session.provider_id || session.user.id || session.user.sub;
 
-          // 3. 準備API請求數據
+          // 準備API請求數據
           const userData = {
-            // 用戶基本訊息
             email: session.user.email || null,
             name: session.user.name || null,
             image: session.user.image || null,
-
-            // 提供者資訊
             provider: currentProvider,
             provider_id: providerId,
           };
 
           console.log("發送到後端的社交登錄資料:", userData);
 
-          // 4. 向後端 API 發送使用者數據
+          // 檢查是否從帳號頁面過來的連結請求
+          const isLinkingAccount =
+            localStorage.getItem("returnToAccountPage") === "true";
+          const linkToUserId = localStorage.getItem("linkToUserId");
+
+          // 只有在明確標記為連結操作時，才添加 link_to_user_id 參數
+          if (isLinkingAccount && linkToUserId) {
+            userData.link_to_user_id = linkToUserId;
+          }
+
+          // 向後端 API 發送使用者數據
           const response = await fetch(
             "http://localhost:3005/api/admin/social-login",
             {
@@ -198,21 +206,55 @@ export function AuthProvider({ children }) {
           console.log("社交登入 API 響應:", result);
 
           if (result.status === "success") {
-            const token = result.data.token;
-            localStorage.setItem(appKey, token);
-            const newUser = jwt.decode(token);
-            setUser(newUser);
-            router.replace("/");
+            // 正常登入情況下，應該有 token
+            if (result.data && result.data.token) {
+              const token = result.data.token;
+              localStorage.setItem(appKey, token);
+              const newUser = jwt.decode(token);
+              setUser(newUser);
+
+              // 清除標記
+              localStorage.removeItem("returnToAccountPage");
+              localStorage.removeItem("linkToUserId");
+
+              // 根據來源跳轉
+              if (isLinkingAccount) {
+                router.replace("/admin/account");
+              } else {
+                router.replace("/");
+              }
+            }
+            // 連結帳號成功的情況（沒有 token 但有成功訊息）
+            else if (isLinkingAccount && result.message) {
+              alert("提示: " + result.message);
+              router.replace("/admin/account");
+
+              // 清除標記
+              localStorage.removeItem("returnToAccountPage");
+              localStorage.removeItem("linkToUserId");
+            }
+            // 其他成功情況但沒有預期的數據結構
+            else {
+              console.warn("API 返回成功但缺少預期數據:", result);
+            }
           } else {
-            console.error("登入處理失敗:", result.message);
+            console.error("登入處理失敗:", result.message || "未知錯誤");
+
+            // 顯示合適的訊息
+            if (isLinkingAccount) {
+              alert("連結帳號失敗: " + (result.message || "未知錯誤"));
+            } else {
+              alert("登入失敗: " + (result.message || "未知錯誤"));
+            }
           }
         } catch (error) {
           console.error("處理社交登入失敗:", error);
+          alert("處理失敗: " + error.message);
         }
       }
     };
 
-    // 定義 handleStorageChange 函數 - 這是缺少的部分
+    // 定義 handleStorageChange 函數
     const handleStorageChange = (event) => {
       if (event.key === appKey) {
         handleSessionChange();
@@ -418,12 +460,12 @@ export function AuthProvider({ children }) {
             return { success: true, user: tempUser };
           }
         } catch (error) {
-          console.error("❌ OTP 驗證失敗:", error);
+          console.error(" OTP 驗證失敗:", error);
           return { success: false, error };
         }
       };
     } catch (error) {
-      console.error("❌ 手機登入錯誤:", error);
+      console.error(" 手機登入錯誤:", error);
       alert("手機登入初始化失敗: " + error.message);
       return null;
     }
@@ -432,11 +474,21 @@ export function AuthProvider({ children }) {
   //  google和line登入
   const handleSocialLogin = async (provider) => {
     try {
-      console.log(`嘗試 ${provider} 登入`);
+      // 檢查是否為連結操作
+      const isLinking = localStorage.getItem("isLinkingAccount") === "true";
+      const linkToUserId = localStorage.getItem("linkToUserId");
+
+      console.log(`嘗試 ${provider} ${isLinking ? "連結" : "登入"}`, {
+        isLinking,
+        linkToUserId,
+        authSource: localStorage.getItem("authSource"),
+        returnToAccountPage: localStorage.getItem("returnToAccountPage"),
+      });
+
       await signIn(provider);
 
-      // 等待會話建立
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // 等待會話建立 - 增加等待時間，特別是對 LINE 可能需要更長時間
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const session = await getSession();
       console.log(`登入會話:`, session);
@@ -457,11 +509,16 @@ export function AuthProvider({ children }) {
           session.user.id || session.user.sub || Date.now().toString(),
       };
 
+      // 如果是連結操作，添加連結用戶ID
+      if (isLinking && linkToUserId) {
+        userData.link_to_user_id = linkToUserId;
+        console.log(`準備連結 ${provider} 帳號到用戶ID:`, linkToUserId);
+      }
+
       // 處理 Line 可能不提供 email 的情況
       if (!userData.email && provider === "line") {
         userData.email = `${userData.provider_id}@line.temporary.email`;
       }
-
       console.log(`發送到後端的資料:`, userData);
 
       // 呼叫 API
@@ -488,9 +545,25 @@ export function AuthProvider({ children }) {
       console.error(`登入處理失敗:`, error);
     }
   };
+
   // 使用統一處理函數
   const loginWithGoogle = () => handleSocialLogin("google");
-  const loginWithLine = () => handleSocialLogin("line");
+  const loginWithLine = () => {
+    console.log("執行 loginWithLine");
+
+    // 檢查是否為連結操作
+    const isLinking = localStorage.getItem("isLinkingAccount") === "true";
+    const linkToUserId = localStorage.getItem("linkToUserId");
+
+    console.log("連結操作檢查:", {
+      isLinking,
+      linkToUserId,
+      authSource: localStorage.getItem("authSource"),
+      returnToAccountPage: localStorage.getItem("returnToAccountPage"),
+    });
+
+    handleSocialLogin("line");
+  };
 
   //  loginWithEmail
   const loginWithEmail = async (email, password) => {
@@ -575,9 +648,13 @@ export function AuthProvider({ children }) {
   };
 
   // 在 useAuth 中
-  const getToken = () => {
-    return localStorage.getItem(appKey);
-  };
+  function getToken() {
+    if (typeof window === "undefined") {
+      // 代表在伺服器端，無法使用 localStorage
+      return null;
+    }
+    return localStorage.getItem("loginWithToken");
+  }
 
   const getDecodedToken = () => {
     const token = getToken();

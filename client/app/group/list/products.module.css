@@ -521,3 +521,9 @@
 }
 
 /* 其他样式可以根据需要继续转换... */
+
+
+.pageLink {
+  border: none;
+  color: var(--black);
+}

@@ -8,10 +8,12 @@ import "./styles/MyCoupon.css";
 import Link from "next/link";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { LuTicketPlus } from "react-icons/lu";
+import { useAuth } from "@/hooks/useAuth"; // 引入 useAuth 钩子
 
 const API_BASE_URL = "http://localhost:3005/api/coupon";
 
 export default function Coupon() {
+  const { user, loading: authLoading } = useAuth(); // 使用 useAuth 钩子获取用户信息和加载状态
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,56 +23,69 @@ export default function Coupon() {
   const [couponType, setCouponType] = useState("all"); // 優惠券類型篩選
   const [statusFilter, setStatusFilter] = useState("all"); // 活動狀態篩選
   const [sortOrder, setSortOrder] = useState("latest"); // 排序方式
+  const [showAlert, setShowAlert] = useState(false); // 控制彈出提醒的顯示
 
   // 讀取優惠券資料
   useEffect(() => {
-    const fetchCoupons = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${API_BASE_URL}/my-coupons`, {
-          params: {
-            page: currentPage,
-            search: searchTerm, // 加入搜尋條件
-            type: couponType, // 優惠券類型篩選
-            status: statusFilter, // 活動狀態篩選
-            sort: sortOrder, // 排序方式
-          },
-        });
+    if (!authLoading && user) {
+      const fetchCoupons = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.get(`${API_BASE_URL}/my-coupons`, {
+            params: {
+              userId: user.id, // 確保傳遞了用戶ID
+              page: currentPage,
+              limit: 10,
+              type: couponType, // 優惠券類型篩選
+              status: statusFilter, // 活動狀態篩選
+              sort: sortOrder, // 排序方式
+            },
+          });
 
-        if (response.data.success) {
-          setCoupons(response.data.coupons);
-          setTotalPages(response.data.totalPages); // 设置总页数
-        } else {
-          setError("獲取優惠券資料失敗");
+          console.log("API response:", response.data); // 添加日誌以檢查API返回的數據
+
+          if (response.data.success) {
+            setCoupons(response.data.coupons);
+            setTotalPages(response.data.totalPages); // 設置總頁數
+          } else {
+            setError("獲取優惠券資料失敗");
+          }
+        } catch (err) {
+          console.error("Error fetching coupons:", err);
+          setError("獲取優惠券資料時發生錯誤");
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error("Error fetching coupons:", err);
-        setError("獲取優惠券資料時發生錯誤");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchCoupons();
-  }, [currentPage, searchTerm, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
+      fetchCoupons();
+    }
+  }, [authLoading, user, currentPage, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
   const handleClaim = async (couponId) => {
+    console.log("發送的 couponId:", couponId);
+    console.log("發送的 userId:", user.id);
     try {
-      const response = await axios.post(`${API_BASE_URL}/claim`, { couponId });
+      const response = await axios.post(`${API_BASE_URL}/code-claim`, {
+        couponId,
+        userId: user.id, // 傳遞用戶ID
+      });
       console.log("Claim response:", response.data);
+
       // 更新本地狀態，避免重新加載
+      const claimedCoupon = response.data.coupon;
       setCoupons((prevCoupons) =>
         prevCoupons.map((coupon) =>
-          coupon.id === couponId ? { ...coupon, status: "已領取" } : coupon
+          coupon.id === couponId ? { ...coupon, ...claimedCoupon, status: "已領取" } : coupon
         )
       );
     } catch (error) {
       console.error("Error claiming coupon:", error);
-      setError("領取優惠券時發生錯誤");
+      setShowAlert(true); // 顯示彈出提醒
     }
   };
 
@@ -78,7 +93,32 @@ export default function Coupon() {
     setSearchTerm(e.target.value);
   };
 
-  if (loading) return <div>載入中...</div>;
+  const handleSearchSubmit = async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/code-claim`, {
+        couponId: searchTerm,
+        userId: user.id, // 傳遞用戶ID
+      });
+      console.log("Claim response:", response.data);
+
+      // 更新本地狀態，避免重新加載
+      const claimedCoupon = response.data.coupon;
+      setCoupons((prevCoupons) => [
+        ...prevCoupons,
+        { ...claimedCoupon, status: "已領取" },
+      ]);
+      setSearchTerm(""); // 清空輸入框
+    } catch (error) {
+      console.error("Error claiming coupon:", error);
+      setShowAlert(true); // 顯示彈出提醒
+    }
+  };
+
+  const handleCloseAlert = () => {
+    setShowAlert(false); // 隱藏彈出提醒
+  };
+
+  if (authLoading || loading) return <div>載入中...</div>;
   if (error) return <div className="text-danger">{error}</div>;
 
   // 優惠券列表（動態渲染）
@@ -98,11 +138,11 @@ export default function Coupon() {
                 >
                   <h1>我的優惠券</h1>
                   <div className="link-list">
-                    <Link className="me-3" href="/admin/coupons/coupon-claim">
+                    <Link className="me-3" href="/admin/coupon/coupon-claim">
                       領取優惠券 &gt;
                     </Link>
                     |
-                    <Link className="ms-3" href="/admin/coupons/coupon-history">
+                    <Link className="ms-3" href="/admin/coupon/coupon-history">
                       查看歷史資料
                     </Link>
                   </div>
@@ -126,8 +166,18 @@ export default function Coupon() {
                         value={searchTerm}
                         onChange={handleSearchChange} // 設定搜尋變更
                       />
-                      <span className="input-group-text d-flex justify-content-center">
-                        <LuTicketPlus  style={{ fontSize: "1.5rem", color: "white" }} />
+                      <span
+                        className="input-group-text d-flex justify-content-center"
+                        style={{ cursor: "pointer" }}
+                        onClick={handleSearchSubmit} // 添加點擊事件處理函數
+                      >
+                        <LuTicketPlus
+                          style={{
+                            fontSize: "1.5rem",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                        />
                       </span>
                     </div>
                   </div>
@@ -145,36 +195,36 @@ export default function Coupon() {
                     </button>
                     <button
                       type="button"
-                      className={couponType === "store" ? "active" : ""}
-                      onClick={() => setCouponType("store")}
+                      className={couponType === "全館" ? "active" : ""}
+                      onClick={() => setCouponType("全館")}
                     >
                       全館優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "product" ? "active" : ""}
-                      onClick={() => setCouponType("product")}
+                      className={couponType === "商品" ? "active" : ""}
+                      onClick={() => setCouponType("商品")}
                     >
                       商品優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "rental" ? "active" : ""}
-                      onClick={() => setCouponType("rental")}
+                      className={couponType === "租賃" ? "active" : ""}
+                      onClick={() => setCouponType("租賃")}
                     >
                       租賃優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "event" ? "active" : ""}
-                      onClick={() => setCouponType("event")}
+                      className={couponType === "活動" ? "active" : ""}
+                      onClick={() => setCouponType("活動")}
                     >
                       活動優惠券
                     </button>
                     <button
                       type="button"
-                      className={couponType === "membership" ? "active" : ""}
-                      onClick={() => setCouponType("membership")}
+                      className={couponType === "會員專屬" ? "active" : ""}
+                      onClick={() => setCouponType("會員專屬")}
                     >
                       會員專屬優惠券
                     </button>
@@ -247,7 +297,7 @@ export default function Coupon() {
                   <MyCouponList
                     coupons={coupons}
                     loading={loading}
-                    error={error}
+                    // error={error}
                     onClaim={handleClaim}
                   />
                 </div>
@@ -262,6 +312,16 @@ export default function Coupon() {
           </main>
         </div>
       </div>
+
+      {/* 彈出提醒 */}
+      {showAlert && (
+        <div className="alert-popup">
+          <div className="alert-content">
+            <p>不符合領取資格</p>
+            <button onClick={handleCloseAlert}>關閉</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import MyCouponCard from "./MyCouponCard"; // 引入 CouponCard 组件
 
 export default function MyCouponList({ coupons, loading, error, onClaim }) {
@@ -7,13 +9,13 @@ export default function MyCouponList({ coupons, loading, error, onClaim }) {
   return (
     <>
       {coupons.length > 0 ? (
-        coupons.map((coupon) => (
-          <div key={coupon.id} className="col">
+        coupons.map((coupon, index) => (
+          <div key={`${coupon.id}-${index}`} className="col">
             <MyCouponCard coupon={coupon} onClaim={onClaim} />
           </div>
         ))
       ) : (
-        <div className="no-coupons">目前沒有可用的優惠券</div>
+        <div className="no-coupons">目前沒有優惠券</div>
       )}
     </>
   );

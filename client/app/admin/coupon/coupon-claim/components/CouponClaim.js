@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import Breadcrumb from "@/components/Breadcrumb/breadcrumb";
 import CouponClaimList from "./CouponClaimList";
@@ -10,14 +10,22 @@ import CouponSortPagination from "./CouponSortPagination";
 import Pagination from "./Pagination";
 import "./styles/CouponClaim.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-
-const API_BASE_URL = "http://localhost:3005/api/coupon";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CouponClaim() {
+  const API_BASE_URL = "http://localhost:3005/api/coupon";
+  const { user, token } = useAuth(); // 從 useAuth 取得 token
+
   // 儲存從 API 取得的優惠券資料
   const [coupons, setCoupons] = useState([]);
   // 儲存分頁資訊：總筆數、目前頁碼、總頁數
-  const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
+  // 儲存所有優惠券的檔期活動
+  const [campaignOptions, setCampaignOptions] = useState([]);
   // 載入狀態與錯誤訊息
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,6 +39,7 @@ export default function CouponClaim() {
 
   // 根據分頁與篩選條件呼叫後端 API，取得優惠券資料
   const fetchCoupons = async (page = 1, filters = {}) => {
+    console.log("fetchCoupons");
     setLoading(true);
     setError(null);
     try {
@@ -39,9 +48,15 @@ export default function CouponClaim() {
         page,
         limit: 10,
         ...filters,
+        userId: user.id,
       };
       // 呼叫後端 /api/coupon/claim API
-      const response = await axios.get(`${API_BASE_URL}/claim`, { params });
+      const response = await axios.get(`${API_BASE_URL}/claim`, {
+        params,
+        headers: {
+          Authorization: `Bearer ${token}`, // 在請求標頭中加入認證 token
+        },
+      });
       if (response.data.success) {
         setCoupons(response.data.coupons);
         setPagination({
@@ -61,15 +76,33 @@ export default function CouponClaim() {
     }
   };
 
-  // 初次載入或篩選條件改變時從第一頁取得資料
+  // 初次載入時取得所有優惠券的檔期活動
+  const fetchCampaignOptions = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/campaignOptions`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // 在請求標頭中加入認證 token
+        },
+      });
+      if (response.data.success) {
+        setCampaignOptions(response.data.campaignOptions);
+      } else {
+        setCampaignOptions([]);
+      }
+    } catch (err) {
+      setCampaignOptions([]);
+      console.error("取得檔期活動失敗:", err.message);
+    }
+  };
+
   useEffect(() => {
     fetchCoupons(1, filters);
+    fetchCampaignOptions();
   }, [filters]);
 
   // 當篩選條件改變時，更新 filters 狀態並重新呼叫 API（從第一頁開始）
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    fetchCoupons(1, newFilters);
   };
 
   // 當分頁切換時呼叫此回呼
@@ -84,12 +117,17 @@ export default function CouponClaim() {
     try {
       // 呼叫 /search API，假設後端根據搜尋字串回傳優惠券資料
       const response = await axios.get(`${API_BASE_URL}/search`, {
-        params: { q: searchText },
+        params: { q: searchText, userId: user.id },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.success) {
         setCoupons(response.data.coupons);
         // 搜尋結果通常不含分頁資訊，需要可自行調整
-        setPagination({ total: response.data.coupons.length, page: 1, totalPages: 1 });
+        setPagination({
+          total: response.data.coupons.length,
+          page: 1,
+          totalPages: 1,
+        });
       } else {
         setCoupons([]);
         setError("搜尋失敗");
@@ -105,11 +143,12 @@ export default function CouponClaim() {
   // 新增 handleClaim 函式：處理使用者領取優惠券的動作
   const handleClaim = async (couponId) => {
     try {
-      const requestBody = { couponId, userId: 1 }; // 測試用 userId，實際請依登入狀態取得
+      const requestBody = { couponId, userId: user.id }; // 使用實際登入的 userId
       const res = await fetch(`${API_BASE_URL}/claim`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(requestBody),
       });
@@ -125,11 +164,6 @@ export default function CouponClaim() {
       return { success: false, error: error.message };
     }
   };
-
-  // 根據目前的 coupons 資料計算出獨特的 campaign 選項
-  const campaignOptions = Array.from(
-    new Set(coupons.map((coupon) => coupon.campaign_name).filter(c => c && c.trim() !== ""))
-  );
 
   return (
     <div>
@@ -154,7 +188,6 @@ export default function CouponClaim() {
         <CouponClaimList
           coupons={coupons}
           loading={loading}
-          error={error}
           onClaim={handleClaim}
         />
         {/* 分頁元件 */}
