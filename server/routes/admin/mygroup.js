@@ -1,6 +1,7 @@
 import express from "express";
 import { pool } from "../../config/mysql.js";
 import { sendJoinGroupCancelMail } from "../../lib/mail.js";
+import { sendSystemNotification } from "../../lib/sendSystemNotification.js";
 const router = express.Router();
 
 router.post("/myGroup", async (req, res) => {
@@ -77,6 +78,10 @@ router.put("/myGroup/:id", async (req, res) => {
     const id = req.params.id
     const sql = `UPDATE groups SET status = 2 WHERE id = ${id} `
     await pool.execute(sql)
+    // 獲取揪團資訊和參加者
+    const [group] = await pool.execute("SELECT name, date FROM groups WHERE id = ?", [id]);
+    const groupName = group[0].name;
+    const groupDate = group[0].date; 
     const getParticipants = `
                             SELECT DISTINCT users.email, groups_participants.user_id
                             FROM groups_participants
@@ -84,6 +89,16 @@ router.put("/myGroup/:id", async (req, res) => {
                             WHERE groups_participants.groups_id = ${id};
                             `;
     const [participants] = await pool.execute(getParticipants)
+    
+    // 發送系統通知
+    const userIds = participants.map((p) => p.user_id);
+    const notificationResult = await sendSystemNotification({
+      userIds,
+      content: `親愛的潛水愛好者您好：很遺憾地通知您，您所參加原定於 ${groupDate} 舉辦的揪團 "${groupName}" 已遭到取消。若有疑問，請詢問官方客服。`,
+    });
+    if (!notificationResult.success) {
+      console.error("系統通知發送失敗:", notificationResult.message);
+    }
     for (const participant of participants) {
         await sendJoinGroupCancelMail(participant.email, groupName, groupDate);
     }

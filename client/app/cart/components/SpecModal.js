@@ -15,36 +15,36 @@ const SpecModal = ({ children, item, onVariantChange }) => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState("等待选择...");
+  const [debugInfo, setDebugInfo] = useState("等待選擇...");
 
   // 獲取商品詳情
   useEffect(() => {
     const getProductDetails = async () => {
       try {
-        console.log("正在获取商品详情, 商品ID:", item.product_id);
+        console.log("正在獲取商品詳情, 商品ID:", item.product_id);
         const response = await axios.get(
           `http://localhost:3005/api/products/${item.product_id}`
         );
         const productData = response.data.data;
         setProductDetails(productData);
-        console.log("商品详情获取成功:", productData);
+        console.log("商品詳情獲取成功:", productData);
         
-        // 初始化颜色选择为当前变体的颜色
+        // 初始化顏色選擇為當前變體的顏色
         const currentVariant = productData.variants.find(
           v => parseInt(v.id) === parseInt(item.variant_id)
         );
         
         if (currentVariant) {
-          console.log("找到当前变体:", currentVariant);
+          console.log("找到當前變體:", currentVariant);
           setSelectedColor(parseInt(currentVariant.color_id));
           setSelectedVariant(currentVariant);
-          setDebugInfo(`当前变体: ID=${currentVariant.id}, 颜色=${currentVariant.color_name || "无"}`);
+          setDebugInfo(`當前變體: ID=${currentVariant.id}, 顏色=${currentVariant.color_name || "無"}`);
         } else {
-          console.log("找不到当前变体:", item.variant_id);
-          setDebugInfo(`找不到当前变体: ID=${item.variant_id}`);
+          console.log("找不到當前變體:", item.variant_id);
+          setDebugInfo(`找不到當前變體: ID=${item.variant_id}`);
         }
       } catch (err) {
-        console.error("获取商品详情失败:", err);
+        console.error("獲取商品詳情失敗:", err);
         setError("獲取商品詳情失敗: " + (err.response?.data?.message || err.message));
       }
     };
@@ -54,37 +54,37 @@ const SpecModal = ({ children, item, onVariantChange }) => {
     }
   }, [item]);
 
-  // 当颜色改变时，查找对应的变体
+  // 當顏色改變時，查找對應的變體
   useEffect(() => {
     if (!productDetails || selectedColor === null) return;
     
-    console.log("颜色改变, 查找变体. 选择的颜色ID:", selectedColor);
+    console.log("顏色改變, 查找變體. 選擇的顏色ID:", selectedColor);
     
-    // 查找匹配所选颜色的变体
+    // 查找匹配所選顏色的變體
     const matchingVariant = productDetails.variants.find(
       v => parseInt(v.color_id) === parseInt(selectedColor)
     );
     
     if (matchingVariant) {
-      console.log("找到匹配变体:", matchingVariant);
+      console.log("找到匹配變體:", matchingVariant);
       setSelectedVariant(matchingVariant);
       
-      // 检查是否与原始变体不同
+      // 檢查是否與原始變體不同
       if (parseInt(matchingVariant.id) !== parseInt(item.variant_id)) {
-        setDebugInfo(`已选择新变体: ID=${matchingVariant.id}, 颜色=${matchingVariant.color_name || "无"}\n(原变体ID: ${item.variant_id})`);
+        setDebugInfo(`已選擇新變體: ID=${matchingVariant.id}, 顏色=${matchingVariant.color_name || "無"}\n(原變體ID: ${item.variant_id})`);
       } else {
-        setDebugInfo(`当前选择的是原变体: ID=${matchingVariant.id}, 颜色=${matchingVariant.color_name || "无"}`);
+        setDebugInfo(`當前選擇的是原變體: ID=${matchingVariant.id}, 顏色=${matchingVariant.color_name || "無"}`);
       }
     } else {
-      console.log("未找到匹配变体, 颜色ID:", selectedColor);
+      console.log("未找到匹配變體, 顏色ID:", selectedColor);
       setSelectedVariant(null);
-      setDebugInfo(`未找到匹配的变体 (颜色ID: ${selectedColor})`);
+      setDebugInfo(`未找到匹配的變體 (顏色ID: ${selectedColor})`);
     }
   }, [selectedColor, productDetails, item.variant_id]);
 
   // 處理規格更新
   const handleUpdate = async () => {
-    console.log("点击了确定按钮");
+    console.log("點擊了確定按鈕");
     
     if (!selectedVariant) {
       setError("請選擇一個規格");
@@ -93,8 +93,8 @@ const SpecModal = ({ children, item, onVariantChange }) => {
 
     // 確保當前選擇的變體與原始變體不同
     if (parseInt(selectedVariant.id) === parseInt(item.variant_id)) {
-      console.log("选择了相同的变体，不需更新");
-      setDebugInfo(`选择了相同的变体 (ID: ${selectedVariant.id})，不需要更新`);
+      console.log("選擇了相同的變體，不需更新");
+      setDebugInfo(`選擇了相同的變體 (ID: ${selectedVariant.id})，不需要更新`);
       return;
     }
 
@@ -108,40 +108,40 @@ const SpecModal = ({ children, item, onVariantChange }) => {
         quantity: item.quantity
       };
       
-      console.log("更新变体，请求数据:", requestData);
-      setDebugInfo(`正在发送更新请求...\n${JSON.stringify(requestData)}`);
+      console.log("更新變體，請求數據:", requestData);
+      setDebugInfo(`正在發送更新請求...\n${JSON.stringify(requestData)}`);
 
-      // 发送更新请求
+      // 發送更新請求
       const response = await axios.put(
         "http://localhost:3005/api/cart/update",
         requestData
       );
 
-      console.log("更新响应:", response.data);
+      console.log("更新響應:", response.data);
       
       if (response.data.success) {
-        setDebugInfo(`更新成功! 新变体ID: ${selectedVariant.id}`);
-        // 更新购物车数据
+        setDebugInfo(`更新成功! 新變體ID: ${selectedVariant.id}`);
+        // 更新購物車數據
         await fetchCart();
         
-        // 延迟关闭对话框，让用户看到成功消息
+        // 延遲關閉對話框，讓用户看到成功消息
         setTimeout(() => {
           const closeButton = document.querySelector(".spec-close-button");
           if (closeButton) closeButton.click();
         }, 1000);
       } else {
-        throw new Error(response.data.message || "更新失败");
+        throw new Error(response.data.message || "更新失敗");
       }
     } catch (err) {
-      console.error("更新失败:", err);
-      setError(err.response?.data?.message || err.message || "更新规格失败");
-      setDebugInfo(`更新失败: ${err.message}`);
+      console.error("更新失敗:", err);
+      setError(err.response?.data?.message || err.message || "更新規格失敗");
+      setDebugInfo(`更新失敗: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // 如果商品详情未加载完成，显示原始内容
+  // 如果商品詳情未加載完成，顯示原始內容
   if (!productDetails) return children;
 
   return (
@@ -161,7 +161,7 @@ const SpecModal = ({ children, item, onVariantChange }) => {
           </div>
 
           <div className="spec-modal-content">
-            {/* 调试信息 */}
+            {/* 調試信息 */}
             <div className="debug-info" style={{ 
               background: "#f0f8ff", 
               padding: "10px", 
@@ -171,7 +171,7 @@ const SpecModal = ({ children, item, onVariantChange }) => {
               wordBreak: "break-word",
               whiteSpace: "pre-line"
             }}>
-              <strong>调试信息:</strong> {debugInfo}
+              <strong>調試信息:</strong> {debugInfo}
             </div>
 
             {/* 商品預覽 */}
@@ -205,12 +205,12 @@ const SpecModal = ({ children, item, onVariantChange }) => {
                 <h4 className="spec-title">顏色</h4>
                 <div className="color-options">
                   {productDetails.colors.map((color) => {
-                    // 检查此颜色是否有可用变体
+                    // 檢查此顏色是否有可用變體
                     const hasVariant = productDetails.variants.some(
                       v => parseInt(v.color_id) === parseInt(color.id)
                     );
                     
-                    // 只显示有对应变体的颜色
+                    // 只顯示有對應變體的顏色
                     if (!hasVariant) return null;
                     
                     return (

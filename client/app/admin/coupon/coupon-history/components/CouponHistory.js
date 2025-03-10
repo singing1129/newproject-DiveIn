@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import CouponHistoryList from "./CouponHistoryList"; // 引入新的 CouponList 組件
 import Pagination from "./Pagination"; // 引入 Pagination 組件
+import CouponSortPagination from "./CouponSortPagination"; // 引入 CouponSortPagination 組件
 import "./styles/CouponHistory.css";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +17,7 @@ export default function CouponHistory() {
   const [status, setStatus] = useState("全部");
   const [sort, setSort] = useState("latest");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(Infinity); // 預設為全部顯示
   const [totalPages, setTotalPages] = useState(1);
   const API_BASE_URL = "http://localhost:3005/api/coupon";
 
@@ -26,7 +28,7 @@ export default function CouponHistory() {
     setError(null); // 清除先前的錯誤狀態
     axios
       .get(`${API_BASE_URL}/history`, {
-        params: { userId: user.id, status, sort, page, limit: 10 }
+        params: { userId: user.id, status, sort, page, limit }
       })
       .then((response) => {
         if (response.data.success) {
@@ -43,7 +45,17 @@ export default function CouponHistory() {
       .finally(() => {
         setLoading(false);
       });
-  }, [user, status, sort, page]);
+  }, [user, status, sort, page, limit]);
+
+  const handleSortChange = (newSort) => {
+    setSort(newSort);
+    setPage(1); // 重置到第一頁
+  };
+
+  const handleDisplayChange = (newLimit) => {
+    setLimit(newLimit === "Infinity" ? Infinity : newLimit);
+    setPage(1); // 重置到第一頁
+  };
 
   if (!user) return <div>載入使用者資訊中...</div>; // 防止未登入時發送請求
   if (loading) return <div>載入優惠券資料中...</div>;
@@ -93,33 +105,20 @@ export default function CouponHistory() {
                   </button>
                 </div>
                 {/* 分頁與排序選單 */}
-                <div className="d-flex justify-content-between align-items-center mt-3">
-                  {/* 分頁顯示 */}
-                  <div className="pagination">
-                    顯示 第{page}頁 / 共{totalPages}頁
-                  </div>
-                  {/* 排序選單 */}
-                  <div className="d-flex align-items-center">
-                    <span className="me-2">排序方式：</span>
-                    <select
-                      className="form-select form-select-sm rounded-pill custom-select-container"
-                      value={sort}
-                      onChange={(e) => setSort(e.target.value)}
-                    >
-                      <option value="latest">最新</option>
-                      <option value="expiry">即將到期</option>
-                      <option value="discount">最高折扣</option>
-                    </select>
-                  </div>
-                </div>
-                {/* 優惠券列表 */}
-                <CouponHistoryList coupons={coupons} loading={loading} /* error={error} */ />
-                {/* 分頁控制區：顯示優惠券總數與分頁按鈕 */}
-                <Pagination
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={setPage}
+                <CouponSortPagination 
+                  onSortChange={handleSortChange} 
+                  onDisplayChange={handleDisplayChange} 
                 />
+                {/* 優惠券列表 */}
+                <CouponHistoryList coupons={coupons} loading={loading} />
+                {/* 分頁控制區：顯示優惠券總數與分頁按鈕 */}
+                {limit !== Infinity && (
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
+                )}
               </div>
             </div>
           </main>

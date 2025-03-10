@@ -57,9 +57,11 @@ export default function Breadcrumb() {
       account: "個人資料",
       login: "用戶登入",
       coupon: "我的優惠券",
-      "coupon-claim": "領取專屬優惠",
-      "coupon-history": "歷史紀錄",
-    },
+      "coupon-claim":"領取專屬優惠",
+      "coupon-history":"歷史紀錄",
+      message:"我的訊息",
+      notifications:"系統通知"
+    }
   };
 
   // 租借用：在商品詳情頁獲取商品名稱

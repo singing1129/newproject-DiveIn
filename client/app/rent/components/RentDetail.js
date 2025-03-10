@@ -22,6 +22,8 @@ import { useCart } from "@/hooks/cartContext"; // 加入購物車
 import FavoriteButton from "./FavoriteButton"; // 根據文件路徑調整
 import AddToCartButton from "./AddToCartButton"; // 最後有時間回來補充加入購物車的動態效果
 
+import Comment from "./Comment";
+
 const Flatpickr = dynamic(() => import("flatpickr"), { ssr: false });
 
 const API_BASE_URL = "http://localhost:3005/api";
@@ -82,17 +84,9 @@ export default function RentProductDetail() {
 
   const [activeTab, setActiveTab] = useState("description"); // 商品描述區塊切換tab
 
-  // 你可能會喜歡區塊，跳出modal選擇詳細資訊加入購物車的 modal
-  // const [show, setShow] = useState(false);
-  // // const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  // // const [bookingDate, setBookingDate] = useState("");
-  // const [rentDateRange, setRentDateRange] = useState([]); // 租借日期
-  // const [modalVisible, setModalVisible] = useState(false);
-  // const [selectedProduct, setSelectedProduct] = useState(null);
-  // const [bookingDate, setBookingDate] = useState("");
-  // const [rentDateRange, setRentDateRange] = useState([]); // 租借日期
-  // const [showModal, setShowModal] = useState(false);
+
+  const [comments, setComments] = useState([]);
 
   // 從後端獲取商品數據
   useEffect(() => {
@@ -171,6 +165,40 @@ export default function RentProductDetail() {
           data.rent_category_small_id,
           data.id
         );
+
+        // 獲取評論數據
+        // const fetchComments = async () => {
+        //   try {
+        //     const response = await fetch(`${API_BASE_URL}/api/rent/${id}/comments`);
+        //     if (!response.ok) {
+        //       throw new Error("無法獲取評論數據！");
+        //     }
+        //     const result = await response.json();
+        //     setComments(result.data || []);
+        //   } catch (err) {
+        //     console.error("獲取評論失敗:", err);
+        //   }
+        // };
+
+        // fetchComments();
+        // 假資料：12 筆評論
+        const fakeComments = Array.from({ length: 12 }, (_, index) => ({
+          id: index + 1,
+          user: `用戶${index + 1}`,
+          email: index % 3 === 0 ? `user${index + 1}@example.com` : null,
+          phone:
+            index % 3 === 1
+              ? `0912-345-${String(index + 1).padStart(2, "0")}`
+              : null,
+          line: index % 3 === 2 ? `line${index + 1}` : null,
+          date: `2023-10-${String(index + 1).padStart(2, "0")}`,
+          rating: Math.floor(Math.random() * 5) + 1, // 隨機 1~5 星
+          comment: `這是第 ${index + 1} 筆評論，內容是關於這個商品的體驗。`,
+          likes: Math.floor(Math.random() * 100), // 隨機 0~99 個讚
+          avatar: `/image/rent/avatar${(index % 4) + 1}.png`, // 假設有 4 種頭像
+        }));
+
+        setComments(fakeComments);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -180,15 +208,6 @@ export default function RentProductDetail() {
 
     fetchProduct();
   }, [id]);
-
-  // 加載中或未找到商品的處理
-  // if (isLoading) {
-  //   return <div>加載中...</div>;
-  // }
-
-  // if (!product) {
-  //   return <div>未找到商品</div>;
-  // }
 
   const handleColorClick = (colorName, colorRGB) => {
     if (selectedColor === colorName) {
@@ -1075,8 +1094,7 @@ export default function RentProductDetail() {
                       </div>
                     ))}
                 </div>
-              </div>
-              <div className="d-flex flex-column under-brand">
+                <div className="d-flex flex-column under-brand">
                 <p className="product-brand">
                   品牌介紹<span>-</span>
                   <span>{product.brand_name}</span>
@@ -1117,92 +1135,15 @@ export default function RentProductDetail() {
                   </div>
                 </div>
               </div>
+              </div>
+            
             </div>
           )}
           {activeTab === "comments" && (
             <div className="under-comments">
               <div className="d-flex flex-column under-comments-content">
                 {/* 這裡放會員評價的內容 */}
-                <div className="reviews-container">
-                  {/* 會員評價 1 */}
-                  <div className="review-card">
-                    <div className="user-info">
-                      <Image
-                        src="/avatar3.jpg"
-                        alt="User Avatar"
-                        className="user-avatar"
-                        width={150}
-                        height={150}
-                      />
-                      <div className="user-details">
-                        <div className="user-name-email">
-                          <span className="user-name">張三</span>
-                          <span className="user-email">
-                            (zhangsan@example.com)
-                          </span>
-                        </div>
-                        <div className="user-rating">
-                          ⭐⭐⭐⭐⭐ {/* 5 顆星 */}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="user-comment">
-                      這是我用過最好的產品！服務非常周到，物流也很快，強烈推薦給大家！
-                    </p>
-                  </div>
-
-                  {/* 會員評價 2 */}
-                  <div className="review-card">
-                    <div className="user-info">
-                      <Image
-                        src="/avatar3.jpg"
-                        alt="User Avatar"
-                        className="user-avatar"
-                        width={150}
-                        height={150}
-                      />
-                      <div className="user-details">
-                        <div className="user-name-email">
-                          <span className="user-name">李四</span>
-                          <span className="user-email">(lisi@example.com)</span>
-                        </div>
-                        <div className="user-rating">
-                          ⭐⭐⭐⭐ {/* 4 顆星 */}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="user-comment">
-                      產品質量不錯，但價格稍微有點高。客服態度很好，解決問題很迅速。
-                    </p>
-                  </div>
-
-                  {/* 會員評價 3 */}
-                  <div className="review-card">
-                    <div className="user-info">
-                      <Image
-                        src="/avatar3.jpg"
-                        alt="User Avatar"
-                        className="user-avatar"
-                        width={150}
-                        height={150}
-                      />
-                      <div className="user-details">
-                        <div className="user-name-email">
-                          <span className="user-name">王五</span>
-                          <span className="user-email">
-                            (wangwu@example.com)
-                          </span>
-                        </div>
-                        <div className="user-rating">
-                          ⭐⭐⭐⭐⭐ {/* 5 顆星 */}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="user-comment">
-                      非常滿意的一次購物體驗！產品功能強大，使用起來非常順手，值得推薦！
-                    </p>
-                  </div>
-                </div>
+                <Comment comments={comments} />
               </div>
             </div>
           )}

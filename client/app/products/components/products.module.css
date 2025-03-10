@@ -368,6 +368,7 @@
   padding: 15px;
   border-bottom: 1px solid var(--border-color);
   transition: background-color 0.3s;
+  text-decoration: none;
 }
 
 .sidebarProduct:hover {

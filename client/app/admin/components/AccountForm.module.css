@@ -29,25 +29,18 @@
   outline: none !important;
   box-shadow: none !important;
 }
+
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
   width: 100%;
-  margin: 10 auto;
+  margin: 10px auto;
   padding: 20px;
   background-color: var(--white);
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-}
-
-/* 小螢幕時改為上下堆疊 */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }
 
 .contentWrapper {
@@ -59,7 +52,7 @@
 
 /* 大頭貼區塊 */
 .avatarSection {
-  flex: 1; /* 佔 1 份 */
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -92,6 +85,160 @@
   text-align: center;
 }
 
+.pointsInfo {
+  font-size: 14px;
+  color: var(--gray-600-color);
+  margin-top: 5px;
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pointsHistoryBtn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.pointsHistoryBtn:hover {
+  color: var(--primary-deep-color);
+}
+
+.levelProgress {
+  margin-top: 10px;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.progressText {
+  font-size: 12px;
+  color: var(--gray-600-color);
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.progressBar {
+  height: 8px !important;
+  border-radius: 4px;
+  background-color: var(--gray-200-color) !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+.progressBar > span {
+  background-color: var(--primary-color) !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.nextLevelInfo {
+  font-size: 12px;
+  color: var(--gray-600-color);
+  margin-top: 5px;
+  text-align: center;
+}
+
+.levelProgressModal {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: var(--gray-50-color);
+  border-radius: 8px;
+}
+
+.levelProgressModal h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--gray-800-color);
+}
+
+.pointsHistoryList {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.pointsHistoryList h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--gray-800-color);
+}
+
+.pointsHistoryList ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--gray-200-color);
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+.historyReason {
+  flex: 2;
+  font-weight: bold;
+}
+
+.historyPoints {
+  flex: 1;
+  text-align: right;
+  color: var(--primary-deep-color);
+  font-weight: bold;
+}
+
+.historyDate {
+  flex: 1;
+  text-align: right;
+  color: var(--gray-600-color);
+  font-size: 12px;
+}
+
+.rewardSection {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: var(--gray-50-color);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.rewardSection h3 {
+  margin-top: 0;
+  color: var(--gray-800-color);
+}
+
+.rewardBtn {
+  background-color: var(--secondary-color);
+  color: var(--gray-800-color);
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.rewardBtn:hover {
+  background-color: var(--secondary-deep-color);
+}
+
+.rewardBtn:disabled {
+  background-color: var(--gray-300-color);
+  cursor: not-allowed;
+}
+
 .avatarUploadBtn {
   background-color: var(--white);
   color: var(--black);
@@ -111,23 +258,40 @@
 }
 
 .avatarInput {
-  display: none; /* 隱藏文件輸入框 */
+  display: none;
 }
 
+/* 登入方式區塊 */
+.providersSection {
+  .providersSection h3 {
+    font-size: 16px;
+    color: var(--gray-600-color);
+  }
+}
 
-.providersSection h3 {
-  font-size: 16px;
-  color: var(--gray-600-color);
+.providerList {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.providerItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-200-color);
 }
 
 .providerIcon {
-  font-size: 16px;
-  color: var(--primary-color);
+  margin-right: 10px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .providerName {
-  font-size: 16px;
-  color: var(--gray-600-color);
+  flex: 1;
+  color: var(--gray-800-color);
 }
 
 /* 個人資訊區塊 */
@@ -151,24 +315,20 @@
 
 .formGroup input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid var(--gray-300-color);
-  border-radius: 5px;
-  font-size: 1rem;
-  color: var(--gray-800-color);
+  margin-top: 20px;
 }
 
-.formGroup input:focus {
-  border-color: var(--primary-color);
-  outline: none;
+.providersSection h3 {
+  font-size: 16px;
+  color: var(--gray-600-color);
+  margin-bottom: 10px;
 }
-
 
 /* 修改密碼 */
 .changePasswordLink {
   background: none;
   border: none;
-  color: var(--primary-color); 
+  color: var(--primary-color);
   cursor: pointer;
   font-size: 0.8rem;
   margin-left: 0.5rem;
@@ -225,22 +385,6 @@
 }
 
 /* 魚博彥新家 */
-.providerList {
-  list-style: none;
-  padding: 0;
-  width: 100%;
-}
-
-.providerItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background-color: var(--gray-50-color);
-  border-radius: 5px;
-}
-
 .removeProviderBtn {
   background-color: transparent;
   color: var(--gray-700-color);
@@ -256,28 +400,20 @@
   color: var(--gray-900-color);
 }
 
-.warningHint {
-  font-size: 0.85rem;
-  color: #c97336;
-  font-weight: normal;
-}
-
-.readonlyHint {
-  font-size: 0.85rem;
-  color: var(--gray-600-color);
-  font-weight: normal;
-}
-
 .addProviderSection {
   margin-top: 20px;
-  width: 100%;
+}
+
+.addProviderSection h4 {
+  font-size: 14px;
+  color: var(--gray-600-color);
+  margin-bottom: 10px;
 }
 
 .addProviderButtons {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 10px;
 }
 
 .addGoogleBtn,
@@ -309,6 +445,85 @@
   margin-right: 10px;
 }
 
+/* 個人資訊區塊 */
+.accountForm {
+  flex: 2;
+  padding: 20px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--gray-800-color);
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300-color);
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.formGroup input:focus {
+  border-color: var(--primary-color);
+}
+
+.readonlyHint {
+  font-size: 0.85rem;
+  color: var(--gray-600-color);
+}
+
+/* 按鈕樣式 */
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.saveBtn,
+.cancelBtn,
+.changePasswordBtn {
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.saveBtn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.saveBtn:hover {
+  background-color: var(--primary-deep-color);
+}
+
+.cancelBtn {
+  background-color: var(--gray-300-color);
+  color: var(--gray-800-color);
+}
+
+.cancelBtn:hover {
+  background-color: var(--gray-400-color);
+}
+
+.changePasswordBtn {
+  background-color: var(--secondary-color);
+  color: var(--gray-800-color);
+}
+
+.changePasswordBtn:hover {
+  background-color: var(--secondary-deep-color);
+}
+
+/* Modal 樣式 */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -331,6 +546,11 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+.modalContent h3 {
+  margin-bottom: 20px;
+  color: var(--gray-800-color);
+}
+
 .modalButtons {
   display: flex;
   justify-content: flex-end;
@@ -338,20 +558,186 @@
   margin-top: 20px;
 }
 
+.primaryBtn,
+.secondaryBtn {
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
 .primaryBtn {
   background-color: var(--primary-color);
   color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background-color: var(--primary-deep-color);
 }
 
 .secondaryBtn {
   background-color: var(--gray-300-color);
   color: var(--gray-800-color);
-  padding: 8px 16px;
-  border: none;
+}
+
+.secondaryBtn:hover {
+  background-color: var(--gray-400-color);
+}
+
+/* 消息提示 */
+.message {
+  padding: 10px 15px;
+  margin: 10px 0;
   border-radius: 5px;
+  text-align: center;
+  font-weight: 500;
+  border-width: 1px;
+  border-style: solid;
+  animation: fadeIn 0.3s ease;
+}
+
+.success {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-color: #bee5eb;
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .contentWrapper {
+    flex-direction: column;
+  }
+
+  .avatarSection,
+  .accountForm {
+    flex: none;
+    width: 100%;
+  }
+}
+
+.levelRulesSection {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: var(--gray-50-color);
+  border-radius: 8px;
+}
+
+.levelRulesSection h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--gray-800-color);
+}
+
+.levelRulesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.levelRulesList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-200-color);
+}
+
+.levelRulesList li:last-child {
+  border-bottom: none;
+}
+
+.levelName {
+  font-weight: bold;
+}
+
+.levelPoints {
+  color: var(--primary-deep-color);
+}
+
+.rewardNotification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.rewardContent {
+  background-color: var(--white);
+  border-left: 5px solid var(--secondary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  min-width: 300px;
+}
+
+.rewardIcon {
+  font-size: 24px;
+  margin-right: 15px;
+}
+
+.rewardText {
+  flex: 1;
+}
+
+.rewardTitle {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--gray-800-color);
+}
+
+.rewardMessage {
+  color: var(--gray-700-color);
+}
+
+.rewardCloseBtn {
+  background: none;
+  border: none;
+  color: var(--gray-500-color);
+  font-size: 20px;
   cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+}
+
+.rewardCloseBtn:hover {
+  color: var(--gray-700-color);
+}
+
+/* 移除不需要的樣式 */
+.socialLoginMessage {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  color: var(--gray-700-color);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
 }

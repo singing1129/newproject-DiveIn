@@ -12,9 +12,17 @@ router.get("/:orderId", async (req, res) => {
     await connection.beginTransaction();
 
     // 1. 查詢訂單基本資訊
+    // const [orderRows] = await connection.execute(
+    //   `SELECT o.id, o.user_id, o.total_price, o.status, o.createdAt, 
+    //           o.payment_method, o.transaction_id, o.payment_time, o.payment_status, o.points
+    //    FROM orders o 
+    //    WHERE o.id = ?`,
+    //   [orderId]
+    // );
     const [orderRows] = await connection.execute(
       `SELECT o.id, o.user_id, o.total_price, o.status, o.createdAt, 
-              o.payment_method, o.transaction_id, o.payment_time, o.payment_status, o.points
+              o.payment_method, o.transaction_id, o.payment_time, o.payment_status, 
+              o.points, o.coupon_usage_id, o.coupon_discount
        FROM orders o 
        WHERE o.id = ?`,
       [orderId]
@@ -26,8 +34,22 @@ router.get("/:orderId", async (req, res) => {
         message: "找不到訂單資訊",
       });
     }
-
     const orderInfo = orderRows[0];
+    // 如果有優惠券使用 ID，查詢優惠券詳細資訊
+    let couponInfo = null;
+    if (orderInfo.coupon_usage_id) {
+      const [couponRows] = await connection.execute(
+        `SELECT cu.id as usage_id, c.code, c.name, c.discount_type, c.discount
+         FROM coupon_usage cu
+         JOIN coupon c ON cu.coupon_id = c.id
+         WHERE cu.id = ?`,
+        [orderInfo.coupon_usage_id]
+      );
+      
+      if (couponRows.length > 0) {
+        couponInfo = couponRows[0];
+      }
+    }
 
     // 2. 查詢訂單配送資訊
     const [shippingRows] = await connection.execute(
@@ -130,19 +152,22 @@ router.get("/:orderId", async (req, res) => {
         [orderId, bundle_id]
       );
 
-      // 计算套装中产品的总原价
+      // 計算套裝價格
       const originalTotal = bundleItems.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
       );
 
-      // 获取套装数量（基于其中一个商品的数量计算）
-      const bundleQuantity =
-        bundleItems.length > 0
-          ? Math.floor(bundleItems[0].quantity / bundleItems.length)
-          : 0;
+      // 獲取套裝數量
+      const bundleQuantity = bundleItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+      // bundleItems.length > 0
+      //   ? Math.floor(bundleItems[0].quantity / bundleItems.length)
+      //   : 0;
 
-      // 添加到套装列表
+      // 添加到套裝列表
       bundles.push({
         id: bundle_id,
         name: bundleInfo[0].name,
@@ -178,7 +203,7 @@ router.get("/:orderId", async (req, res) => {
 
       switch (paymentStatus) {
         case "pending":
-          return "待付款";
+          return "已付款";
         case "paid":
           if (status === "shipped") return "已出貨";
           if (status === "delivered") return "已送達";
@@ -191,6 +216,8 @@ router.get("/:orderId", async (req, res) => {
           return "處理中";
       }
     };
+    console.log("訂單信息:", orderInfo);
+
 
     // 整合數據
     const orderData = {
@@ -206,6 +233,10 @@ router.get("/:orderId", async (req, res) => {
         statusCode: orderInfo.status, // 保留原始狀態碼，前端可能需要判斷
         totalAmount: orderInfo.total_price,
         rewardPoints: orderInfo.points || 0,
+         // 添加優惠券相關資訊
+        couponDiscount: parseFloat(orderInfo.coupon_discount) || 0,
+        couponName: couponInfo ? couponInfo.name : null,
+        couponCode: couponInfo ? couponInfo.code : null,
       },
       paymentInfo: {
         method: orderInfo.payment_method,
@@ -364,7 +395,7 @@ router.get("/:orderId", async (req, res) => {
 // 查詢用戶的所有訂單
 router.get("/user/:userId", async (req, res) => {
   const { userId } = req.params;
-  console.log(userId);
+  // console.log(userId);
   try {
     // 查詢用戶所有訂單基本資訊
     const [orderRows] = await pool.execute(
@@ -445,6 +476,10 @@ router.get("/user/:userId", async (req, res) => {
                 Number(activityCount[0].count || 0) +
                 Number(rentalCount[0].count || 0) +
                 Number(bundleCount[0].count || 0),
+              productCount: Number(productCount[0].count || 0),
+              activityCount: Number(activityCount[0].count || 0),
+              rentalCount: Number(rentalCount[0].count || 0),
+              bundleCount: Number(bundleCount[0].count || 0),
               firstItem: firstRental.length > 0 ? firstRental[0] : null,
             };
           }
@@ -453,9 +488,14 @@ router.get("/user/:userId", async (req, res) => {
             ...order,
             orderNumber: `OD${String(order.id).padStart(8, "0")}`,
             totalItems:
-              (productCount[0].count || 0) +
-              (activityCount[0].count || 0) +
-              (rentalCount[0].count || 0),
+              Number(productCount[0].count || 0) +
+              Number(activityCount[0].count || 0) +
+              Number(rentalCount[0].count || 0) +
+              Number(bundleCount[0].count || 0),
+            productCount: Number(productCount[0].count || 0),
+            activityCount: Number(activityCount[0].count || 0),
+            rentalCount: Number(rentalCount[0].count || 0),
+            bundleCount: Number(bundleCount[0].count || 0),
             firstItem: firstActivity[0],
           };
         }
@@ -464,9 +504,14 @@ router.get("/user/:userId", async (req, res) => {
           ...order,
           orderNumber: `OD${String(order.id).padStart(8, "0")}`,
           totalItems:
-            (productCount[0].count || 0) +
-            (activityCount[0].count || 0) +
-            (rentalCount[0].count || 0),
+            Number(productCount[0].count || 0) +
+            Number(activityCount[0].count || 0) +
+            Number(rentalCount[0].count || 0) +
+            Number(bundleCount[0].count || 0),
+          productCount: Number(productCount[0].count || 0),
+          activityCount: Number(activityCount[0].count || 0),
+          rentalCount: Number(rentalCount[0].count || 0),
+          bundleCount: Number(bundleCount[0].count || 0),
           firstItem: firstItem[0],
         };
       })

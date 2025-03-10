@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： localhost
--- 產生時間： 2025 年 03 月 07 日 10:56
+-- 產生時間： 2025 年 03 月 09 日 11:33
 -- 伺服器版本： 10.4.28-MariaDB
 -- PHP 版本： 8.2.4
 
@@ -361,8 +361,8 @@ CREATE TABLE `coupon` (
   `name` varchar(255) NOT NULL COMMENT '優惠券名稱',
   `campaign_name` varchar(255) DEFAULT NULL COMMENT '檔期活動名稱',
   `discount_type` enum('金額','折扣 %') NOT NULL COMMENT '折扣類型（金額或折扣 %）',
-  `discount` decimal(10,2) NOT NULL COMMENT '折扣數值（依折扣類型而定）',
-  `min_spent` decimal(10,2) NOT NULL COMMENT '最低消費金額（滿額使用）',
+  `discount` decimal(10,0) NOT NULL COMMENT '折扣數值（依折扣類型而定）',
+  `min_spent` decimal(10,0) NOT NULL COMMENT '最低消費金額（滿額使用）',
   `start_date` datetime NOT NULL COMMENT '優惠券開始時間',
   `end_date` datetime NOT NULL COMMENT '優惠券結束時間',
   `total_issued` int(11) NOT NULL COMMENT '總發放數量',
@@ -418,7 +418,7 @@ CREATE TABLE `coupon_usage` (
   `id` int(11) NOT NULL COMMENT '唯一識別碼',
   `coupon_id` int(11) NOT NULL COMMENT '對應 coupon.id',
   `users_id` int(11) NOT NULL COMMENT '用戶 ID',
-  `used_at` datetime NOT NULL COMMENT '使用時間',
+  `used_at` datetime DEFAULT NULL,
   `status` enum('已領取','已使用','已過期') NOT NULL COMMENT '優惠券狀態',
   `is_deleted` tinyint(1) DEFAULT 0 COMMENT '是否刪除（若取消優惠券使用）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
@@ -507,6 +507,8 @@ CREATE TABLE `orders` (
   `payment_time` datetime DEFAULT NULL,
   `payment_status` enum('pending','paid','failed','refunded') DEFAULT 'pending',
   `points` int(100) DEFAULT NULL,
+  `coupon_usage_id` int(10) UNSIGNED DEFAULT NULL,
+  `coupon_discount` decimal(10,2) DEFAULT 0.00,
   `is_reviewed` tinyint(1) NOT NULL DEFAULT 0,
   `reviewed_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -557,7 +559,7 @@ CREATE TABLE `order_items` (
   `order_id` int(10) UNSIGNED NOT NULL,
   `variant_id` int(10) UNSIGNED NOT NULL,
   `quantity` int(11) NOT NULL DEFAULT 1,
-  `price` decimal(10,2) NOT NULL,
+  `price` decimal(10,0) NOT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
   `bundle_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -575,9 +577,9 @@ CREATE TABLE `order_rental_items` (
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `quantity` int(11) NOT NULL DEFAULT 1,
-  `price_per_day` decimal(10,2) NOT NULL,
-  `total_price` decimal(10,2) NOT NULL,
-  `deposit` decimal(10,2) NOT NULL,
+  `price_per_day` decimal(10,0) NOT NULL,
+  `total_price` decimal(10,0) NOT NULL,
+  `deposit` decimal(10,0) NOT NULL,
   `createdAt` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -598,6 +600,22 @@ CREATE TABLE `order_shipping_info` (
   `store_name` varchar(100) DEFAULT NULL,
   `store_address` text DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `points_history`
+--
+
+CREATE TABLE `points_history` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `order_id` int(10) UNSIGNED DEFAULT NULL,
+  `points` int(11) NOT NULL,
+  `action` varchar(50) NOT NULL COMMENT '積分來源: review_reward, purchase, event, etc.',
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -891,7 +909,8 @@ CREATE TABLE `reviews` (
   `rating` tinyint(4) NOT NULL,
   `comment` text DEFAULT NULL,
   `createdAt` datetime DEFAULT current_timestamp(),
-  `isDeleted` tinyint(1) NOT NULL DEFAULT 0
+  `isDeleted` tinyint(1) NOT NULL DEFAULT 0,
+  `useful_count` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -962,6 +981,7 @@ CREATE TABLE `users` (
   `created_at` varchar(50) NOT NULL DEFAULT current_timestamp(),
   `updated_at` varchar(50) DEFAULT NULL,
   `level_id` int(11) NOT NULL DEFAULT 0,
+  `total_points` int(11) DEFAULT 0,
   `is_deleted` int(11) NOT NULL DEFAULT 0,
   `head` varchar(250) DEFAULT NULL,
   `resetSecret` varchar(255) DEFAULT NULL,
@@ -970,6 +990,21 @@ CREATE TABLE `users` (
   `otp_expiration` datetime DEFAULT NULL,
   `is_custom_head` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 資料表結構 `users_level`
+--
+
+CREATE TABLE `users_level` (
+  `id` int(11) NOT NULL,
+  `level_name` varchar(50) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `min_points` int(11) DEFAULT 0 COMMENT '該等級所需的最低積分',
+  `max_points` int(11) DEFAULT NULL COMMENT '該等級的最高積分（NULL 表示無上限）'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1160,7 +1195,8 @@ ALTER TABLE `groups_participants`
 --
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `idx_orders_coupon_usage` (`coupon_usage_id`);
 
 --
 -- 資料表索引 `order_activity_items`
@@ -1197,6 +1233,14 @@ ALTER TABLE `order_rental_items`
 --
 ALTER TABLE `order_shipping_info`
   ADD PRIMARY KEY (`id`),
+  ADD KEY `order_id` (`order_id`);
+
+--
+-- 資料表索引 `points_history`
+--
+ALTER TABLE `points_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
   ADD KEY `order_id` (`order_id`);
 
 --
@@ -1250,8 +1294,7 @@ ALTER TABLE `product_images`
 ALTER TABLE `product_reviews`
   ADD PRIMARY KEY (`id`),
   ADD KEY `review_id` (`review_id`),
-  ADD KEY `product_id` (`product_id`),
-  ADD KEY `variant_id` (`variant_id`);
+  ADD KEY `product_id` (`product_id`);
 
 --
 -- 資料表索引 `product_variant`
@@ -1311,6 +1354,13 @@ ALTER TABLE `size`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`);
+
+--
+-- 資料表索引 `users_level`
+--
+ALTER TABLE `users_level`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `levelName` (`level_name`);
 
 --
 -- 資料表索引 `user_providers`
@@ -1510,6 +1560,12 @@ ALTER TABLE `order_shipping_info`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用資料表自動遞增(AUTO_INCREMENT) `points_history`
+--
+ALTER TABLE `points_history`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用資料表自動遞增(AUTO_INCREMENT) `product`
 --
 ALTER TABLE `product`
@@ -1600,6 +1656,12 @@ ALTER TABLE `users`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- 使用資料表自動遞增(AUTO_INCREMENT) `users_level`
+--
+ALTER TABLE `users_level`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用資料表自動遞增(AUTO_INCREMENT) `user_providers`
 --
 ALTER TABLE `user_providers`
@@ -1686,6 +1748,13 @@ ALTER TABLE `order_items`
 --
 ALTER TABLE `order_shipping_info`
   ADD CONSTRAINT `order_shipping_info_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
+
+--
+-- 資料表的限制式 `points_history`
+--
+ALTER TABLE `points_history`
+  ADD CONSTRAINT `points_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `points_history_ibfk_2` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL;
 
 --
 -- 資料表的限制式 `product`

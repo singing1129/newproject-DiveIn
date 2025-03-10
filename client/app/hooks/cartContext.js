@@ -4,7 +4,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./useAuth";
 import useToast from "@/hooks/useToast";
-
+import { useCoupon } from "./useCoupon";
 // 創建 Context
 const CartContext = createContext();
 const API_BASE_URL = "http://localhost:3005/api";
@@ -21,6 +21,8 @@ export const CartProvider = ({ children }) => {
     rentals: [],
     bundles: [], // 新增 bundles 陣列
   });
+  console.log("cartData", cartData);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const [error, setError] = useState(null);
   // 添加選中項目的狀態
@@ -39,6 +41,37 @@ export const CartProvider = ({ children }) => {
       fetchCart();
     }
   }, [user]);
+
+  // 處理優惠券
+  // 添加計算優惠券折扣的函數
+  const calculateCouponDiscount = (coupon) => {
+    if (!coupon) return 0;
+
+    const subtotal =
+      cartData.total?.products ||
+      0 + cartData.total?.activities ||
+      0 + cartData.total?.bundles ||
+      0 + cartData.total?.rentals?.rental_fee ||
+      0;
+
+    if (coupon.discount_type === "金額") {
+      return parseFloat(coupon.discount);
+    } else if (coupon.discount_type === "折扣 %") {
+      return ((subtotal * parseFloat(coupon.discount)) / 100).toFixed(0);
+    }
+
+    return 0;
+  };
+
+  // 應用優惠券
+  const applyCoupon = (coupon) => {
+    setAppliedCoupon(coupon);
+  };
+
+  // 移除優惠券
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+  };
 
   // 處理全選
   const handleSelectAll = (type, items, isSelected) => {
@@ -313,12 +346,24 @@ export const CartProvider = ({ children }) => {
 
   const completeCheckout = async (checkoutData) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/checkout/complete`, {
-        userId: user.id, // 這裡應該使用實際的 userId
+      // 確保加入優惠券信息
+      const checkoutWithCoupon = {
         ...checkoutData,
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
+        couponUsageId: appliedCoupon ? appliedCoupon.coupon_usage_id : null,
+        couponDiscount: appliedCoupon
+          ? calculateCouponDiscount(appliedCoupon)
+          : 0,
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/checkout/complete`, {
+        userId: user.id,
+        ...checkoutWithCoupon, // 使用包含優惠券信息的數據
       });
 
       if (response.data.success) {
+        // 結帳成功後清除優惠券信息
+        setAppliedCoupon(null);
         return response.data;
       }
       throw new Error(response.data.message || "結帳失敗");
@@ -345,6 +390,10 @@ export const CartProvider = ({ children }) => {
         proceedToCheckout,
         submitActivityTravelers,
         completeCheckout,
+        appliedCoupon,
+        applyCoupon,
+        removeCoupon,
+        calculateCouponDiscount,
       }}
     >
       {children}

@@ -458,7 +458,7 @@
   font-weight: 400;
   text-align: left;
   line-height: 2;
-  padding: 15px;
+  padding: 31px;
   border-top: 2px solid var(--gray-100-color);
 }
 .under-comments .under-comments-content {
@@ -546,7 +546,8 @@
 .under-brand {
   height: 100%;
   gap: 14px;
-  padding: 15px;
+  margin-top: 40px;
+  /* padding: 15px; */
 }
 
 .under-brand  span{

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>優惠券詳細資料</title>
+  <!-- Bootstrap 5.3.3 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<!-- 使用條件按鈕，點擊後觸發 modal -->
+<div class="container my-5">
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#couponDetailModal">
+    查看使用條件
+  </button>
+</div>
+
+<!-- Modal：優惠券詳細資料 -->
+<div class="modal fade" id="couponDetailModal" tabindex="-1" aria-labelledby="couponDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="couponDetailModalLabel">優惠券詳細資料</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+      </div>
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- 優惠券標題與說明 -->
+        <div class="mb-3">
+          <h6>優惠券名稱：滿額折扣券</h6>
+          <p>本優惠券可於指定期間內於滿 NT$500 訂單中使用，享有折扣優惠。</p>
+        </div>
+        <!-- 使用條件 -->
+        <div class="mb-3">
+          <strong>使用條件：</strong>
+          <ul>
+            <li>訂單滿 NT$500 以上</li>
+            <li>僅限單筆訂單使用</li>
+            <li>不得與其他優惠同時使用</li>
+          </ul>
+        </div>
+        <!-- 有效期限 -->
+        <div>
+          <strong>有效期限：</strong>
+          <p>2025/01/01 - 2025/12/31</p>
+        </div>
+      </div>
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+        <button type="button" class="btn btn-primary">立即使用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5.3.3 Bundle JS (包含 Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
