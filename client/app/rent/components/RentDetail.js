@@ -1094,8 +1094,7 @@ export default function RentProductDetail() {
                       </div>
                     ))}
                 </div>
-              </div>
-              <div className="d-flex flex-column under-brand">
+                <div className="d-flex flex-column under-brand">
                 <p className="product-brand">
                   品牌介紹<span>-</span>
                   <span>{product.brand_name}</span>
@@ -1136,6 +1135,8 @@ export default function RentProductDetail() {
                   </div>
                 </div>
               </div>
+              </div>
+            
             </div>
           )}
           {activeTab === "comments" && (

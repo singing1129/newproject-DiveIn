@@ -1,222 +1,246 @@
 :root {
-    --primary-color: #219ebc;
-    --primary-deep-color: #023047;
-    --primary-light-color: #8ecae6;
-    --secondary-color: #ffd500;
-    --secondary-deep-color: #ffb703;
-    --secondary-light-color: #f1d691;
-    --white: #ffffff;
-    --black: #000000;
-    --gray-50-color: #e5e5e5;
-    --gray-100-color: #dedede;
-    --gray-200-color: #e5e5e5;
-    --gray-300-color: #cfcfcf;
-    --gray-400-color: #b2b2b2;
-    --gray-500-color: #a3a3a3;
-    --gray-600-color: #898989;
-    --gray-700-color: #6f6f6f;
-    --gray-800-color: #555555;
-    --gray-900-color: #3b3b3b;
-  }
-  
-  .commentSection {
-    margin-top: 2rem;
-    padding: 1rem;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    font-family: "Noto Sans TC", serif;
-    font-size: 16px;
-  }
-  
-  /* 總評分區塊 */
-  .ratingSummary {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding: 0;
-  }
-  
-  /* 總評分 */
-  .totalRating {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .ratingValue {
-    font-size: 36px;
-    font-weight: 700;
-    color: var(--primary-deep-color);
-    line-height: 1;
-  }
-  
-  .stars {
-    font-size: 20px;
-    color: var(--secondary-color);
-    letter-spacing: 2px;
-  }
-  
-  .ratingCount {
-    font-size: 16px;
-    color: var(--gray-700-color);
-    font-weight: 500;
-  }
-  
-  /* 排序下拉選單 */
-  .sortDropdownContainer {
-    position: relative;
-  }
-  
-  .sortDropdown {
-    padding: 0.6rem 2rem 0.6rem 1rem; /* 內邊距與其他頁面一致 */
-    border: 0.5px solid var(--gray-200-color); /* 參考 .select-order-btn 的邊框 */
-    background-color: var(--white);
-    font-size: 15px; /* 參考 .selectOrderText 的字體大小 */
-    color: var(--gray-600-color); /* 預設文字顏色 */
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease; /* 平滑過渡 */
-    border-radius: 4px; /* 輕微圓角，與其他頁面一致 */
-  }
-  
-  /* Hover 效果 */
-  .sortDropdown:hover {
-    background-color: var(--primary-light-color); /* 淺藍色背景，參考 .select-order-btn:hover */
-    color: var(--black); /* 文字變黑，與其他頁面一致 */
-  }
-  
-  /* 箭頭樣式 */
-  .sortDropdownContainer i {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: var(--gray-600-color);
-    font-size: 10px; /* 參考 .bi-caret-down-fill 的字體大小 */
-    transition: color 0.3s ease; /* 箭頭顏色過渡 */
-  }
-  
-  .sortDropdown:hover + i {
-    color: var(--black); /* Hover 時箭頭跟隨文字變黑 */
-  }
-  
-  /* 評論列表 */
-  .commentList {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-  
-  .commentItem {
-    padding: 1rem;
-    background-color: var(--white);
-    border: 1px solid var(--gray-200-color);
-    border-radius: 8px;
-    transition: all 0.3s ease;
-  }
-  
-  .commentItem:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .userInfo {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-  }
-  
-  .userAvatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-right: 10px;
-  }
-  
-  .avatarImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .userDetails {
-    flex: 1;
-  }
-  
-  .userName {
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--black);
-  }
-  
-  .userContact {
-    font-size: 12px;
-    color: var(--gray-600-color);
-    margin-left: 8px;
-  }
-  
-  .userRating {
-    font-size: 14px;
-    color: var(--secondary-color);
-    margin-top: 4px;
-  }
-  
-  .commentDate {
-    font-size: 12px;
-    color: var(--gray-600-color);
-    text-align: right;
-  }
-  
-  .commentContent {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .userComment {
-    font-size: 14px;
-    color: var(--gray-800-color);
-    line-height: 1.6;
-  }
-  
-  .likeButton {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-    color: var(--gray-600-color);
-    cursor: pointer;
-    transition: color 0.3s ease;
-    margin-top: 10px;
-  }
-  
-  .likeButton:hover {
-    color: var(--primary-color);
-  }
-  
-  .likeButton i {
-    font-size: 16px;
-  }
-  
-  /* 加載更多按鈕 */
-  .loadMore {
-    text-align: center;
-    margin-top: 1.5rem;
-  }
-  
-  .loadMoreButton {
-    padding: 0.6rem 1.5rem;
-    background-color: var(--primary-color);
-    color: var(--white);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-  
-  .loadMoreButton:hover {
-    background-color: var(--primary-deep-color);
-    transform: scale(1.05);
-  }
+  --primary-color: #219ebc;
+  --primary-deep-color: #023047;
+  --primary-light-color: #8ecae6;
+  --secondary-color: #ffd500;
+  --secondary-deep-color: #ffb703;
+  --secondary-light-color: #f1d691;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-50-color: #e5e5e5;
+  --gray-100-color: #dedede;
+  --gray-200-color: #e5e5e5;
+  --gray-300-color: #cfcfcf;
+  --gray-400-color: #b2b2b2;
+  --gray-500-color: #a3a3a3;
+  --gray-600-color: #898989;
+  --gray-700-color: #6f6f6f;
+  --gray-800-color: #555555;
+  --gray-900-color: #3b3b3b;
+}
+
+.commentSection {
+  /* margin-top: 2rem; */
+  padding: 1rem;
+  /* background-color: #f9f9f9; */
+  border-radius: 8px;
+  font-family: "Noto Sans TC", serif;
+  font-size: 16px;
+}
+
+.ratingSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0;
+}
+
+.totalRating {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ratingValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.stars {
+  font-size: 20px;
+  color: var(--secondary-color);
+  letter-spacing: 2px;
+}
+
+.ratingCount {
+  font-size: 16px;
+  color: var(--gray-700-color);
+  font-weight: 500;
+}
+
+.sortDropdownContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.sortDropdown {
+  padding: 0.6rem 2rem 0.6rem 1rem;
+  border: 0.5px solid var(--gray-200-color);
+  background-color: var(--white);
+  font-size: 15px;
+  color: var(--gray-600-color);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
+  width: 200px; /* 增加寬度，避免文字換行 */
+  white-space: nowrap; /* 防止文字換行 */
+}
+
+.sortDropdown:hover {
+  background-color: var(--primary-light-color);
+  color: var(--white);
+}
+
+.sortDropdown::after {
+  content: "\25BC";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-600-color);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--white);
+  border: 1px solid var(--gray-200-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  width: 100%;
+}
+
+.dropdownItem {
+  padding: 0.5rem 1rem;
+  font-size: 15px;
+  color: var(--gray-600-color);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dropdownItem:hover {
+  background-color: var(--primary-light-color);
+  color: var(--white);
+}
+
+.dropdownItem:active {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.commentList {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.commentItem {
+  padding: 1rem;
+  background-color: var(--white);
+  border: 1px solid var(--gray-200-color);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.commentItem:hover {
+  transform: translateY(-5px); 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.userInfo {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.userAvatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 10px;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.userDetails {
+  flex: 1;
+}
+
+.userName {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--black);
+}
+
+.userContact {
+  font-size: 12px;
+  color: var(--gray-600-color);
+  margin-left: 8px;
+}
+
+.userRating {
+  font-size: 14px;
+  color: var(--secondary-color);
+  margin-top: 4px;
+}
+
+.commentDate {
+  font-size: 12px;
+  color: var(--gray-600-color);
+  text-align: right;
+}
+
+.commentContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.userComment {
+  font-size: 14px;
+  color: var(--gray-800-color);
+  line-height: 1.6;
+}
+
+.likeButton {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 5px;
+  font-size: 14px;
+  color: var(--gray-600-color);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.likeButton:hover {
+  color: var(--primary-color);
+}
+
+.likeButton i {
+  font-size: 16px;
+}
+
+.loadMore {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.loadMoreButton {
+  padding: 0.6rem 1.5rem;
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.loadMoreButton:hover {
+  background-color: var(--primary-deep-color);
+  transform: scale(1.05);
+}
+

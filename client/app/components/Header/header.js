@@ -384,19 +384,21 @@
 //   );
 // }
 
-"use client"; // 確保標記為客戶端組件
-import { useState } from "react";
+"use client"; 
+import { useState, useEffect } from "react";
 import { FaSearch, FaBars } from "react-icons/fa";
 import User from "./user";
 import { FiShoppingCart } from "react-icons/fi";
 import Link from "next/link";
 import HeaderPop from "./headerPop"; // 確保 HeaderPop 組件正確導入
 import React, { forwardRef } from "react";
+import { useRouter } from "next/navigation";
 
 // 使用 forwardRef 並設置 displayName
 const Header = forwardRef((props, ref) => {
   const [showPop, setShowPop] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
+  const router = useRouter(); // 使用 useRouter
 
   const handleMouseEnter = (menu) => {
     setShowPop(true);
@@ -408,13 +410,32 @@ const Header = forwardRef((props, ref) => {
     setActiveMenu(null);
   };
 
+
+   // [新增點]: 點擊連結時重置 body 的 overflow 樣式 ，避免因為首頁行為影響滾輪行為
+   const handleLinkClick = () => {
+    document.body.style.overflow = "auto";
+  };
+  
+   // [新增點]: 監聽路由變化，確保跳轉前重置 overflow
+  //  useEffect(() => {
+  //   const handleRouteChange = () => {
+  //     document.body.style.overflow = "auto";
+  //   };
+
+  //   router.events.on("routeChangeStart", handleRouteChange);
+
+  //   return () => {
+  //     router.events.off("routeChangeStart", handleRouteChange);
+  //   };
+  // }, [router]);
+
   return (
     <header ref={ref} className={`sticky-top ${props.className || ""}`}>
       <nav className="container" onMouseLeave={handleMouseLeave}>
         {/* 電腦版 navbar */}
         <div className="d-none d-sm-flex">
           <div className="header-icon-container">
-            <Link href="/">
+            <Link href="/" onClick={handleLinkClick}>
               <img src="/image/DiveIn-logo-dark-final.png" alt="Logo" />
             </Link>
           </div>
@@ -424,6 +445,7 @@ const Header = forwardRef((props, ref) => {
                 <Link
                   className="a"
                   href="/"
+                  onClick={handleLinkClick}
                   onMouseEnter={() => {
                     setShowPop(false);
                   }}
@@ -435,6 +457,7 @@ const Header = forwardRef((props, ref) => {
                 <Link
                   className="a"
                   href="/products"
+                  onClick={handleLinkClick}
                   onMouseEnter={() => handleMouseEnter("products")}
                 >
                   商品
@@ -444,6 +467,7 @@ const Header = forwardRef((props, ref) => {
                 <Link
                   className="a"
                   href="/activity"
+                  onClick={handleLinkClick}
                   onMouseEnter={() => handleMouseEnter("events")}
                 >
                   活動
@@ -453,6 +477,7 @@ const Header = forwardRef((props, ref) => {
                 <Link
                   className="a"
                   href="/rent"
+                  onClick={handleLinkClick}
                   onMouseEnter={() => handleMouseEnter("rental")}
                 >
                   租借
@@ -462,6 +487,7 @@ const Header = forwardRef((props, ref) => {
                 <Link
                   className="a"
                   href="/group"
+                  onClick={handleLinkClick}
                   onMouseEnter={() => handleMouseEnter("group")}
                 >
                   揪團
@@ -471,6 +497,7 @@ const Header = forwardRef((props, ref) => {
                 <Link
                   className="a"
                   href="/article"
+                  onClick={handleLinkClick}
                   onMouseEnter={() => handleMouseEnter("forum")}
                 >
                   論壇
@@ -511,12 +538,12 @@ const Header = forwardRef((props, ref) => {
             </button>
           </div>
           <div className="header-icon-container text-center">
-            <Link href="/">
+            <Link href="/" onClick={handleLinkClick}>
               <img src="/image/DiveIn-logo-dark-final.png" alt="Logo" />
             </Link>
           </div>
           <div className="mobile-cart fs-4">
-            <Link href="/cart" className="a text-black">
+            <Link href="/cart" className="a text-black" onClick={handleLinkClick}>
               <FiShoppingCart />
             </Link>
           </div>
@@ -545,7 +572,7 @@ const Header = forwardRef((props, ref) => {
         <div className="mobile-offcanvas-body offcanvas-body p-0">
           <ul className="m-0 list-unstyled border-bottom">
             <li className="px-3 pt-4 pb-2">
-              <Link className="a text-reset" href="/">
+              <Link className="a text-reset" href="/" onClick={handleLinkClick}>
                 首頁
               </Link>
             </li>
@@ -561,28 +588,28 @@ const Header = forwardRef((props, ref) => {
               <div className="mobile-collapse collapse mt-3" id="product-menu">
                 <ul className="list-group">
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">面鏡／呼吸管</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>面鏡／呼吸管</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">蛙鞋</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>蛙鞋</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">潛水配件</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>潛水配件</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">電子裝備／專業配件</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>電子裝備／專業配件</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">防寒衣物</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>防寒衣物</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">包包攜行</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>包包攜行</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">魚槍／配件</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>魚槍／配件</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">生活小物</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>生活小物</a>
                   </li>
                 </ul>
               </div>
@@ -599,13 +626,13 @@ const Header = forwardRef((props, ref) => {
               <div className="mobile-collapse collapse mt-3" id="activity-menu">
                 <ul className="list-group">
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">自由潛水活動</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>自由潛水活動</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">水肺潛水活動</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>水肺潛水活動</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">浮潛活動</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>浮潛活動</a>
                   </li>
                 </ul>
               </div>
@@ -622,13 +649,13 @@ const Header = forwardRef((props, ref) => {
               <div className="mobile-collapse collapse mt-3" id="rent-menu">
                 <ul className="list-group">
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">基礎裝備租借</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>基礎裝備租借</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">專業裝備租借</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>專業裝備租借</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">水下攝影設備</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>水下攝影設備</a>
                   </li>
                 </ul>
               </div>
@@ -645,13 +672,13 @@ const Header = forwardRef((props, ref) => {
               <div className="mobile-collapse collapse mt-3" id="group-menu">
                 <ul className="list-group">
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">建立揪團</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>建立揪團</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">參加揪團</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>參加揪團</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">我的揪團</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>我的揪團</a>
                   </li>
                 </ul>
               </div>
@@ -668,16 +695,16 @@ const Header = forwardRef((props, ref) => {
               <div className="mobile-collapse collapse mt-3" id="forum-menu">
                 <ul className="list-group">
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">綜合討論</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>綜合討論</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">潛水心得</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>潛水心得</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">裝備討論</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>裝備討論</a>
                   </li>
                   <li className="list-group-item">
-                    <a className="a text-reset" href="#">水攝攝影</a>
+                    <a className="a text-reset" href="#" onClick={handleLinkClick}>水攝攝影</a>
                   </li>
                 </ul>
               </div>
@@ -688,12 +715,12 @@ const Header = forwardRef((props, ref) => {
             <h5 className="px-3 pt-4 py-2 text-secondary">帳戶</h5>
             <ul className="m-0 px-4 list-unstyled">
               <li className="px-3 py-2">
-                <Link className="a text-reset" href="/admin/login">
+                <Link className="a text-reset" href="/admin/login" onClick={handleLinkClick}>
                   登入
                 </Link>
               </li>
               <li className="px-3 pt-2 pb-4">
-                <Link className="a text-reset" href="/admin/register">
+                <Link className="a text-reset" href="/admin/register" onClick={handleLinkClick}>
                   註冊
                 </Link>
               </li>
@@ -705,7 +732,7 @@ const Header = forwardRef((props, ref) => {
   );
 });
 
-// [修正點]: 為 forwardRef 組件設置 displayName
+// 為 forwardRef 組件設置 displayName
 Header.displayName = "Header";
 
 export default Header;

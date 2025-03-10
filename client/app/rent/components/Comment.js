@@ -5,51 +5,57 @@ import styles from "./Comment.module.css";
 import Image from "next/image";
 
 const Comment = ({ comments = [] }) => {
-  const [sortBy, setSortBy] = useState("all"); // 預設排序方式
-  const [visibleComments, setVisibleComments] = useState(6); // 初始顯示 6 筆評論
+  const [sortBy, setSortBy] = useState("all");
+  const [visibleComments, setVisibleComments] = useState(6);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [localComments, setLocalComments] = useState(comments); // 新增本地狀態管理評論
 
-  // 計算總星級評分
+  // 當外部傳入的 comments 更新時，同步到本地狀態
+  useState(() => {
+    setLocalComments(comments);
+  }, [comments]);
+
   const totalRating =
-    comments.reduce((sum, comment) => sum + comment.rating, 0) /
-    comments.length;
-  const roundedRating = Math.round(totalRating * 10) / 10; // 四捨五入到小數點後一位
+    localComments.reduce((sum, comment) => sum + comment.rating, 0) / localComments.length || 0;
+  const roundedRating = Math.round(totalRating * 10) / 10;
 
-  // 根據排序方式處理評論
-  const sortedComments = [...comments].sort((a, b) => {
-    if (sortBy === "newest") {
-      return new Date(b.date) - new Date(a.date);
-    } else if (sortBy === "oldest") {
-      return new Date(a.date) - new Date(b.date);
-    } else if (sortBy === "highestRating") {
-      return b.rating - a.rating;
-    } else if (sortBy === "lowestRating") {
-      return a.rating - b.rating;
-    } else if (sortBy === "all") {
-      return 0; // 不排序
-    } else if (sortBy === "popular") {
-      return b.likes - a.likes; // 按熱門排序
-    }
+  const sortOptions = [
+    { value: "all", label: "全部留言" },
+    { value: "popular", label: "熱門留言" },
+    { value: "newest", label: "時間由新到舊" },
+    { value: "oldest", label: "時間由舊到新" },
+    { value: "highestRating", label: "星級由高到低" },
+    { value: "lowestRating", label: "星級由低到高" },
+  ];
+
+  const handleSortSelect = (value) => {
+    setSortBy(value);
+    setIsDropdownOpen(false);
+  };
+
+  const sortedComments = [...localComments].sort((a, b) => {
+    if (sortBy === "newest") return new Date(b.date) - new Date(a.date);
+    if (sortBy === "oldest") return new Date(a.date) - new Date(b.date);
+    if (sortBy === "highestRating") return b.rating - a.rating;
+    if (sortBy === "lowestRating") return a.rating - b.rating;
+    if (sortBy === "popular") return b.likes - a.likes;
     return 0;
   });
 
-  // 加載更多評論，每次增加 6 筆
   const loadMoreComments = () => {
-    setVisibleComments((prev) => prev + 6); // 每次點擊增加 6 筆顯示
+    setVisibleComments((prev) => prev + 6);
   };
 
   // 按讚功能
   const handleLike = (commentId) => {
-    const updatedComments = comments.map((comment) =>
-      comment.id === commentId
-        ? { ...comment, likes: comment.likes + 1 }
-        : comment
+    const updatedComments = localComments.map((comment) =>
+      comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment
     );
-    setComments(updatedComments); // 注意：這裡需要定義 setComments 或改進邏輯
+    setLocalComments(updatedComments); // 更新本地評論狀態
   };
 
   return (
     <div className={styles.commentSection}>
-      {/* 總評分區塊 */}
       <div className={styles.ratingSummary}>
         <div className={styles.totalRating}>
           <span className={styles.ratingValue}>{roundedRating}</span>
@@ -58,27 +64,32 @@ const Comment = ({ comments = [] }) => {
             {"☆".repeat(5 - Math.round(roundedRating))}
           </div>
           <span className={styles.ratingCount}>
-            ({comments.length} 則評價)
+            ({localComments.length} 則評價)
           </span>
         </div>
         <div className={styles.sortDropdownContainer}>
-          <select
+          <div
             className={styles.sortDropdown}
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <option value="all">全部留言</option>
-            <option value="popular">熱門留言</option>
-            <option value="newest">時間由新到舊</option>
-            <option value="oldest">時間由舊到新</option>
-            <option value="highestRating">星級由高到低</option>
-            <option value="lowestRating">星級由低到高</option>
-          </select>
-          <i className="bi bi-caret-down-fill"></i>
+            {sortOptions.find((opt) => opt.value === sortBy)?.label || "選擇排序"}
+          </div>
+          {isDropdownOpen && (
+            <div className={styles.dropdownMenu}>
+              {sortOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={styles.dropdownItem}
+                  onClick={() => handleSortSelect(option.value)}
+                >
+                  {option.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 評論列表 */}
       <div className={styles.commentList}>
         {sortedComments.slice(0, visibleComments).map((comment) => (
           <div key={comment.id} className={styles.commentItem}>
@@ -86,7 +97,7 @@ const Comment = ({ comments = [] }) => {
               <div className={styles.userAvatar}>
                 <Image
                   src={comment.avatar || "/image/rent/default-avatar.png"}
-                  alt="用戶頭像"
+                  alt="會員"
                   width={50}
                   height={50}
                   className={styles.avatarImage}
@@ -119,7 +130,6 @@ const Comment = ({ comments = [] }) => {
         ))}
       </div>
 
-      {/* 加載更多按鈕 */}
       {visibleComments < sortedComments.length && (
         <div className={styles.loadMore}>
           <button className={styles.loadMoreButton} onClick={loadMoreComments}>
