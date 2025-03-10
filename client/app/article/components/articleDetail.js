@@ -5,6 +5,7 @@ import Image from "next/image";
 import axios from "axios";
 import DOMPurify from "dompurify";
 import { useAuth } from "../../hooks/useAuth";
+import Link from "next/link";
 import "./article.css";
 
 // ArticleContent 組件
@@ -309,22 +310,23 @@ export default function ArticleDetail() {
             )}
           </div>
           {replyInputs[reply.id] !== undefined && (
-            <div className="reply-input-area">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="輸入回覆..."
-                value={replyInputs[reply.id] || ""}
-                onChange={(e) =>
-                  setReplyInputs((prev) => ({
-                    ...prev,
-                    [reply.id]: e.target.value,
-                  }))
-                }
-              />
-              <button onClick={() => handleReplySubmit(reply.id)}>送出</button>
-            </div>
-          )}
+  <div className="more-reply reply-input-area">
+    <img src="../img/article/reply3.jpg" className="reply-avatar" alt="" />
+    <input
+      type="text"
+      className="form-control"
+      placeholder="輸入回覆..."
+      value={replyInputs[reply.id] || ""}
+      onChange={(e) =>
+        setReplyInputs((prev) => ({
+          ...prev,
+          [reply.id]: e.target.value,
+        }))
+      }
+    />
+    <button onClick={() => handleReplySubmit(reply.id)}>回覆</button>
+  </div>
+)}
         </div>
         {reply.replies?.length > 0 && (
           <div className="reply-children">{renderReplies(reply.replies, 2)}</div>
@@ -391,54 +393,56 @@ export default function ArticleDetail() {
               value={newReply}
               onChange={(e) => setNewReply(e.target.value)}
             />
-            <button onClick={handleArticleReplySubmit}>提交</button>
+            <button onClick={handleArticleReplySubmit}>留言</button>
           </div>
         </div>
         <div className="related-article-area-title">相關文章</div>
         <div className="related-article-area row row-cols-1 row-cols-md-2">
-          {relatedArticles.map((relatedArticle, index) => {
-            const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
-              ? relatedArticle.img_url
-              : `${backendURL}${relatedArticle.img_url || defaultImage}`;
-            const sanitizedContent = DOMPurify.sanitize(relatedArticle.content);
+  {relatedArticles.map((relatedArticle, index) => {
+    const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
+      ? relatedArticle.img_url
+      : `${backendURL}${relatedArticle.img_url || defaultImage}`;
+    const sanitizedContent = DOMPurify.sanitize(relatedArticle.content);
 
-            return (
-              <div className="related-card" key={index}>
-                <div className="img-container">
-                  <Image
-                    className="article-list-card-photo-img"
-                    src={relatedImageUrl}
-                    alt="Article Thumbnail"
-                    width={300}
-                    height={200}
-                    style={{ objectFit: "cover", objectPosition: "center" }}
-                    onError={(e) => {
-                      e.currentTarget.src = defaultImage;
-                    }}
-                  />
-                </div>
-                <div className="card-body">
-                  <div className="card-title">{relatedArticle.title}</div>
-                  <div
-                    className="card-content"
-                    dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-                  />
-                  <div className="related-tag-area">
-                    {Array.isArray(relatedArticle.tags) ? (
-                      relatedArticle.tags.map((tag, index) => (
-                        <span key={index} className="tag">
-                          #{tag.trim()}
-                        </span>
-                      ))
-                    ) : (
-                      <span>No tags available</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+    return (
+      <Link href={`/article/${relatedArticle.id}`} key={index} passHref>
+        <div className="related-card">
+          <div className="img-container">
+            <Image
+              className="article-list-card-photo-img"
+              src={relatedImageUrl}
+              alt="Article Thumbnail"
+              width={300}
+              height={200}
+              style={{ objectFit: "cover", objectPosition: "center" }}
+              onError={(e) => {
+                e.currentTarget.src = defaultImage;
+              }}
+            />
+          </div>
+          <div className="card-body">
+            <div className="card-title">{relatedArticle.title}</div>
+            <div
+              className="card-content"
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            />
+            <div className="related-tag-area">
+              {Array.isArray(relatedArticle.tags) ? (
+                relatedArticle.tags.map((tag, index) => (
+                  <span key={index} className="tag">
+                    #{tag.trim()}
+                  </span>
+                ))
+              ) : (
+                <span>No tags available</span>
+              )}
+            </div>
+          </div>
         </div>
+      </Link>
+    );
+  })}
+</div>
       </div>
     </div>
   );

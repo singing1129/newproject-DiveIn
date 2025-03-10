@@ -66,12 +66,11 @@
   /* padding: 3rem 20px 20px 0; */
 
   border-bottom: 1px solid #ddd; /* 可視需求添加邊框 */
-
 }
 .tag-area .tag {
   display: inline-block;
   padding: 0.5em 1em; /* 增加 padding，避免文字擠在邊框裡 */
-  margin: 20px 10px 30px 0 ;
+  margin: 20px 10px 30px 0;
   border: 1px solid rgba(0, 0, 0, 0.25); /* 外框顏色 */
   border-radius: 20px; /* 讓外框變成橢圓形 */
   color: rgba(0, 0, 0, 0.5); /* 文字顏色 */
@@ -100,9 +99,7 @@
   color: rgba(0, 0, 0, 0.5);
 }
 
-
 /* 留言 */
-
 
 /* 留言區域整體樣式 */
 .replies-section {
@@ -117,8 +114,8 @@
 /* 留言容器 */
 .reply-container {
   width: 100%; /* 確保佔據整行 */
-  margin-bottom: 15px;
-  padding: 15px 0 5px 15px;
+
+
 }
 
 /* 第一層留言 */
@@ -134,7 +131,9 @@
 
 /* 留言詳情 */
 .reply-details {
+  padding: 15px 0 5px 15px;
   display: block; /* 垂直排列內容 */
+  margin: 15px 0;
 }
 
 /* 留言區域（頭像 + 文字） */
@@ -184,25 +183,30 @@
 .others-reply-area {
   display: flex;
   gap: 15px;
+  padding-left: 50px;
 }
 
-.good, .bad, .others-reply {
+.good,
+.bad,
+.others-reply {
   cursor: pointer;
   color: #666;
 }
 
-.good:hover, .bad:hover, .others-reply:hover {
-  color: #007bff;
+.good:hover,
+.bad:hover,
+.others-reply:hover {
+  color:#219ebc;
 }
 
 /* 已點讚狀態 */
 .good.liked {
-  color: #007bff;
+  color: #219ebc;
 }
 
 /* 已倒讚狀態 */
 .bad.disliked {
-  color: #007bff;
+  color:#219ebc;
 }
 
 /* 子回覆容器 */
@@ -211,57 +215,45 @@
   display: block; /* 垂直排列子回覆 */
 }
 
-
-/* 回覆輸入框區域 */
+/* 留言輸入區域 */
+.more-reply,
 .reply-input-area {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-}
-
-.reply-input-area input {
-  flex: 1;
-}
-
-.reply-input-area button {
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.reply-input-area button:hover {
-  background-color: #0056b3;
-}
-
-/* 新留言輸入區域 */
-.more-reply {
   display: flex;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 20px; /* 統一外邊距 */
 }
 
-.more-reply input {
+.more-reply input,
+.reply-input-area input {
   flex: 1;
-  margin-right: 10px;
+  margin: 0 17px; /* 統一輸入框間距 */
 }
 
-.more-reply button {
-  padding: 5px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
+.more-reply button,
+.reply-input-area button {
+  text-align: center;
+  font-size: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  color: black;
+  padding: 6px 20px;
+  background-color: transparent; /* 統一背景色 */
   cursor: pointer;
 }
 
-.more-reply button:hover {
-  background-color: #0056b3;
+.more-reply button:hover,
+.reply-input-area button:hover {
+  border: none;
+  background-color: #8ecae6;
+  color: black; /* 統一懸停效果 */
 }
 
-
+.reply-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
 
 /* related-article-area */
 .related-article-area-title {
@@ -274,7 +266,7 @@
   color: #fff;
   font-size: 12px;
   font-weight: 500;
-  margin: 20px 0;
+  margin: 40px 0 30px 0;
 }
 
 /* 父容器設置 */
@@ -284,16 +276,29 @@
   margin-bottom: 40px;
 }
 
-/* 卡片外框設置 */
+/* card */
 .related-card {
+  gap: 5px;
   display: flex;
   flex-direction: column;
-  height: auto; /* 讓高度自動調整 */
-  max-height: 400px; /* 可選：最大高度限制 */
+  height: 230px;
   overflow: hidden;
   background: #fff;
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: 25px;
+  cursor: pointer; /* 顯示手形光標，表示可點擊 */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* 添加過渡效果 */
+}
+
+.related-card:hover {
+  transform: scale(1.03); /* 懸停時略微放大 */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影效果 */
+}
+
+/* 確保 Link 不影響樣式 */
+.related-article-area a {
+  text-decoration: none; /* 移除底線 */
+  color: inherit; /* 繼承文字顏色 */
 }
 
 /* 圖片區域 */
@@ -320,7 +325,7 @@
 
 /* 卡片標題與內容 */
 .related-card .card-title {
-  margin-top: 0;
+  margin: 5px;
   color: rgba(0, 0, 0, 0.8);
   font-size: 18px;
   font-weight: 500;
@@ -333,7 +338,7 @@
   color: rgba(0, 0, 0, 0.8);
   font-size: 14px;
   font-weight: 400;
-  margin-top: 8px;
+  margin: 5px;
   line-height: 1.4; /* 設置行高 */
   max-height: 2.8em; /* 限制高度（2 行） */
   overflow: hidden;
@@ -353,7 +358,7 @@
   color: #219ebc;
   font-size: 14px;
   font-weight: 400;
-  margin-right: 6px;
+  margin: 5px;
 }
 
 /* 回覆區域 */
