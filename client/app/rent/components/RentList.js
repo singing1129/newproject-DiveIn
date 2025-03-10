@@ -1612,9 +1612,9 @@ export default function RentList() {
 
               {/* 2. 篩選條件區塊 */}
               <div className="d-flex flex-column sidebar-lists product-filter">
-                <div className="d-flex justify-content-between align-items-center sidebar-lists-title">
+                <div className="d-flex justify-content-between align-items-center sidebar-lists-title sidebar-lists-select-title">
                   <h6>篩選條件</h6>
-                  <button
+                  {/* <button
                     type="button"
                     className={`btn sidebar-selectBtn d-flex flex-row ${
                       isPriceFilterActive ? "active" : ""
@@ -1650,7 +1650,15 @@ export default function RentList() {
                   >
                     <i className="bi bi-funnel-fill"></i>
                     <i className="bi bi-list"></i>
-                  </button>
+                  </button> */}
+                  {/* <div
+                    className={`sidebar-selectBtn d-flex flex-row ${
+                      isPriceFilterActive ? "active" : ""
+                    }`}
+                  >
+                    <i className="bi bi-funnel-fill"></i>
+                    <i className="bi bi-list"></i>
+                  </div> */}
                 </div>
 
                 {/* 價格區間 */}
@@ -1937,7 +1945,7 @@ export default function RentList() {
             {/* Main Content */}
             <div className="col-12 col-lg-9 col-md-8 order-1 order-md-2 d-flex flex-column main">
               {/* Main Top */}
-              <div className="main-top w-100">
+              {/* <div className="main-top w-100">
                 <h4 className="fw-bold">隨租隨用體驗，潛享無限自由</h4>
                 <p className="main-describe">
                   歡迎來到我們的租賃專區，這裡提供多款精選潛水裝備供您靈活租用！無論是輕便舒適的潛水服，還是功能強大的潛水電筒，我們的租賃服務專為潛水愛好者設計，滿足從初學者到資深潛水員的各種需求。
@@ -1957,7 +1965,7 @@ export default function RentList() {
                   priority
                   unoptimized
                 />
-              </div>
+              </div> */}
 
               {/* Main Select */}
               <div className="d-flex flex-row justify-content-between align-items-center">
@@ -1983,7 +1991,7 @@ export default function RentList() {
                   )}
                 </div>
                 {/* 排序與一頁資料數量顯示 */}
-                <div className="py-3 d-flex flex-row justify-content-end gap-2 align-items-center main-select">
+                <div className="select-order d-flex flex-row justify-content-end gap-2 align-items-center main-select">
                   {/* 排序選項 */}
                   <div className="d-flex flex-row justify-content-between align-items-center select-order">
                     <div className="dropdown">
@@ -2050,15 +2058,6 @@ export default function RentList() {
                             }}
                           >
                             價格：由低到高
-                          </a>
-                        </li>
-                        <li>
-                          <a
-                            className="dropdown-item"
-                            href="#"
-                            onClick={() => handleSort("sales_desc")}
-                          >
-                            銷量：由高到低
                           </a>
                         </li>
                       </ul>
