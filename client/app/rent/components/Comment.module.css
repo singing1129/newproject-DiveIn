@@ -147,8 +147,15 @@
 
 .userInfo {
   display: flex;
+  justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+}
+
+.userLeft {
+  display: flex;
+  align-items: center; /* 頭貼與右邊資訊垂直居中對齊 */
+  gap: 10px; /* 頭貼與右邊文字的間距 */
 }
 
 .userAvatar {
@@ -156,7 +163,7 @@
   height: 50px;
   border-radius: 50%;
   overflow: hidden;
-  margin-right: 10px;
+  flex-shrink: 0; /* 防止頭貼被壓縮 */
 }
 
 .avatarImage {
@@ -166,31 +173,36 @@
 }
 
 .userDetails {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 確保內容垂直居中 */
 }
 
 .userName {
   font-size: 16px;
   font-weight: bold;
   color: var(--black);
+  display: flex;
+  align-items: center; /* 名字與聯絡資訊水平對齊 */
+  gap: 8px; /* 名字與聯絡資訊的間距 */
 }
 
 .userContact {
   font-size: 12px;
   color: var(--gray-600-color);
-  margin-left: 8px;
 }
 
 .userRating {
   font-size: 14px;
   color: var(--secondary-color);
-  margin-top: 4px;
+  margin-top: 4px; /* 與上方文字的間距 */
 }
 
 .commentDate {
   font-size: 12px;
   color: var(--gray-600-color);
   text-align: right;
+  align-self: flex-start; /* 日期靠上對齊 */
 }
 
 .commentContent {

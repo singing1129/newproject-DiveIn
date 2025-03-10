@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 添加 useEffect
 import styles from "./Comment.module.css";
 import Image from "next/image";
 
@@ -8,11 +8,13 @@ const Comment = ({ comments = [] }) => {
   const [sortBy, setSortBy] = useState("all");
   const [visibleComments, setVisibleComments] = useState(6);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [localComments, setLocalComments] = useState(comments); // 新增本地狀態管理評論
+  const [localComments, setLocalComments] = useState(
+    comments.map((comment) => ({ ...comment, likes: comment.likes || 0 }))
+  ); // 確保 likes 有默認值
 
-  // 當外部傳入的 comments 更新時，同步到本地狀態
-  useState(() => {
-    setLocalComments(comments);
+  // 同步外部傳入的 comments
+  useEffect(() => {
+    setLocalComments(comments.map((comment) => ({ ...comment, likes: comment.likes || 0 })));
   }, [comments]);
 
   const totalRating =
@@ -46,12 +48,11 @@ const Comment = ({ comments = [] }) => {
     setVisibleComments((prev) => prev + 6);
   };
 
-  // 按讚功能
   const handleLike = (commentId) => {
     const updatedComments = localComments.map((comment) =>
       comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment
     );
-    setLocalComments(updatedComments); // 更新本地評論狀態
+    setLocalComments(updatedComments);
   };
 
   return (
@@ -94,25 +95,27 @@ const Comment = ({ comments = [] }) => {
         {sortedComments.slice(0, visibleComments).map((comment) => (
           <div key={comment.id} className={styles.commentItem}>
             <div className={styles.userInfo}>
-              <div className={styles.userAvatar}>
-                <Image
-                  src={comment.avatar || "/image/rent/default-avatar.png"}
-                  alt="會員"
-                  width={50}
-                  height={50}
-                  className={styles.avatarImage}
-                />
-              </div>
-              <div className={styles.userDetails}>
-                <div className={styles.userName}>
-                  {comment.user}
-                  <span className={styles.userContact}>
-                    {comment.email || comment.phone || comment.line}
-                  </span>
+              <div className={styles.userLeft}>
+                <div className={styles.userAvatar}>
+                  <Image
+                    src={comment.avatar || "/image/rent/default-avatar.png"}
+                    alt="會員"
+                    width={50}
+                    height={50}
+                    className={styles.avatarImage}
+                  />
                 </div>
-                <div className={styles.userRating}>
-                  {"★".repeat(comment.rating)}
-                  {"☆".repeat(5 - comment.rating)}
+                <div className={styles.userDetails}>
+                  <div className={styles.userName}>
+                    {comment.user}
+                    <span className={styles.userContact}>
+                      {comment.email || comment.phone || comment.line}
+                    </span>
+                  </div>
+                  <div className={styles.userRating}>
+                    {"★".repeat(comment.rating)}
+                    {"☆".repeat(5 - comment.rating)}
+                  </div>
                 </div>
               </div>
               <div className={styles.commentDate}>{comment.date}</div>
