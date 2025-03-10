@@ -15,7 +15,7 @@ export default function Cart1() {
   const userId = user.id;
   const { cartData, fetchCart, selectedItems, proceedToCheckout } = useCart();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [selectedVariant, setSelectedVariant] = useState(null);
+
   console.log("cartData", cartData);
   // 計算商品小計
   const calculateSubtotal = () => {
@@ -52,7 +52,7 @@ export default function Cart1() {
         return Number(item.price_per_day) * item.rental_days * item.quantity;
       case "bundle":
       case "bundles":
-        return Number(item.discount_price) * item.quantity; // 添加bundle类型处理
+        return Number(item.discount_price) * item.quantity; // 添加bundle類型處理
       default:
         return 0;
     }
@@ -186,7 +186,7 @@ export default function Cart1() {
                         key={item.id || `product-${Math.random()}`}
                         item={{
                           ...item,
-                          image: item.image_url || "/article-5ae9687eec0d4.jpg",
+                          image: `/image/product/${item.image_url}`,
                           name: item.product_name || "未知商品",
                           stock: item.stock === undefined ? null : item.stock,
                           color: item.color_name || "標準",
@@ -214,11 +214,7 @@ export default function Cart1() {
                         key={bundle.id || `bundle-${Math.random()}`}
                         item={{
                           ...bundle,
-                          image:
-                            bundle.image_url ||
-                            (bundle.items && bundle.items[0]?.image_url
-                              ? bundle.items[0].image_url
-                              : "/article-5ae9687eec0d4.jpg"),
+                          image: bundle.image_url || bundle.items[0].image_url,
                           name: bundle.name || "未知套組",
                           price: Number(bundle.discount_price) || 0,
                           original_price: Number(bundle.original_total) || 0,
@@ -244,7 +240,7 @@ export default function Cart1() {
                         key={item.id}
                         item={{
                           ...item,
-                          image: "./article-5ae9687eec0d4.jpg",
+                          image: `/image/activity/${item.activity_id}/${item.image_url}`,
                           name: item.activity_name,
                           activityInfo: `${item.date} ${item.time}`,
                         }}
@@ -269,7 +265,7 @@ export default function Cart1() {
                         key={item.id}
                         item={{
                           ...item,
-                          image: item.image_url || "/image/rent/no-img.png",
+                          image: `${item.image_url}`,
                           name: (
                             <>
                               <span>{item.rentalBrand} -</span>

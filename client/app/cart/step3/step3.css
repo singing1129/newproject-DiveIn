@@ -329,3 +329,117 @@
 .free-shipping-hint i {
   font-size: 0.875rem;
 }
+
+
+/* 優惠券 */
+/* 可以添加到step3.css或創建新的優惠券樣式文件 */
+
+/* 優惠券選擇器樣式 */
+.coupon-selector .nav-tabs .nav-link {
+  color: var(--primary-color);
+}
+
+.coupon-selector .nav-tabs .nav-link.active {
+  color: var(--primary-hover);
+  font-weight: 500;
+}
+
+/* 優惠券列表容器 */
+.coupon-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* 優惠券項目樣式 */
+.coupon-item {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.coupon-item:hover {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 已選中的優惠券 */
+.coupon-item.border-primary {
+  box-shadow: 0 2px 12px rgba(33, 158, 188, 0.15);
+}
+
+/* 優惠券左側裝飾 */
+.coupon-item::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 30px;
+  background-color: var(--primary-color);
+  border-radius: 0 4px 4px 0;
+}
+
+/* 優惠券標籤 */
+.coupon-tag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 0 0.25rem 0 0.25rem;
+}
+
+/* 優惠券輸入框 */
+.coupon-input-group {
+  position: relative;
+}
+
+.coupon-input-group input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(33, 158, 188, 0.25);
+}
+
+/* 滾動條樣式 */
+.coupon-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.coupon-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.coupon-list::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 3px;
+}
+
+.coupon-list::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
+
+/* 已套用優惠券提示框 */
+.applied-coupon-alert {
+  background-color: rgba(33, 158, 188, 0.1);
+  border: 1px solid rgba(33, 158, 188, 0.3);
+  border-radius: 0.25rem;
+  padding: 0.5rem 1rem;
+  margin-top: 1rem;
+}
+
+.applied-coupon-alert .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* 修改地址選擇器樣式 */
+.zipcode-dropdown {
+  width: 100%;
+  max-width: 300px;  /* 或者你想要的寬度 */
+}
+
+.zipcode-container select {
+  padding: 8px;
+  font-size: 16px;
+}

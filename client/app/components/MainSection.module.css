@@ -1,0 +1,413 @@
+:global(:root) {
+  --primary-color: #219ebc;
+  --primary-deep-color: #023047;
+  --primary-light-color: #8ecae6;
+  --secondary-color: #ffd500;
+  --secondary-deep-color: #ffb703;
+  --secondary-light-color: #f1d691;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-20-color: #f8f9fa;
+  --gray-50-color: #e5e5e5;
+  --gray-100-color: #dedede;
+  --gray-200-color: #e5e5e5;
+  --gray-300-color: #cfcfcf;
+  --gray-400-color: #b2b2b2;
+  --gray-500-color: #a3a3a3;
+  --gray-600-color: #898989;
+  --gray-700-color: #6f6f6f;
+  --gray-800-color: #555555;
+  --gray-900-color: #3b3b3b;
+  --header-height: 80px;
+  --footer-height: 300px;
+}
+
+:global(*) {
+  font-family: "Noto Sans TC", serif;
+  font-size: 16px;
+}
+
+.mainSection {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--white);
+  background: linear-gradient(180deg, #023047 0%, #219ebc 100%);
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2000;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2001;
+}
+
+.fadeIn {
+  animation: fadeIn 0.5s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.swiperContainer {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden !important;
+  position: relative;
+  z-index: 1;
+  /* 移除 padding-top 和 padding-bottom，讓 slide 自行調整 */
+}
+
+.swiperContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.swiperContainer {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.slide {
+  width: 100%;
+  height: 100vh; /* 每頁完整佔據視窗高度 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  overflow: hidden !important;
+  padding-top: var(--header-height); /* 內容避開 Header */
+  padding-bottom: var(--footer-height); /* 內容避開 Footer */
+  box-sizing: border-box;
+}
+
+.parallaxBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 400%;
+  background-size: cover;
+  background-position: center top;
+  z-index: -1;
+  filter: contrast(1.2) brightness(1.1);
+  transition: transform 1.2s ease-out;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  padding: 20px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 以下樣式保持不變 */
+.bubbleContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bubble {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(100vh);
+  transition: box-shadow 0.3s ease, border 0.3s ease, transform 0.3s ease;
+  color: var(--white);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.bubble.visible {
+  opacity: 1;
+  animation: bubbleRise 1.5s ease-out forwards, floatWave 4s infinite ease-in-out 1.5s;
+}
+
+.bubble:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--primary-light-color);
+  transform: scale(1.05);
+}
+
+@keyframes bubbleRise {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatWave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.bubbleOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.bubble:hover .bubbleOverlay {
+  background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.3));
+}
+
+.bubbleContent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.bubbleContent .activityName {
+  font-size: 14px;
+  font-style: italic;
+  margin: 0 0 10px;
+  text-align: center;
+}
+
+.bubbleContent .location {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+.productBubble {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(100vh);
+  transition: box-shadow 0.3s ease, border 0.3s ease, transform 0.3s ease;
+  color: var(--white);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.productBubble.visible {
+  opacity: 1;
+  animation: bubbleRise 1.5s ease-out forwards, floatWave 4s infinite ease-in-out 1.5s;
+}
+
+.productBubble:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--primary-light-color);
+  transform: scale(1.05);
+}
+
+.productBubble.burst {
+  animation: productBubbleShrink 0.3s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes productBubbleShrink {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+.productWrapper {
+  position: absolute;
+  z-index: 10;
+}
+
+.bubbleContent .productName {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 5px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+.bubbleContent .productTag {
+  font-size: 12px;
+  color: var(--white);
+  background: var(--primary-color);
+  padding: 4px 12px;
+  border-radius: 15px;
+  margin: 0 0 5px;
+  text-align: center;
+}
+
+.bubbleContent .productPrice {
+  font-size: 14px;
+  margin: 5px 0 0;
+  text-align: center;
+}
+
+.link {
+  text-decoration: none;
+  color: inherit;
+}
+
+@media (max-width: 1024px) {
+  .bubbleContainer {
+    height: 100%;
+    padding: 20px;
+  }
+
+  .bubble,
+  .productBubble {
+    width: 25vw;
+    height: 25vw;
+    max-width: 250px;
+    max-height: 250px;
+  }
+
+  .bubble.visible,
+  .productBubble.visible {
+    animation: bubbleRiseMobile 0.8s ease-out forwards;
+  }
+}
+
+@media (max-width: 768px) {
+  .bubbleContainer {
+    height: 100%;
+    padding: 20px;
+  }
+
+  .bubble,
+  .productBubble {
+    width: 50vw;
+    height: 50vw;
+    max-width: 300px;
+    max-height: 300px;
+  }
+
+  .bubble.visible,
+  .productBubble.visible {
+    animation: bubbleRiseMobile 0.8s ease-out forwards;
+  }
+}
+
+@keyframes bubbleRiseMobile {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.welcomeContent {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 20px;
+  color: var(--white);
+  z-index: 2;
+  position: relative;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin: 0 auto;
+}
+
+.welcomeContent h2 {
+  font-size: 36px;
+  color: var(--white);
+  margin-bottom: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.welcomeDescription {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+  line-height: 1.6;
+  padding: 0 20px;
+  margin-bottom: 0;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--white);
+}

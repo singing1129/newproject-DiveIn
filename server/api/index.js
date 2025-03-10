@@ -17,6 +17,10 @@ import favoritesRouter from "../routes/favorites/index.js";
 import cartRouter from "../routes/cart/index.js";
 import categoriesRouter from "../routes/categories/index.js";
 import brandRouter from "../routes/brands/index.js";
+// jimmy
+import jimmyRouter from "../routes/jimmy/index.js";
+// 評價相關路由
+import reviewRouter from "../routes/reviews/index.js";
 // 活動相關路由
 import activityRouter from "../routes/activity/index.js";
 import activityDetailRouter from "../routes/activity/detail.js";
@@ -57,6 +61,7 @@ import memberRouter from "../routes/admin/index.js";
 import memberMyGroupRouter from "../routes/admin/mygroup.js";
 import memberUpdateRouter from "../routes/admin/updateForm.js";
 // import shipmentRouter from "../routes/ship/index.js"; // 運送相關路由
+import searchRouter from "../routes/search/index.js"; // 搜索相关路由
 import checkoutRouter from "../routes/checkout/index.js";
 //ecpay
 import ecpayRouter from "../routes/ecpay/index.js";
@@ -141,6 +146,8 @@ apiRouter.use("/bundle", bundleRouter);
 apiRouter.use("/favorites", favoritesRouter);
 // 購物車相關路由
 apiRouter.use("/cart", cartRouter);
+// 搜尋相關路由
+apiRouter.use("/search", searchRouter);
 // 分類相關路由
 apiRouter.use("/categories", categoriesRouter);
 // 品牌相關路由
@@ -155,7 +162,10 @@ apiRouter.use("/linepay", linepayRouter);
 apiRouter.use("/order", orderRouter);
 // 密碼重設
 apiRouter.use("/passwordReset", passwordResetRouter);
-
+// jimmy
+apiRouter.use("/jimmy", jimmyRouter);
+// 評價相關路由
+apiRouter.use("/reviews", reviewRouter);
 // 活動相關路由
 apiRouter.use("/activity", activityRouter);
 apiRouter.use("/activity", activityDetailRouter);

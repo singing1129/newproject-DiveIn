@@ -4,7 +4,7 @@ import { useState } from "react";
 //推薦組件
 import RecommendationSection from "./components/RecommendationSection";
 import Card from "./components/Card";
-import ActivitySection from "./components/ActivitySection";
+import ActivitySection from "./components/MainSection";
 
 import Image from "next/image";
 import Link from "next/link";

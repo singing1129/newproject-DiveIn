@@ -40,7 +40,13 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to bottom, #023047, #219ebc);
+  background: linear-gradient(
+    to bottom,
+    #023047 0%,      /* 深藍色，銜接導入頁 */
+    #094d69 40%,     /* 中深藍色，增加深度 */
+    #8ecae6 80%,     /* 淺藍色，過渡到淺層 */
+    #f5faff 100%     /* 接近白色，銜接購物頁 */
+  );
   overflow: hidden;
 }
 
@@ -54,6 +60,45 @@ body {
   z-index: 1;
 }
 
+
+/* 動態氣泡效果 */
+.particles-background::before,
+.particles-background::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: bubbleRise 8s infinite ease-in-out;
+}
+
+.particles-background::before {
+  left: 20%;
+  bottom: -20px;
+  animation-delay: 0s;
+}
+
+.particles-background::after {
+  left: 70%;
+  bottom: -20px;
+  animation-delay: 3s;
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-100vh) scale(1.5);
+    opacity: 0;
+  }
+}
+
 /* 光線效果 */
 .login2-container::before {
   content: "";
@@ -63,8 +108,8 @@ body {
   width: 100%;
   height: 100%;
   background: radial-gradient(
-    circle at top,
-    rgba(255, 255, 255, 0.1),
+    circle at top center,
+    rgba(255, 255, 255, 0.15),
     transparent 70%
   );
   z-index: 2;
@@ -129,7 +174,7 @@ body {
   padding: 0.8rem;
   background: var(--primary-light-color);
   border: none;
-  color: var(--primary-deep-color);
+  color: rgb(2, 48, 71, 0.8);
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
@@ -138,7 +183,7 @@ body {
 
 /* 登入btn hover */
 .login-btn:hover {
-  background: var(--primary-deep-color);
+  background: rgb(33, 158, 188, 0.8);
   color: var(--white);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
@@ -177,8 +222,8 @@ body {
   justify-content: center;
   width: 50px;
   height: 50px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(33, 158, 188, 0.2); 
+  border: 1px solid hsla(199, 64%, 73%, 0.1); 
   border-radius: 50%;
   color: var(--white);
   font-size: 1.5rem;
@@ -187,13 +232,13 @@ body {
 }
 
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(33, 158, 188, 0.8);
   transform: scale(1.1);
 }
 
 .icon {
   font-size: 24px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--white);
 }
 
 /* 忘記密碼與註冊新帳號 */
