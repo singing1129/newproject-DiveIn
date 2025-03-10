@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import MyCouponList from "./MyCouponList"; // 引入 MyCouponList 组件
 import Pagination from "./Pagination"; // 引入 Pagination 组件
+import CouponSortPagination from "./CouponSortPagination"; // 引入 CouponSortPagination 组件
 import "./styles/MyCoupon.css";
 import Link from "next/link";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -23,6 +24,7 @@ export default function Coupon() {
   const [couponType, setCouponType] = useState("all"); // 優惠券類型篩選
   const [statusFilter, setStatusFilter] = useState("all"); // 活動狀態篩選
   const [sortOrder, setSortOrder] = useState("latest"); // 排序方式
+  const [limit, setLimit] = useState(Infinity); // 預設為全部顯示
   const [showAlert, setShowAlert] = useState(false); // 控制彈出提醒的顯示
 
   // 讀取優惠券資料
@@ -35,7 +37,7 @@ export default function Coupon() {
             params: {
               userId: user.id, // 確保傳遞了用戶ID
               page: currentPage,
-              limit: 10,
+              limit: limit === Infinity ? undefined : limit,
               type: couponType, // 優惠券類型篩選
               status: statusFilter, // 活動狀態篩選
               sort: sortOrder, // 排序方式
@@ -60,7 +62,7 @@ export default function Coupon() {
 
       fetchCoupons();
     }
-  }, [authLoading, user, currentPage, couponType, statusFilter, sortOrder]); // 當這些狀態改變時重新加載資料
+  }, [authLoading, user, currentPage, couponType, statusFilter, sortOrder, limit]); // 當這些狀態改變時重新加載資料
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -272,23 +274,13 @@ export default function Coupon() {
                   </div>
                 </div>
                 {/* 分頁與排序選單 */}
-                <div className="d-flex justify-content-between align-items-center mt-3">
-                  <div className="pagination">
-                    顯示 第{currentPage}頁 / 共{totalPages}頁
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="me-2">排序方式：</span>
-                    <select
-                      className="form-select form-select-sm rounded-pill custom-select-container"
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)} // 改變排序
-                    >
-                      <option value="latest">最新</option>
-                      <option value="expiry">即將到期</option>
-                      <option value="discount">最高折扣</option>
-                    </select>
-                  </div>
-                </div>
+                <CouponSortPagination 
+                  onSortChange={setSortOrder} 
+                  onDisplayChange={(newLimit) => {
+                    setLimit(newLimit === "Infinity" ? Infinity : newLimit);
+                    setCurrentPage(1); // 重置到第一頁
+                  }}
+                />
                 {/* 優惠券列表：使用 MyCouponList 组件 */}
                 <div
                   className="row row-cols-1 row-cols-md-2 g-4 mb-2"
@@ -302,11 +294,13 @@ export default function Coupon() {
                   />
                 </div>
                 {/* 分頁控制區：顯示優惠券總數與分頁按鈕 */}
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
+                {limit !== Infinity && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                )}
               </div>
             </div>
           </main>
