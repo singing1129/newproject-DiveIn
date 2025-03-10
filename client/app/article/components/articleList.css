@@ -108,15 +108,19 @@
 
 /* article-list 和 cards-container */
 .article-list {
+  position: relative; /* 添加相對定位，讓子元素的 absolute 參考此容器 */
   padding: 0;
+  min-height: 100%; /* 確保容器有足夠高度 */
 }
 
 .cards-container {
   display: flex;
-  flex-wrap: wrap; /* 恢復 flex-wrap */
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   padding: 0;
+  padding-bottom: 60px; /* 為分頁預留空間，根據分頁高度調整 */
+  margin-bottom: 40px;
 }
 
 .article-list-card-link {
@@ -269,12 +273,14 @@ margin-left: 10px;
 
 /* Pagination 分页 */
 .custom-pagination {
+  position: absolute; /* 相對於 .article-list 定位 */
+  bottom: 10px; /* 距離底部 10px */
+  right: 10px; /* 距離右側 10px */
   display: flex;
   justify-content: flex-end;
   background-color: white;
   list-style: none;
-  width: 100%;
-  margin-top: 60px;
+  margin-bottom: 40px; 
   padding: 0;
 }
 
