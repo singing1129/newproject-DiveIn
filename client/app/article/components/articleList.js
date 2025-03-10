@@ -115,17 +115,16 @@ const ArticleListPage = () => {
     router.push(`?${params.toString()}`);
   };
 
-  const handleSortChange = (e) => {
-    const newSort = e.target.value;
-    setSortOption(newSort);
+  const handleSortChange = (sortValue) => {
+    setSortOption(sortValue);
     const params = new URLSearchParams(searchParams);
-    if (newSort === "all") {
+
+    if (sortValue === "all") {
       params.delete("sort");
       params.delete("category");
       params.delete("tag");
       params.delete("status");
-      router.push("/article");
-    } else if (newSort === "my-articles") {
+    } else if (sortValue === "my-articles") {
       if (!usersId) {
         const choice = window.confirm(
           "您尚未登入！\n[確定] 前往登入\n[取消] 返回文章列表"
@@ -139,26 +138,24 @@ const ArticleListPage = () => {
       }
       params.delete("sort");
       params.delete("status");
-      router.push(`/article?${params.toString()}`);
     } else {
-      params.set("sort", newSort);
-      router.push(`/article?${params.toString()}`);
+      params.set("sort", sortValue);
     }
+
+    router.push(`/article?${params.toString()}`);
   };
 
-  const handleStatusChange = (e) => {
-    const newStatus = e.target.value;
-    setStatusOption(newStatus);
+  const handleStatusChange = (statusValue) => {
+    setStatusOption(statusValue);
     const params = new URLSearchParams(searchParams);
-    if (newStatus === "all") {
+
+    if (statusValue === "all") {
       params.delete("status");
-      params.delete("category");
-      params.delete("tag");
-      router.push("/article");
     } else {
-      params.set("status", newStatus);
-      router.push(`/article?${params.toString()}`);
+      params.set("status", statusValue);
     }
+
+    router.push(`/article?${params.toString()}`);
   };
 
   const handleButtonClick = (path) => {
@@ -182,9 +179,9 @@ const ArticleListPage = () => {
         </div>
 
         <div className="article-list col-9">
-        {/* article-controls */}
+          {/* article-controls */}
           <div className="article-controls">
-          {/* create-btn */}
+            {/* create-btn */}
             <div className="article-controls-btn">
               <button
                 className="btn"
@@ -198,30 +195,48 @@ const ArticleListPage = () => {
             </div>
             {/* filter */}
             <div className="custom-filter">
-  <select
-    value={sortOption}
-    onChange={handleSortChange}
-    className="custom-form-select"
-  >
-    <option value="all">所有文章</option>
-    <option value="newest">最新文章</option>
-    <option value="oldest">最舊文章</option>
-    <option value="popular">熱門文章</option>
-    <option value="my-articles">我的文章</option>
-  </select>
-  {sortOption === "my-articles" && (
-    <select
-      value={statusOption}
-      onChange={handleStatusChange}
-      className="custom-form-select"
-    >
-      <option value="all">所有文章</option>
-      <option value="published">已發表</option>
-      <option value="draft">草稿夾</option>
-    </select>
-  )}
-</div>
+              {/* 排序選項 */}
+              <div className="dropdown">
+                <button
+                  className="px-3 btn custom-filter-btn"
+                  type="button"
+                  id="sortButton"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  {sortOption === "all" ? "所有文章" : sortOption === "newest" ? "最新文章" : sortOption === "oldest" ? "最舊文章" : sortOption === "popular" ? "熱門文章" : "我的文章"}
+                  <i className="bi bi-caret-down-fill ps-2"></i>
+                </button>
+                <ul className="dropdown-menu" aria-labelledby="sortButton">
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("all"); }}>所有文章</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("newest"); }}>最新文章</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("oldest"); }}>最舊文章</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("popular"); }}>熱門文章</a></li>
+                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("my-articles"); }}>我的文章</a></li>
+                </ul>
+              </div>
 
+              {/* 如果選擇了「我的文章」顯示狀態選項 */}
+              {sortOption === "my-articles" && (
+                <div className="dropdown">
+                  <button
+                    className="px-3 btn custom-filter-btn ms-2"
+                    type="button"
+                    id="statusButton"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    {statusOption === "all" ? "所有文章" : statusOption === "published" ? "已發表" : "草稿夾"}
+                    <i className="bi bi-caret-down-fill ps-2"></i>
+                  </button>
+                  <ul className="dropdown-menu" aria-labelledby="statusButton">
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleStatusChange("all"); }}>所有文章</a></li>
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleStatusChange("published"); }}>已發表</a></li>
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleStatusChange("draft"); }}>草稿夾</a></li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* card */}

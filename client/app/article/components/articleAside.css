@@ -184,7 +184,6 @@ aside {
   border: 1px solid #ccc;
   font-size: 14px;
   outline: none;
-  border-radius: 30px;
   height: 40px;
 }
 
@@ -198,7 +197,7 @@ aside {
   right: 30px; /* 與 .aside-category 的 padding-right 對齊 */
   top: 50%;
   transform: translateY(-50%);
-  font-size: 18px;
+  font-size: 16px;
   color: #aaa;
   cursor: pointer;
 }
@@ -213,7 +212,7 @@ aside {
   right: 30px; /* 與 .aside-category 的 padding-right 對齊 */
   top: 50%;
   transform: translateY(-50%);
-  font-size: 18px;
+  font-size: 16px;
   color: #aaa;
   cursor: pointer;
 }

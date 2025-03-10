@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation"; // 引入 useRouter
 import "./articleList.css";
 import axios from "axios";
 import DOMPurify from "dompurify";
@@ -17,6 +18,7 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
   );
 
   const { user } = useAuth();
+  const router = useRouter(); // 使用 useRouter
   const sanitizedContent = DOMPurify.sanitize(article.content || "");
 
   const handleDelete = async () => {
@@ -95,14 +97,15 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
             <div className="article-list-card-btn">
               {isMyArticles && isAuthor && (
                 <>
-                  <Link href={`/article/${article.id}/update`} passHref>
-                    <button
-                      className="btn btn-card btn-edit"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      編輯
-                    </button>
-                  </Link>
+                  <button
+                    className="btn btn-card btn-edit"
+                    onClick={(e) => {
+                      e.stopPropagation(); // 阻止事件冒泡
+                      router.push(`/article/${article.id}/update`); // 使用 router.push 導航
+                    }}
+                  >
+                    編輯
+                  </button>
                   <button
                     className="btn btn-card btn-delete"
                     onClick={(e) => {

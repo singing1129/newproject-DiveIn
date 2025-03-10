@@ -171,7 +171,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
   try {
     // 插入文章資料
     const { results: articleResult } = await db.query(
-      "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, reply_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO article (title, content, article_category_small_id, users_id, status, created_at, publish_at, view_count, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         new_title,
         new_content, // 先使用原始的 content
@@ -180,8 +180,7 @@ router.post("/create", upload.single("new_coverImage"), async (req, res) => {
         status,
         new Date(),
         status === "published" ? new Date() : null,
-        0,
-        0,
+        0,     
         0,
       ]
     );
