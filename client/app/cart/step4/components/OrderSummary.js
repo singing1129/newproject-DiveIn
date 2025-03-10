@@ -13,7 +13,11 @@ export default function OrderSummary({ items }) {
                 <div>
                   <div className="item-name">{product.name}</div>
                   <div className="item-spec text-muted">
-                    {product.color} / {product.size}
+                    {/* 有商品和尺寸才會有/  */}
+                    {product.color && product.size && `${product.color}/`}
+                    {product.size && `${product.size}`}
+                    {product.color && !product.size && `${product.color}`}
+                    {product.size && !product.color && `${product.size}`}
                   </div>
                 </div>
                 <div className="text-end">
@@ -28,14 +32,21 @@ export default function OrderSummary({ items }) {
       {/* 套装商品 */}
       {items.bundles && items.bundles.length > 0 && (
         <div className="bundle-section mb-4">
-          <h6 className="section-title">套装商品</h6>
+          <h6 className="section-title">套裝商品</h6>
           {items.bundles.map((bundle) => (
             <div key={bundle.id} className="item-row">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <div className="item-name">{bundle.name}</div>
                   <div className="item-spec text-muted">
-                    套装内含{bundle.items.length}项商品
+                    套裝內含{bundle.items.length}項商品
+                    {bundle.items.map((item) => (
+                      <div key={item.id}>
+                        {item.name}
+                        {item.color && `/${item.color}`}
+                        {item.size && `/${item.size}`}
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div className="text-end">

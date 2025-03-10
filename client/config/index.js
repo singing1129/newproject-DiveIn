@@ -40,6 +40,7 @@ export const protectedRoutes = [
   '/user/profile-password',
 ]
 
+
 // breadcrumb面包屑使用
 // 用pathname英文對照中文的名稱(類似關聯陣列的物件)
 // 使用方式需用 ex. pathnameLocale['home']

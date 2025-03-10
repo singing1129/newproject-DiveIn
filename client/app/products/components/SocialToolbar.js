@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import useLocalStorage from "@/hooks/use-localstorage";
 
 export default function SocialToolbar() {
   const [currentPosition, setCurrentPosition] = useState(0);
@@ -9,14 +10,11 @@ export default function SocialToolbar() {
   const thumbnailListRef = useRef(null);
   const itemHeight = 48; // 40px高度 + 8px間距
 
-  // 瀏覽紀錄
-  const [historyItems, setHistoryItems] = useState([]);
-
-  useEffect(() => {
-    const storedHistory =
-      JSON.parse(localStorage.getItem("browsingHistory")) || [];
-    setHistoryItems(storedHistory);
-  }, []);
+  // 瀏覽紀錄 - 使用useLocalStorage hook
+  const [historyItems, setHistoryItems] = useLocalStorage(
+    "browsingHistory",
+    []
+  );
 
   useEffect(() => {
     // 确保在historyItems变化时重新计算maxScroll
@@ -28,7 +26,7 @@ export default function SocialToolbar() {
       }
     };
 
-    // 立即执行一次
+    //立即執行一次
     updateMaxScroll();
 
     // 添加一个延迟执行，确保图片加载后重新计算
@@ -53,13 +51,13 @@ export default function SocialToolbar() {
       newPosition = Math.min(maxScroll, currentPosition + step);
     }
 
-    // 确保滚动位置不超出范围
+    // 確保滾動位置不超出範圍
     if (newPosition < 0) newPosition = 0;
     if (newPosition > maxScroll) newPosition = maxScroll;
 
     setCurrentPosition(newPosition);
 
-    // 调试信息
+    // 測試用
     console.log({
       direction,
       newPosition,
@@ -67,12 +65,6 @@ export default function SocialToolbar() {
       listHeight: thumbnailListRef.current?.scrollHeight,
       containerHeight: 140,
     });
-  };
-
-  //清除紀錄
-  const handleClearHistory = () => {
-    localStorage.removeItem("browsingHistory");
-    setHistoryItems([]);
   };
 
   return (
@@ -118,10 +110,10 @@ export default function SocialToolbar() {
                 <Link href={`/products/${item.id}`} key={index}>
                   <li className="thumbnail-item">
                     <img
-                      src={`/img/product/${item.image}`}
+                      src={item.image}
                       alt={item.name}
                       onLoad={() => {
-                        // 图片加载完成后重新计算高度
+                        // 圖片加載完重新計算高度
                         if (thumbnailListRef.current) {
                           const containerHeight = 140;
                           const totalHeight =
@@ -136,10 +128,15 @@ export default function SocialToolbar() {
                 </Link>
               ))
             ) : (
-              <li className="thumbnail-item empty-history">
-                <span style={{ fontSize: "10px", textAlign: "center" }}>
-                  无浏览记录
-                </span>
+              <li className=" empty-history">
+                <Link
+                  href="http://localhost:3000/products"
+                  className="text-decoration-none text-danger"
+                >
+                  <span style={{ fontSize: "10px", textAlign: "center" }}>
+                    先逛逛
+                  </span>
+                </Link>
               </li>
             )}
           </ul>
@@ -158,8 +155,8 @@ export default function SocialToolbar() {
         </button>
       </div>
 
-      <div className="clear-btn" onClick={handleClearHistory}>
-        清除記錄
+      <div className="clear-btn" onClick={() => setHistoryItems([])}>
+        清除紀錄
       </div>
     </div>
   );

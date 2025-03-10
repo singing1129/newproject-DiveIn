@@ -9,6 +9,7 @@ import useToast from "@/hooks/useToast";
 import SelectBundle from "../components/SelectBundle";
 import Link from "next/link";
 import { useCart } from "@/hooks/cartContext";
+import RatingSummary from "@/components/RatingSummary";
 // import styles from "./bundle.module.css";
 
 // components/BundleDetail.js
@@ -114,6 +115,7 @@ const handleBundleSelect = async (bundleData) => {
                 <div className="savings-badge">
                   省下 NT${bundle.original_total - bundle.discount_price}
                 </div>
+                <RatingSummary type="bundle" id={bundle.id} />
               </div>
 
               <div className="bundle-description mt-3">

@@ -1,0 +1,562 @@
+/* 錯誤訊息 */
+.errorMessage {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 搜索覆蓋層樣式 */
+.searchOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 100px;
+  z-index: 1050;
+  animation: fadeIn 0.3s ease;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*  關閉按鈕樣式 */
+.closeButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 1051;
+  transition: transform 0.2s;
+}
+
+.closeButton:hover {
+  transform: scale(1.2);
+}
+
+/* 搜尋容器樣式 */
+.searchContainer {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  cursor: default;
+}
+
+/* 搜尋表單樣式 */
+.searchForm {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* 搜尋輸入框樣式 */
+.searchInput {
+  flex: 1;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 30px 0 0 30px;
+  font-size: 16px;
+  outline: none;
+  transition: box-shadow 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.searchInput:focus {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 搜尋按鈕樣式 */
+.searchButton {
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 0 30px 30px 0;
+  padding: 15px 25px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.searchButton:hover {
+  background-color: #0055aa;
+}
+
+.searchButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* 錯誤訊息樣式 */
+.errorMessage {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 搜尋結果容器樣式 */
+.searchResults {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* 搜尋標籤樣式 */
+.searchTabs {
+  display: flex;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #eee;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0 10px;
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.tabButton:hover {
+  color: #0066cc;
+}
+
+.activeTab {
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.activeTab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #0066cc;
+}
+
+/* 結果內容樣式 */
+.resultsContent {
+  padding: 20px;
+}
+
+/* 結果部分樣式 */
+.resultSection {
+  margin-bottom: 30px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+/* 查看更多連結樣式 */
+.viewMore {
+  display: block;
+  text-align: right;
+  color: #0066cc;
+  font-size: 14px;
+  margin-top: 15px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.viewMore:hover {
+  text-decoration: underline;
+}
+
+/* 商品網格樣式 */
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.productCard {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: white;
+}
+
+.productCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.productImage {
+  height: 150px;
+  overflow: hidden;
+}
+
+.productImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.productCard:hover .productImage img {
+  transform: scale(1.05);
+}
+
+.productInfo {
+  padding: 15px;
+}
+
+.productInfo h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.price {
+  color: #e53935;
+  font-weight: 600;
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.brand {
+  font-size: 13px;
+  color: #666;
+}
+
+/* 活動列表樣式 */
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.activityItem {
+  display: flex;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: white;
+}
+
+.activityItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.activityImage {
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+}
+
+.activityImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.activityItem:hover .activityImage img {
+  transform: scale(1.05);
+}
+
+.activityInfo {
+  flex: 1;
+  padding: 15px;
+}
+
+.activityInfo h4 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.activityInfo p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+/* 租借網格樣式 */
+.rentalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.rentalCard {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: white;
+}
+
+.rentalCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.rentalImage {
+  height: 150px;
+  overflow: hidden;
+}
+
+.rentalImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.rentalCard:hover .rentalImage img {
+  transform: scale(1.05);
+}
+
+.rentalInfo {
+  padding: 15px;
+}
+
+.rentalInfo h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 揪團列表樣式 */
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.groupItem {
+  display: flex;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: white;
+}
+
+.groupItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.groupImage {
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+}
+
+.groupImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.groupItem:hover .groupImage img {
+  transform: scale(1.05);
+}
+
+.groupInfo {
+  flex: 1;
+  padding: 15px;
+}
+
+.groupInfo h4 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.groupInfo p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+/* 文章列表樣式 */
+.articleList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.articleItem {
+  display: flex;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: white;
+}
+
+.articleItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.articleImage {
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+}
+
+.articleImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.articleItem:hover .articleImage img {
+  transform: scale(1.05);
+}
+
+.articleInfo {
+  flex: 1;
+  padding: 15px;
+}
+
+.articleInfo h4 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.articleInfo p {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+/* 無結果提示樣式 */
+.noResults {
+  text-align: center;
+  padding: 40px 0;
+  color: #666;
+}
+
+.noResults p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .searchOverlay {
+    padding-top: 60px;
+  }
+
+  .searchContainer {
+    max-width: 90%;
+  }
+
+  .searchInput {
+    padding: 12px 15px;
+    font-size: 14px;
+  }
+
+  .searchButton {
+    padding: 12px 20px;
+  }
+
+  .productGrid,
+  .rentalGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+  }
+
+  .productImage,
+  .rentalImage {
+    height: 120px;
+  }
+
+  .activityImage,
+  .groupImage,
+  .articleImage {
+    width: 80px;
+    height: 60px;
+  }
+
+  .resultsContent {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .searchOverlay {
+    padding-top: 40px;
+  }
+
+  .productGrid,
+  .rentalGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .productImage,
+  .rentalImage {
+    height: 100px;
+  }
+}
+
+/* 連結樣式 */
+.productLink,
+.activityLink,
+.rentalLink,
+.groupLink,
+.articleLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+  width: 100%;
+}

@@ -1,16 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import useLocalStorage from "@/hooks/use-localstorage";
 
 export default function BrowsingHistory() {
-  const [historyItems, setHistoryItems] = useState([]);
-
-  useEffect(() => {
-    const storedHistory =
-      JSON.parse(localStorage.getItem("browsingHistory")) || [];
-    setHistoryItems(storedHistory);
-  }, []);
+  const [historyItems, setHistoryItems] = useLocalStorage(
+    "browsingHistory",
+    []
+  );
 
   if (historyItems.length === 0) return null;
 
@@ -54,20 +52,6 @@ export default function BrowsingHistory() {
                           objectFit: "cover",
                         }}
                       />
-                    </div>
-                    <div className="button-group">
-                      <button
-                        className="like-button"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fa-heart fa-solid text-danger"></i>
-                      </button>
-                      <button
-                        className="cart-button"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <i className="fa-solid fa-cart-shopping text-primary"></i>
-                      </button>
                     </div>
                   </div>
                   <div>

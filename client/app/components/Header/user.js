@@ -23,12 +23,29 @@ export default function User() {
     // FIXME: 修正下拉選單位置
     <div className="position-relative">
       {user && user !== -1 ? (
-        <IconButton onClick={handleClick}>
-          <FaRegUser />
+        <IconButton
+          onClick={handleClick}
+          sx={{
+            padding: "0,auto",
+            color: "#333",
+          }}
+        >
+          <FaRegUser size={20} />
         </IconButton>
       ) : (
-        <Link href="/admin/login" className="header-cart a">
-          <FaRegUser />
+        <Link
+          href="/admin/login"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#333",
+            fontSize: "20px",
+            background: "transparent",
+            cursor: "pointer",
+          }}
+        >
+          <FaRegUser size={20} />
         </Link>
       )}
 
@@ -45,6 +62,11 @@ export default function User() {
           {user ? (
             <>
               <MenuItem onClick={handleClose}>
+                <Link className="text-decoration-none" href="/admin/account">
+                  設定帳戶
+                </Link>
+              </MenuItem>
+              <MenuItem onClick={handleClose}>
                 <Link className="text-decoration-none" href="/admin/favorites">
                   我的收藏
                 </Link>
@@ -57,11 +79,6 @@ export default function User() {
               <MenuItem onClick={handleClose}>
                 <Link className="text-decoration-none" href="/admin/message">
                   我的訊息
-                </Link>
-              </MenuItem>
-              <MenuItem onClick={handleClose}>
-                <Link className="text-decoration-none" href="/admin/account">
-                  帳戶設定
                 </Link>
               </MenuItem>
               <MenuItem
