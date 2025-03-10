@@ -41,8 +41,9 @@
 }
 
 .create-form {
-  padding: 32px;
-  margin-bottom: 30px;
+  padding: 32px 32px 70px 32px;
+  
+  margin-bottom: 60px;
   border-top: 6px solid#219ebc;
   border-right: 2px solid #219ebc;
   border-bottom: 2px solid #219ebc;
@@ -169,7 +170,7 @@
 .btnarea .article-create-btn {
   display: inline-block; /* 按鈕為行內區塊元素 */
   margin-top: 8px; /* 上邊距 */
-  padding: 8px 12px; /* 內邊距 */
+  padding: 8px 12px 50px 8px; /* 內邊距 */
   background-color: #029cad; /* 背景顏色 */
   color: #fff; /* 文字顏色為白色 */
   text-align: center; /* 文字置中 */

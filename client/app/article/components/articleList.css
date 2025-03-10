@@ -29,7 +29,7 @@
 }
 
 .article-controls-btn .btn-icon {
-  margin-right: 10px;
+  margin-right: 8px;
 }
 
 .article-controls-btn .btn {
@@ -46,6 +46,8 @@
   border-radius: 4px;
   cursor: pointer;
   box-sizing: border-box;
+  white-space: nowrap; /* 讓內部文字不換行 */
+  padding: 0 10px; /* 增加內邊距，防止文字擠壓 */
 }
 
 .article-controls-btn .btn:hover {

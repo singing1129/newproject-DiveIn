@@ -1,0 +1,66 @@
+.interactive-btn-container {
+    position: relative;
+    display: inline-block;
+    transition: transform 0.3s ease-out; /* 平滑移動 */
+  }
+  
+  .interactive-btn {
+    margin-left: 10px;
+    text-align: center;
+    font-size: 14px;
+    border-radius: 4px;
+    padding: 8px 25px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+  
+  /*  可選的狀態 */
+  .interactive-btn:not(.disabled) {
+    background-color: #8ecae6;
+    color: #FFF;
+    border: none;
+  }
+  
+  /*  可選的狀態 hover */
+  .interactive-btn:not(.disabled):hover {
+    background-color: #8ecae6;
+    color: #000000;
+    border: none;
+  }
+  
+  /*  不可選的狀態 */
+  .interactive-btn.disabled {
+    background-color: transparent;
+    color: black;
+    cursor: not-allowed;
+  }
+  
+  .interactive-btn:active {
+    transform: scale(0.95);
+  }
+  
+  /* 彈跳動畫 */
+  .jelly-bounce {
+    animation: bounce 0.6s ease-in-out;
+  }
+  
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  
+  /*  當 disabled 時，顯示 "請完成表單" */
+  .rubbing {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  

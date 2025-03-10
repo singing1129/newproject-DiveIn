@@ -5,6 +5,7 @@ import axios from "axios"; // 提交表單請求
 import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 import { useAuth } from "../../hooks/useAuth"; // 用戶驗證
+import InteractiveButton from "../components/InteractiveButton";
 
 const ArticleForm = () => {
   const { id } = useParams(); // 这里 `id` 可能是文章 ID，如果页面是创建新文章，则 `id` 可能为 undefined
@@ -145,6 +146,11 @@ const ArticleForm = () => {
     }
   };
 
+  {
+    /* 計算按鈕是否應該禁用 */
+  }
+  const isDisabled =
+    !new_title.trim() || !new_content.trim() || !new_categorySmall;
   return (
     <div className="create-form">
       <div className="article-controls-btn">
@@ -155,14 +161,7 @@ const ArticleForm = () => {
           </span>
           返回列表
         </span>
-        <span className="btn">
-          {/* onClick={() => handleButtonClick("/article/mine")} */}
-          <span className="btn-icon">
-            <i className="fa-solid fa-bookmark"></i>
-          </span>
-          我的文章
-        </span>
-      </div>
+        </div>
 
       <form
         onSubmit={(e) => {
@@ -196,7 +195,7 @@ const ArticleForm = () => {
         <input
           type="text"
           className="form-control"
-          placeholder="限 60 個中英字母"
+          placeholder="請輸入標題..."
           value={new_title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -276,20 +275,20 @@ const ArticleForm = () => {
 
         {/* 按鈕 */}
         <div className="btnarea">
-          <button
-            type="submit"
-            className="btn article-create-btn"
+          <InteractiveButton
             onClick={() => setSubmitStatus("draft")}
+            disabled={!new_title || !new_content || !new_categorySmall}
+            rubbing="請填寫完整內容"
           >
             儲存草稿
-          </button>
-          <button
-            type="submit"
-            className="btn article-create-btn"
+          </InteractiveButton>
+          <InteractiveButton
             onClick={() => setSubmitStatus("published")}
+            disabled={!new_title || !new_content || !new_categorySmall}
+            rubbing="請填寫完整內容"
           >
             發表文章
-          </button>
+          </InteractiveButton>
         </div>
       </form>
     </div>
