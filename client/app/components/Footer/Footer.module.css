@@ -1,0 +1,133 @@
+.footer {
+    background: linear-gradient(135deg, #023047 0%, #219ebc 100%); /* 海洋藍漸層 */
+    color: var(--white);
+    padding: 2rem 0;
+    font-family: "Noto Sans TC", sans-serif;
+    position: relative;
+  }
+  
+  .footerContent {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .footerTop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  /* Logo 區塊 */
+  .footerLogo {
+    text-align: center;
+  }
+  
+  .footerLogo img {
+    max-width: 150px;
+    height: auto;
+  }
+  
+  /* 電腦版欄位 */
+  .footerColumns {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    width: 100%;
+  }
+  
+  @media (min-width: 576px) {
+    .footerColumns {
+      display: grid;
+    }
+  }
+  
+  .footerColumn {
+    padding: 1rem;
+  }
+  
+  .columnTitle {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--white);
+    border-bottom: 2px solid var(--primary-light-color);
+    padding-bottom: 0.5rem;
+  }
+  
+  .footerList {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footerLink {
+    color: var(--white);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.3s ease;
+  }
+  
+  .footerLink:hover {
+    color: var(--secondary-color); /* 黃色 Hover 效果 */
+  }
+  
+  .contactItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+  }
+  
+  .contactIcon {
+    font-size: 1.2rem;
+    color: var(--secondary-light-color);
+  }
+  
+  /* 手機版摺疊選單 */
+  .mobileSitemap {
+    width: 100%;
+    display: block;
+  }
+  
+  @media (min-width: 576px) {
+    .mobileSitemap {
+      display: none;
+    }
+  }
+  
+  .accordionButton {
+    background: none;
+    border: none;
+    color: var(--white);
+    width: 100%;
+    text-align: left;
+    padding: 1rem;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .accordionButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .collapseContent {
+    padding: 1rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--gray-100-color);
+  }
+  
+  /* 底部版權 */
+  .footerBottom {
+    text-align: center;
+    padding: 1rem 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+    color: var(--gray-200-color);
+  }

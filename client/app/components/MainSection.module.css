@@ -18,8 +18,8 @@
   --gray-700-color: #6f6f6f;
   --gray-800-color: #555555;
   --gray-900-color: #3b3b3b;
-  --header-height: 100px;
-  --footer-height: 0px;
+  --header-height: 80px;
+  --footer-height: 300px;
 }
 
 :global(*) {
@@ -33,78 +33,33 @@
   min-height: 100vh;
   overflow: hidden;
   color: var(--white);
-}
-
-.header,
-.footer {
-  position: fixed;
-  left: 0;
-  width: 100%;
-  display: none;
-  opacity: 0;
-  z-index: 2000;
-  transition: opacity 1s ease-out, transform 1s ease-out;
+  background: linear-gradient(180deg, #023047 0%, #219ebc 100%);
 }
 
 .header {
-  width: 100%;
+  position: fixed;
   top: 0;
-  height: var(--header-height, 100px);
-  background-color: transparent !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  left: 0;
+  width: 100%;
   z-index: 2000;
 }
 
-.header nav,
-.header .container,
-.header .d-none,
-.header .d-sm-flex {
-  background-color: transparent !important;
-}
-
 .footer {
+  position: fixed;
   bottom: 0;
-  height: var(--footer-height, 0px);
-  background-color: transparent !important;
+  left: 0;
+  width: 100%;
   z-index: 2001;
 }
 
-.visible {
-  display: block !important;
-  opacity: 1;
-  transform: translateY(0);
+.fadeIn {
+  animation: fadeIn 0.5s ease-in forwards;
 }
 
-.hidden {
-  display: none !important;
-  opacity: 0;
-}
-
-.fadeInUp {
-  animation: fadeInFromBottom 1s ease-out forwards;
-}
-
-.fadeInDown {
-  animation: fadeInDown 1s ease-out forwards;
-}
-
-@keyframes fadeInFromBottom {
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(50px);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
@@ -118,8 +73,7 @@
   overflow: hidden !important;
   position: relative;
   z-index: 1;
-  padding-top: calc(var(--header-height, 100px));
-  box-sizing: border-box;
+  /* 移除 padding-top 和 padding-bottom，讓 slide 自行調整 */
 }
 
 .swiperContainer::-webkit-scrollbar {
@@ -133,14 +87,17 @@
 
 .slide {
   width: 100%;
-  height: calc(100vh - var(--header-height, 100px));
+  height: 100vh; /* 每頁完整佔據視窗高度 */
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   position: relative;
   z-index: 2;
   background: transparent;
   overflow: hidden !important;
+  padding-top: var(--header-height); /* 內容避開 Header */
+  padding-bottom: var(--footer-height); /* 內容避開 Footer */
+  box-sizing: border-box;
 }
 
 .parallaxBg {
@@ -172,6 +129,7 @@
   overflow: hidden;
 }
 
+/* 以下樣式保持不變 */
 .bubbleContainer {
   position: relative;
   width: 100%;
@@ -187,13 +145,12 @@
   background-position: center;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
   opacity: 0;
   transform: translateY(100vh);
-  transition: box-shadow 0.3s ease, border 0.3s ease;
-  --scale-factor: 1;
+  transition: box-shadow 0.3s ease, border 0.3s ease, transform 0.3s ease;
   color: var(--white);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
@@ -204,9 +161,9 @@
 }
 
 .bubble:hover {
-  --scale-factor: 1.05;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--primary-light-color);
+  transform: scale(1.05);
 }
 
 @keyframes bubbleRise {
@@ -215,8 +172,8 @@
     transform: translateY(100vh);
   }
   50% {
-    opacity: 0.7;
-    transform: translateY(20px) translateX(3px);
+    opacity: 0.8;
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;
@@ -226,20 +183,10 @@
 
 @keyframes floatWave {
   0%, 100% {
-    transform: translateY(0) scale(1);
-    border-radius: 50%;
-  }
-  25% {
-    transform: translateY(-5px) scale(1) translateX(2px);
-    border-radius: 48% 52% 50% 50% / 50% 50% 52% 48%;
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px) scale(1);
-    border-radius: 50% 48% 52% 50% / 52% 50% 48% 50%;
-  }
-  75% {
-    transform: translateY(-5px) scale(1) translateX(-2px);
-    border-radius: 52% 50% 48% 50% / 50% 48% 50% 52%;
+    transform: translateY(-10px);
   }
 }
 
@@ -249,14 +196,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.15));
+  background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
   border-radius: 50%;
-  transition: background 0.3s ease, filter 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .bubble:hover .bubbleOverlay {
-  background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.25));
-  filter: brightness(1.1) blur(2px);
+  background: radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.3));
 }
 
 .bubbleContent {
@@ -269,15 +215,13 @@
   align-items: center;
   padding: 15px;
   box-sizing: border-box;
-  transform: perspective(500px) rotateX(10deg) rotateY(10deg);
 }
 
 .bubbleContent .activityName {
-  font-size: 12px;
+  font-size: 14px;
   font-style: italic;
   margin: 0 0 10px;
   text-align: center;
-  transform: translateZ(30px) rotateX(-5deg);
 }
 
 .bubbleContent .location {
@@ -289,7 +233,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
-  transform: translateZ(50px) rotateX(-5deg);
 }
 
 .productBubble {
@@ -300,13 +243,12 @@
   background-position: center;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
   opacity: 0;
   transform: translateY(100vh);
-  transition: box-shadow 0.3s ease, border 0.3s ease;
-  --scale-factor: 1;
+  transition: box-shadow 0.3s ease, border 0.3s ease, transform 0.3s ease;
   color: var(--white);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   z-index: 10;
@@ -319,13 +261,13 @@
 }
 
 .productBubble:hover {
-  --scale-factor: 1.05;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  border: 2px solid var(--primary-light-color);
+  transform: scale(1.05);
 }
 
 .productBubble.burst {
-  animation: productBubbleShrink 0.3s ease-out forwards; /* 直接縮小 */
+  animation: productBubbleShrink 0.3s ease-out forwards;
   pointer-events: none;
 }
 
@@ -333,12 +275,10 @@
   0% {
     transform: scale(1);
     opacity: 1;
-    border-radius: 50%;
   }
   100% {
     transform: scale(0);
     opacity: 0;
-    border-radius: 50%;
   }
 }
 
@@ -356,26 +296,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 90%;
-  transform: translateZ(30px) rotateX(-5deg);
 }
 
 .bubbleContent .productTag {
   font-size: 12px;
-  color: var(--primary-deep-color);
-  background: rgba(142, 202, 230, 0.3);
+  color: var(--white);
+  background: var(--primary-color);
   padding: 4px 12px;
   border-radius: 15px;
   margin: 0 0 5px;
   text-align: center;
-  transform: translateZ(20px) rotateX(-5deg);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .bubbleContent .productPrice {
   font-size: 14px;
   margin: 5px 0 0;
   text-align: center;
-  transform: translateZ(20px) rotateX(-5deg);
 }
 
 .link {
@@ -401,11 +337,6 @@
   .productBubble.visible {
     animation: bubbleRiseMobile 0.8s ease-out forwards;
   }
-
-  .bubble:hover,
-  .productBubble:hover {
-    animation: none;
-  }
 }
 
 @media (max-width: 768px) {
@@ -416,8 +347,8 @@
 
   .bubble,
   .productBubble {
-    width: 80vw;
-    height: 80vw;
+    width: 50vw;
+    height: 50vw;
     max-width: 300px;
     max-height: 300px;
   }
@@ -425,11 +356,6 @@
   .bubble.visible,
   .productBubble.visible {
     animation: bubbleRiseMobile 0.8s ease-out forwards;
-  }
-
-  .bubble:hover,
-  .productBubble:hover {
-    animation: none;
   }
 }
 
@@ -456,27 +382,26 @@
   z-index: 2;
   position: relative;
   padding: 30px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   margin: 0 auto;
-  margin-top: -100px;
 }
 
 .welcomeContent h2 {
   font-size: 36px;
   color: var(--white);
-  margin-bottom: 0px;
+  margin-bottom: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .welcomeDescription {
   font-size: 16px;
   font-weight: 500;
-  color: var(--primary-deep-color);
+  color: var(--white);
   line-height: 1.6;
   padding: 0 20px;
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .loading {
