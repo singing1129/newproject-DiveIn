@@ -42,7 +42,6 @@ const ArticleListPage = () => {
 
   // 文章篩選選項
   const [sortOption, setSortOption] = useState("all");
-  const [isMyArticles, setIsMyArticles] = useState(false);
   const [statusOption, setStatusOption] = useState("all");
 
   const { user } = useAuth();
@@ -61,10 +60,6 @@ const ArticleListPage = () => {
   }, [user]);
 
   useEffect(() => {
-    setIsMyArticles(searchParams.get("myArticles") === "true");
-  }, [searchParams]);
-
-  useEffect(() => {
     const fetchArticles = async () => {
       const page = parseInt(searchParams.get("page")) || 1;
       const category = searchParams.get("category");
@@ -75,7 +70,7 @@ const ArticleListPage = () => {
       let url = `${API_BASE_URL}/article`;
       const params = new URLSearchParams();
 
-      if (!status && !isMyArticles) {
+      if (!status && sortOption !== "my-articles") {
         params.set("status", "published");
       }
 
@@ -87,7 +82,7 @@ const ArticleListPage = () => {
       if (sort) params.set("sort", sort);
       if (status) params.set("status", status);
 
-      if (isMyArticles && usersId) {
+      if (sortOption === "my-articles" && usersId) {
         params.set("users_id", usersId);
       }
 
@@ -111,7 +106,7 @@ const ArticleListPage = () => {
     if (!loading) {
       fetchArticles();
     }
-  }, [searchParams, sortOption, isMyArticles, usersId, loading]);
+  }, [searchParams, sortOption, usersId, loading]);
 
   const goToPage = (page) => {
     if (page < 1 || page > pagination.totalPages) return;
@@ -130,6 +125,21 @@ const ArticleListPage = () => {
       params.delete("tag");
       params.delete("status");
       router.push("/article");
+    } else if (newSort === "my-articles") {
+      if (!usersId) {
+        const choice = window.confirm(
+          "您尚未登入！\n[確定] 前往登入\n[取消] 返回文章列表"
+        );
+        if (choice) {
+          router.push("/admin/login");
+          return;
+        }
+        setSortOption("all");
+        return;
+      }
+      params.delete("sort");
+      params.delete("status");
+      router.push(`/article?${params.toString()}`);
     } else {
       params.set("sort", newSort);
       router.push(`/article?${params.toString()}`);
@@ -149,32 +159,6 @@ const ArticleListPage = () => {
       params.set("status", newStatus);
       router.push(`/article?${params.toString()}`);
     }
-  };
-
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
-
-  const handleMyArticlesClick = () => {
-    if (!usersId) {
-      const choice = window.confirm(
-        "您尚未登入！\n[確定] 前往登入\n[取消] 返回文章列表"
-      );
-      if (choice) {
-        router.push("/admin/login");
-      }
-      return;
-    }
-
-    setIsMyArticles(!isMyArticles);
-    setShowStatusFilter(!isMyArticles);
-
-    const params = new URLSearchParams(searchParams);
-    if (!isMyArticles) {
-      params.set("myArticles", "true");
-    } else {
-      params.delete("myArticles");
-      router.push("/article");
-    }
-    router.push(`?${params.toString()}`);
   };
 
   const handleButtonClick = (path) => {
@@ -198,30 +182,9 @@ const ArticleListPage = () => {
         </div>
 
         <div className="article-list col-9">
+        {/* article-controls */}
           <div className="article-controls">
-            <div className="filter">
-              <select
-                value={sortOption}
-                onChange={handleSortChange}
-                className="form-select"
-              >
-                <option value="all">所有文章</option>
-                <option value="newest">最新文章</option>
-                <option value="oldest">最舊文章</option>
-                <option value="popular">熱門文章</option>
-              </select>
-              {showStatusFilter && (
-                <select
-                  value={statusOption}
-                  onChange={handleStatusChange}
-                  className="form-select"
-                >
-                  <option value="all">所有文章</option>
-                  <option value="published">已發表</option>
-                  <option value="draft">草稿夾</option>
-                </select>
-              )}
-            </div>
+          {/* create-btn */}
             <div className="article-controls-btn">
               <button
                 className="btn"
@@ -232,20 +195,42 @@ const ArticleListPage = () => {
                 </span>
                 新增文章
               </button>
-              <button className="btn" onClick={handleMyArticlesClick}>
-                <span className="btn-icon">
-                  <i className="fa-solid fa-bookmark"></i>
-                </span>
-                {isMyArticles ? "返回列表" : "我的文章"}
-              </button>
             </div>
+            {/* filter */}
+            <div className="custom-filter">
+  <select
+    value={sortOption}
+    onChange={handleSortChange}
+    className="custom-form-select"
+  >
+    <option value="all">所有文章</option>
+    <option value="newest">最新文章</option>
+    <option value="oldest">最舊文章</option>
+    <option value="popular">熱門文章</option>
+    <option value="my-articles">我的文章</option>
+  </select>
+  {sortOption === "my-articles" && (
+    <select
+      value={statusOption}
+      onChange={handleStatusChange}
+      className="custom-form-select"
+    >
+      <option value="all">所有文章</option>
+      <option value="published">已發表</option>
+      <option value="draft">草稿夾</option>
+    </select>
+  )}
+</div>
+
           </div>
+
+          {/* card */}
           <div className="cards-container">
             {(searchQuery ? filteredArticles : articles).map((article) => (
               <ArticleCard
                 key={article.id}
                 article={article}
-                isMyArticles={isMyArticles}
+                isMyArticles={sortOption === "my-articles"}
                 onDeleteSuccess={() => {
                   setArticles((prevArticles) =>
                     prevArticles.filter((a) => a.id !== article.id)
