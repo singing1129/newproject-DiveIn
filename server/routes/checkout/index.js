@@ -549,8 +549,17 @@ router.post("/complete", async (req, res) => {
         if (coupon.discount_type === "金額") {
           couponDiscount = Number(coupon.discount);
         } else if (coupon.discount_type === "折扣 %") {
-          couponDiscount = Math.floor(
-            (subtotal * Number(coupon.discount)) / 100
+          // 取得折扣百分比，例如 0.88 (代表 88% 的折扣)
+          const discountPercent = parseFloat(coupon.discount);
+
+          // 計算折扣金額（總金額 * (1 - 折扣%)）
+          couponDiscount = Math.floor(subtotal * (1 - discountPercent));
+
+          console.log(
+            "折扣百分比:",
+            discountPercent * 100, // 轉換回百分比顯示
+            "%, 折扣金額:",
+            couponDiscount
           );
         }
 
@@ -761,7 +770,7 @@ router.post("/complete", async (req, res) => {
         [appliedCouponId, couponDiscount, orderId]
       );
     }
-    
+
     // 訂單完成後，記錄積分
     if (orderPoints > 0) {
       // 新增積分歷史記錄

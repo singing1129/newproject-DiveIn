@@ -8,19 +8,18 @@ import styles from "./AccountForm.module.css";
 import { useRouter } from "next/navigation";
 import { RecaptchaVerifier } from "firebase/auth";
 import { auth } from "../../../config/firebase";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { TextField, Button, Box, LinearProgress, Tooltip } from "@mui/material";
-import zhTW from "date-fns/locale/zh-TW";
+
+import { LinearProgress } from "@mui/material";
+
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import "flatpickr/dist/themes/material_blue.css";
 import "flatpickr/dist/flatpickr.min.css";
-import "../../rent/components/flatpickr.css"
+import "../../rent/components/flatpickr.css";
 
 // 登入方式 icon
-import { AiFillGoogleSquare } from "react-icons/ai"; // Google
+import { FcGoogle } from "react-icons/fc";
+
 import { FaLine } from "react-icons/fa"; // Line
 import { FaSquarePhone } from "react-icons/fa6"; // 手機
 import { IoMdMail } from "react-icons/io";
@@ -1025,13 +1024,17 @@ export default function AccountForm() {
 
   const handleCancel = () => {
     // 釋放本地預覽
-    if (formData.avatarPreview) {
-      URL.revokeObjectURL(formData.avatarPreview);
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(null);
     }
+
+    // 清除上傳的文件
+    setAvatarFile(null);
 
     // 重新從後端獲取資料
     fetchMemberData();
-    setMessage({ type: "", text: "" });
+    setMessage(null);
   };
 
   // 在組件卸載時釋放預覽URL
@@ -1104,36 +1107,58 @@ export default function AccountForm() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(
-        "http://localhost:3005/api/admin/change-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+
+      // 判斷是修改密碼還是設置密碼
+      const isSettingPassword = !providers.includes("email");
+      const endpoint = isSettingPassword
+        ? "http://localhost:3005/api/admin/set-password"
+        : "http://localhost:3005/api/admin/change-password";
+
+      const requestBody = isSettingPassword
+        ? { newPassword: passwordData.newPassword }
+        : {
             currentPassword: passwordData.currentPassword,
             newPassword: passwordData.newPassword,
-          }),
-        }
-      );
+          };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       const data = await response.json();
 
       if (data.status === "success") {
-        setMessage({ type: "success", text: "密碼修改成功" });
+        setMessage({ type: "success", text: data.message || "密碼更新成功" });
         setShowPasswordModal(false);
+
+        // 如果是設置密碼，更新提供者列表
+        if (isSettingPassword) {
+          setProviders((prev) => [...prev, "email"]);
+        }
+
+        // 清空密碼表單
         setPasswordData({
           currentPassword: "",
           newPassword: "",
           confirmPassword: "",
         });
       } else {
-        setMessage({ type: "error", text: data.message || "密碼修改失敗" });
+        setMessage({
+          type: "error",
+          text: data.message || "密碼更新失敗，請稍後再試",
+        });
       }
     } catch (error) {
-      setMessage({ type: "error", text: "密碼修改失敗，請稍後再試" });
+      console.error("密碼更新錯誤:", error);
+      setMessage({
+        type: "error",
+        text: error.response?.data.message || "密碼更新失敗，請稍後再試",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -1301,7 +1326,21 @@ export default function AccountForm() {
             <ul className={styles.providerList}>
               {providers.map((provider) => (
                 <li key={provider} className={styles.providerItem}>
-                  {getProviderName(provider)}
+                  <span className={styles.providerIcon}>
+                    {provider === "google" && <FcGoogle />}
+                    {provider === "line" && (
+                      <FaLine style={{ color: "#06C755" }} />
+                    )}
+                    {provider === "phone" && (
+                      <FaSquarePhone style={{ color: "#4285F4" }} />
+                    )}
+                    {provider === "email" && (
+                      <IoMdMail style={{ color: "#DB4437" }} />
+                    )}
+                  </span>
+                  <span className={styles.providerName}>
+                    {getProviderName(provider)}
+                  </span>
                   {providers.length > 1 && (
                     <button
                       className={styles.removeProviderBtn}
@@ -1324,7 +1363,7 @@ export default function AccountForm() {
                     onClick={handleAddGoogleLogin}
                     disabled={isLoading}
                   >
-                    <img src="/img/ic_google.svg" alt="Google logo" />
+                    <FcGoogle size={20} />
                     連結 Google 帳號
                   </button>
                 )}
@@ -1334,7 +1373,7 @@ export default function AccountForm() {
                     onClick={handleAddLineLogin}
                     disabled={isLoading}
                   >
-                    <img src="/img/line.png" alt="Line logo" />
+                    <FaLine size={20} style={{ color: "#06C755" }} />
                     連結 Line 帳號
                   </button>
                 )}
@@ -1344,7 +1383,7 @@ export default function AccountForm() {
                     onClick={handleAddPhoneLogin}
                     disabled={isLoading}
                   >
-                    <img src="/img/phone.svg" alt="Phone logo" />
+                    <FaSquarePhone size={20} style={{ color: "#4285F4" }} />
                     連結手機號碼
                   </button>
                 )}
@@ -1352,31 +1391,6 @@ export default function AccountForm() {
             </div>
           </div>
         </div>
-
-        {/* {provider === "email" && (
-            <>
-              <IoMdMail className={styles.providerIcon} />
-              <span className={styles.providerName}>電子郵件</span>
-            </>
-          )}
-          {provider === "phone" && (
-          <>
-            <FaSquarePhone className={styles.providerIcon} />
-            <span className={styles.providerName}>手機號碼</span>
-          </>
-        )}
-          {provider === "line" && (
-            <>
-              <FaLine className={styles.providerIcon} />
-              <span className={styles.providerName}>LINE</span>
-            </>
-          )}
-          {provider === "google" && (
-            <>
-              <AiFillGoogleSquare className={styles.providerIcon} />
-              <span className={styles.providerName}>Google</span>
-            </>
-          )} */}
 
         {/* 個人資訊區塊 */}
         <div className={styles.accountForm}>
@@ -1446,7 +1460,7 @@ export default function AccountForm() {
                 className={styles.changePasswordBtn}
                 onClick={() => setShowPasswordModal(true)}
               >
-                修改密碼
+                {providers.includes("email") ? "修改密碼" : "設置密碼"}
               </button>
               <button
                 type="submit"
@@ -1472,50 +1486,89 @@ export default function AccountForm() {
       {showPasswordModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
-            <h3>修改密碼</h3>
+            <h3>{providers.includes("email") ? "修改密碼" : "設置密碼"}</h3>
             <form onSubmit={handlePasswordChange}>
-              <div className={styles.formGroup}>
-                <label>目前密碼</label>
-                <input
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) =>
-                    setPasswordData((prev) => ({
-                      ...prev,
-                      currentPassword: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>新密碼</label>
-                <input
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) =>
-                    setPasswordData((prev) => ({
-                      ...prev,
-                      newPassword: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>確認新密碼</label>
-                <input
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) =>
-                    setPasswordData((prev) => ({
-                      ...prev,
-                      confirmPassword: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+              {providers.includes("email") ? (
+                <>
+                  <div className={styles.formGroup}>
+                    <label>目前密碼</label>
+                    <input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          currentPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>新密碼</label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          newPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>確認新密碼</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={styles.socialLoginMessage}>
+                    您目前使用社交媒體帳號登入，設置密碼後可以使用電子郵件和密碼登入。
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>設置密碼</label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          newPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>確認密碼</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordData((prev) => ({
+                          ...prev,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
               <div className={styles.modalButtons}>
                 <button
                   type="submit"

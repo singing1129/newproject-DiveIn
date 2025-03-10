@@ -42,13 +42,13 @@ const CouponSelector = ({ cartData, onApplyCoupon, onRemoveCoupon }) => {
   };
 
   // 顯示折扣類型
-  const formatDiscountType = (coupon) => {
-    if (coupon.discount_type === "金額") {
-      return `折抵 NT$${coupon.discount}`;
-    } else {
-      return `${coupon.discount}% 折扣`;
-    }
-  };
+  // const formatDiscountType = (coupon) => {
+  //   if (coupon.discount_type === "金額") {
+  //     return `折抵 NT$${coupon.discount}`;
+  //   } else {
+  //     return `${coupon.discount}% 折扣`;
+  //   }
+  // };
 
   // 格式化日期
   const formatDate = (dateString) => {
@@ -84,8 +84,7 @@ const CouponSelector = ({ cartData, onApplyCoupon, onRemoveCoupon }) => {
         {selectedCoupon && (
           <div className="mt-2 alert alert-success d-flex justify-content-between align-items-center">
             <div>
-              <strong>已套用：</strong> {selectedCoupon.name} (
-              {formatDiscountType(selectedCoupon)})
+              <strong>已套用：</strong> {selectedCoupon.name}
             </div>
             <button
               className="btn btn-sm btn-outline-danger"
@@ -149,7 +148,7 @@ const CouponSelector = ({ cartData, onApplyCoupon, onRemoveCoupon }) => {
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <div className="fw-bold text-danger mb-1">
-                      {coupon.name} {formatDiscountType(coupon)}
+                      {coupon.name}
                     </div>
                     <small className="text-muted d-block">
                       消費滿 NT${coupon.min_spent} 可使用
@@ -211,7 +210,7 @@ const CouponSelector = ({ cartData, onApplyCoupon, onRemoveCoupon }) => {
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <div className="fw-bold text-danger mb-1">
-                      {coupon.name} {formatDiscountType(coupon)}
+                      {coupon.name}
                     </div>
                     <small className="text-muted d-block">
                       消費滿 NT${coupon.min_spent} 可使用

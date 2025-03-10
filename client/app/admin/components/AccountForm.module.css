@@ -269,14 +269,29 @@
   }
 }
 
+.providerList {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.providerItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-200-color);
+}
+
 .providerIcon {
-  font-size: 16px;
-  color: var(--primary-color);
+  margin-right: 10px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .providerName {
-  font-size: 16px;
-  color: var(--gray-600-color);
+  flex: 1;
+  color: var(--gray-800-color);
 }
 
 /* 個人資訊區塊 */
@@ -308,7 +323,6 @@
   color: var(--gray-600-color);
   margin-bottom: 10px;
 }
-
 
 /* 修改密碼 */
 .changePasswordLink {
@@ -371,22 +385,6 @@
 }
 
 /* 魚博彥新家 */
-.providerList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.providerItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background-color: var(--gray-50-color);
-  border-radius: 5px;
-}
-
 .removeProviderBtn {
   background-color: transparent;
   color: var(--gray-700-color);
@@ -730,4 +728,16 @@
 
 .rewardCloseBtn:hover {
   color: var(--gray-700-color);
+}
+
+/* 移除不需要的樣式 */
+.socialLoginMessage {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  color: var(--gray-700-color);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
 }

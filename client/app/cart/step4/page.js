@@ -112,8 +112,8 @@ export default function Cart4() {
                         <span>商品小計</span>
                         <span>
                           NT${" "}
-                          {orderData.orderInfo.totalAmount +
-                            orderData.orderInfo.couponDiscount}
+                          {Number(orderData.orderInfo.totalAmount) +
+                            Number(orderData.orderInfo.couponDiscount)}
                         </span>
                       </div>
                       {orderData.orderInfo.couponName && (

@@ -184,17 +184,22 @@ export const useCoupon = (cartData) => {
     if (selectedCoupon.discount_type === "金額") {
       return parseFloat(selectedCoupon.discount);
     } else if (selectedCoupon.discount_type === "折扣 %") {
-      // 計算折扣金額 (例如: 90% = 10% 折扣)
+      // 取得折扣百分比，例如 0.88 (代表 88%)
       const discountPercent = parseFloat(selectedCoupon.discount);
-      const discountAmount = ((subtotal * discountPercent) / 100).toFixed(0);
+      
+      // 計算折扣金額（應該是總金額 * (1 - 折扣%)）
+      const discountAmount = (subtotal * (1 - discountPercent)).toFixed(0);
+      
       console.log(
         "折扣百分比:",
-        discountPercent,
+        discountPercent * 100, // 轉換回百分比顯示
         "%, 折扣金額:",
         discountAmount
       );
+    
       return parseFloat(discountAmount);
     }
+    
 
     return 0;
   };

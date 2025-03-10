@@ -769,15 +769,28 @@ export function AuthProvider({ children }) {
 
   // 在 useAuth 中
   function getToken() {
-    if (typeof window === "undefined") {
-      // 代表在伺服器端，無法使用 localStorage
+    try {
+      // 檢查是否在瀏覽器環境
+      if (typeof window === "undefined") {
+        console.log("非瀏覽器環境，無法訪問localStorage");
+        return null;
+      }
+
+      return localStorage.getItem(appKey);
+    } catch (error) {
+      console.error("獲取token時出錯:", error);
       return null;
     }
-    return localStorage.getItem("loginWithToken");
   }
 
   const getDecodedToken = () => {
     try {
+      // 檢查是否在瀏覽器環境
+      if (typeof window === "undefined") {
+        console.log("非瀏覽器環境，無法訪問localStorage");
+        return null;
+      }
+
       const token = localStorage.getItem(appKey);
       console.log(`嘗試解碼token: ${token ? "有token" : "無token"}`);
 
@@ -788,13 +801,6 @@ export function AuthProvider({ children }) {
 
       if (!decoded) {
         console.error("Token解碼失敗");
-        return null;
-      }
-
-      // 檢查token是否有效
-      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-        console.log("Token已過期");
-        localStorage.removeItem(appKey);
         return null;
       }
 

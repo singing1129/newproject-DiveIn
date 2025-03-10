@@ -1470,5 +1470,162 @@ function standardizePhoneNumber(phoneNumber) {
   return cleaned;
 }
 
+// 修改密碼 API
+router.post("/change-password", checkToken, async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { currentPassword, newPassword } = req.body;
+
+    // 驗證請求數據
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        status: "error",
+        message: "請提供當前密碼和新密碼",
+      });
+    }
+
+    // 獲取用戶當前密碼
+    const [user] = await pool.execute(
+      "SELECT password FROM users WHERE id = ?",
+      [id]
+    );
+
+    if (user.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "找不到用戶",
+      });
+    }
+
+    // 如果用戶沒有密碼（社交登入）
+    if (!user[0].password) {
+      return res.status(400).json({
+        status: "error",
+        message: "您尚未設置密碼，請使用設置密碼功能",
+      });
+    }
+
+    // 驗證當前密碼
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user[0].password
+    );
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        status: "error",
+        message: "當前密碼不正確",
+      });
+    }
+
+    // 加密新密碼
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 更新密碼
+    await pool.execute("UPDATE users SET password = ? WHERE id = ?", [
+      hashedPassword,
+      id,
+    ]);
+
+    // 檢查用戶是否已有 email 登入方式
+    const [providers] = await pool.execute(
+      "SELECT * FROM user_providers WHERE user_id = ? AND provider = 'email'",
+      [id]
+    );
+
+    // 如果沒有 email 登入方式，添加一個
+    if (providers.length === 0) {
+      // 獲取用戶郵箱
+      const [userEmail] = await pool.execute(
+        "SELECT email FROM users WHERE id = ?",
+        [id]
+      );
+
+      if (userEmail[0].email) {
+        await pool.execute(
+          "INSERT INTO user_providers (user_id, provider, provider_id) VALUES (?, ?, ?)",
+          [id, "email", userEmail[0].email]
+        );
+      }
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "密碼修改成功",
+    });
+  } catch (error) {
+    console.error("修改密碼錯誤:", error);
+    res.status(500).json({
+      status: "error",
+      message: "修改密碼失敗",
+      error: error.message,
+    });
+  }
+});
+
+// 設置密碼 API（用於社交登入用戶首次設置密碼）
+router.post("/set-password", checkToken, async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { newPassword } = req.body;
+
+    // 驗證請求數據
+    if (!newPassword) {
+      return res.status(400).json({
+        status: "error",
+        message: "請提供新密碼",
+      });
+    }
+
+    // 獲取用戶信息
+    const [user] = await pool.execute(
+      "SELECT email, password FROM users WHERE id = ?",
+      [id]
+    );
+
+    if (user.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "找不到用戶",
+      });
+    }
+
+    // 加密新密碼
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 更新密碼
+    await pool.execute("UPDATE users SET password = ? WHERE id = ?", [
+      hashedPassword,
+      id,
+    ]);
+
+    // 檢查用戶是否已有 email 登入方式
+    const [providers] = await pool.execute(
+      "SELECT * FROM user_providers WHERE user_id = ? AND provider = 'email'",
+      [id]
+    );
+
+    // 如果沒有 email 登入方式，添加一個
+    if (providers.length === 0 && user[0].email) {
+      await pool.execute(
+        "INSERT INTO user_providers (user_id, provider, provider_id) VALUES (?, ?, ?)",
+        [id, "email", user[0].email]
+      );
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "密碼設置成功，現在您可以使用電子郵件和密碼登入",
+    });
+  } catch (error) {
+    console.error("設置密碼錯誤:", error);
+    res.status(500).json({
+      status: "error",
+      message: "設置密碼失敗",
+      error: error.message,
+    });
+  }
+});
+
 // 確保這個路由被導出和掛載
 export default router;
