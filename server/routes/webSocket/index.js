@@ -61,6 +61,7 @@ function createWebsocketRoom(wss) {
           id: notificationId,
           content,
           timestamp,
+          isNew: true, // 新增 isNew 屬性
         };
         console.log("準備推送通知，當前連線數量:", global.clients.size);
         if (userId) {

@@ -22,6 +22,7 @@ export async function sendSystemNotification({ userIds, content }) {
         id: notificationIds[0], // 改回 id，而不是 userId
         content,
         timestamp,
+        isNew:true
       };
       console.log("準備推送的訊息:", systemMsg);
 
@@ -54,6 +55,7 @@ export async function sendSystemNotification({ userIds, content }) {
         id: notificationId,
         content,
         timestamp,
+        isNew:true
       };
 
       global.clients.forEach((client) => {

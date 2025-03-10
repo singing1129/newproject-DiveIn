@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import useToast from "./useToast";
 
 const WebSocketContext = createContext(null);
 
@@ -10,8 +11,11 @@ export const WebSocketProvider = ({ children }) => {
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [ws, setWs] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const {showToast} = useToast();
 
   useEffect(() => {
+     // 如果 user 還沒登入，則不進行 WebSocket 連線
+     if (!user || !user.id) return;
     const socket = new WebSocket("ws://localhost:3005");
     socket.onopen = () => {
       console.log("WebSocket 已連線");
@@ -22,7 +26,6 @@ export const WebSocketProvider = ({ children }) => {
       }
     };
     socket.onmessage = async (event) => {
-        console.log("收到 WebSocket 訊息:", event.data)
       const data = JSON.parse(await event.data.text?.() || event.data);
       console.log("收到 WebSocket 訊息:", data);
       if (data.type === "history") {
@@ -31,6 +34,12 @@ export const WebSocketProvider = ({ children }) => {
         setMessages((prev) => [...prev, data]);
       } else if (data.type === "system") {
         setSystemNotifications((prev) => [...prev, data]);
+        console.log("系統通知 isNew: ", data.isNew);  // 確認是否有 isNew 屬性
+        // 只有在 isNew 為 true 時顯示土司通知
+    if (data.isNew == true) {
+      showToast("收到一則新的系統通知");
+    }
+        console.log("收到系統訊息");
       }
     };
     socket.onclose = () => {

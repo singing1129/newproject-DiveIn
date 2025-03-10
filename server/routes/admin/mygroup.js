@@ -94,7 +94,7 @@ router.put("/myGroup/:id", async (req, res) => {
     const userIds = participants.map((p) => p.user_id);
     const notificationResult = await sendSystemNotification({
       userIds,
-      content: `親愛的潛水愛好者您好：很遺憾地通知您！您所參加原定於 ${groupDate} 舉辦的揪團 "${groupName}" 已遭到取消，若有疑問，請詢問官方客服。`,
+      content: `親愛的潛水愛好者您好：很遺憾地通知您，您所參加原定於 ${groupDate} 舉辦的揪團 "${groupName}" 已遭到取消。若有疑問，請詢問官方客服。`,
     });
     if (!notificationResult.success) {
       console.error("系統通知發送失敗:", notificationResult.message);
