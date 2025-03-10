@@ -24,6 +24,12 @@ export default function Sidebar() {
           </Link>
         </li>
         <li>
+          <Link href="/admin/message">
+            <i className={`bi bi-envelope ${styles.iconSpacing}`}></i>
+            我的訊息
+          </Link>
+        </li>
+        <li>
           <Link href="/admin/group">
             <i className={`bi bi-people ${styles.iconSpacing}`}></i>
             我的揪團

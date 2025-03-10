@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // Next.js 的路由
+import { useRouter, useSearchParams } from "next/navigation";
 import "./articleAside.css";
+import "./articleList.css";
 
-const Sidebar = () => {
+const Sidebar = ({
+  searchQuery,
+  setSearchQuery,
+  handleSearch,
+  handleClearSearch,
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get("category"); // 取得當前 URL 的 category 參數
+  const currentCategory = searchParams.get("category");
 
   const [sidebarData, setSidebarData] = useState({ sidebar: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showClearIcon, setShowClearIcon] = useState(false); // 新增狀態
 
   useEffect(() => {
     const fetchSidebarData = async () => {
@@ -31,6 +38,20 @@ const Sidebar = () => {
     fetchSidebarData();
   }, []);
 
+  // 修改搜尋處理函數
+  const handleSearchClick = () => {
+    if (searchQuery) {
+      handleSearch(); // 執行搜尋
+      setShowClearIcon(true); // 顯示清除圖標
+    }
+  };
+
+  // 修改清除處理函數
+  const handleClearClick = () => {
+    handleClearSearch(); // 清空搜尋
+    setShowClearIcon(false); // 隱藏清除圖標，恢復搜尋圖標
+  };
+
   if (loading || !sidebarData.sidebar) return <div>加载中...</div>;
   if (error) return <div>发生错误: {error}</div>;
 
@@ -41,24 +62,44 @@ const Sidebar = () => {
     random_tags = [],
   } = sidebarData.sidebar || {};
 
-  // 🔹 點擊分類篩選
   const handleCategoryClick = (categorySmallName) => {
     router.push(`/article?category=${encodeURIComponent(categorySmallName)}`);
   };
 
-  // 🔹 點擊標籤篩選
   const handleTagClick = (tagName) => {
     router.push(`/article?tag=${encodeURIComponent(tagName)}`);
   };
 
-  // 🔹 點擊最近文章跳轉
   const handleArticleClick = (articleId) => {
     router.push(`/article/${articleId}`);
   };
 
   return (
-    <aside className="col-3">
-      {/* 分类区域 */}
+    <aside>
+      {/* 搜尋框 */}
+      <div className="article-search-box">
+        <input
+          type="text"
+          placeholder="搜尋文章..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {showClearIcon && searchQuery ? (
+          <i
+            className="fa-solid fa-times clear-icon"
+            onClick={handleClearClick}
+            style={{ cursor: "pointer" }}
+          />
+        ) : (
+          <i
+            className="fa-solid fa-search search-icon"
+            onClick={handleSearchClick}
+            style={{ cursor: "pointer" }}
+          />
+        )}
+      </div>
+
+      {/* 原有的分類區域 */}
       {categoryBig.map((bigCategory) => (
         <div key={bigCategory.id} className="aside-category">
           <div className="aside-title">{bigCategory.name}</div>
@@ -113,7 +154,7 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* 标签区域 */}
+      {/* 標籤區域 */}
       <div className="aside-tag">
         <div className="aside-title">標籤區域</div>
         <div className="aside-tag-area">

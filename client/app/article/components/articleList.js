@@ -5,7 +5,7 @@ import "./articleList.css";
 import "./articleAside.css";
 import Sidebar from "./sidebar";
 import ArticleCard from "./articleCard";
-import { useAuth } from "../../hooks/useAuth"; // 引入 useAuth
+import { useAuth } from "../../hooks/useAuth";
 
 const API_BASE_URL = "http://localhost:3005/api";
 
@@ -18,7 +18,7 @@ const ArticleListPage = () => {
     currentPage: 1,
   });
 
-  // 搜尋
+  // 搜尋相關狀態和函數
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredArticles, setFilteredArticles] = useState([]);
 
@@ -45,32 +45,25 @@ const ArticleListPage = () => {
   const [isMyArticles, setIsMyArticles] = useState(false);
   const [statusOption, setStatusOption] = useState("all");
 
-  // 使用 useAuth 獲取用戶資訊
-  const { user } = useAuth(); // 從 useAuth 獲取 user
-  const [usersId, setUsersId] = useState(null); // 初始設為 null
+  const { user } = useAuth();
+  const [usersId, setUsersId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 當 user 改變時更新 usersId
   useEffect(() => {
     if (user === -1) {
-      // 未初始化完成，保持 loading
       setUsersId(null);
     } else if (user && user.id) {
-      // 已登入，設置 usersId
       setUsersId(user.id);
     } else {
-      // 未登入，設置為 null
       setUsersId(null);
     }
     setLoading(false);
   }, [user]);
 
-  // 刷新頁面後保持「我的文章」選擇
   useEffect(() => {
     setIsMyArticles(searchParams.get("myArticles") === "true");
   }, [searchParams]);
 
-  // 獲取文章
   useEffect(() => {
     const fetchArticles = async () => {
       const page = parseInt(searchParams.get("page")) || 1;
@@ -82,7 +75,6 @@ const ArticleListPage = () => {
       let url = `${API_BASE_URL}/article`;
       const params = new URLSearchParams();
 
-      // 未登入或主頁時，預設只顯示已發布文章
       if (!status && !isMyArticles) {
         params.set("status", "published");
       }
@@ -95,7 +87,6 @@ const ArticleListPage = () => {
       if (sort) params.set("sort", sort);
       if (status) params.set("status", status);
 
-      // 如果是「我的文章」且已登入，添加 users_id
       if (isMyArticles && usersId) {
         params.set("users_id", usersId);
       }
@@ -122,7 +113,6 @@ const ArticleListPage = () => {
     }
   }, [searchParams, sortOption, isMyArticles, usersId, loading]);
 
-  // 切換頁面
   const goToPage = (page) => {
     if (page < 1 || page > pagination.totalPages) return;
     const params = new URLSearchParams(searchParams);
@@ -130,7 +120,6 @@ const ArticleListPage = () => {
     router.push(`?${params.toString()}`);
   };
 
-  // 處理排序變更
   const handleSortChange = (e) => {
     const newSort = e.target.value;
     setSortOption(newSort);
@@ -147,7 +136,6 @@ const ArticleListPage = () => {
     }
   };
 
-  // 處理狀態篩選
   const handleStatusChange = (e) => {
     const newStatus = e.target.value;
     setStatusOption(newStatus);
@@ -163,28 +151,19 @@ const ArticleListPage = () => {
     }
   };
 
-  const handleCategoryClick = (categorySmallName) => {
-    const params = new URLSearchParams();
-    params.set("category", categorySmallName);
-    router.push(`/article?${params.toString()}`);
-  };
-
   const [showStatusFilter, setShowStatusFilter] = useState(false);
 
-  // 處理「我的文章」按鈕點擊
   const handleMyArticlesClick = () => {
     if (!usersId) {
-      // 未登入，顯示彈窗
       const choice = window.confirm(
         "您尚未登入！\n[確定] 前往登入\n[取消] 返回文章列表"
       );
       if (choice) {
-        router.push("/admin/login"); // 前往登入頁面
+        router.push("/admin/login");
       }
       return;
     }
 
-    // 已登入，切換「我的文章」狀態
     setIsMyArticles(!isMyArticles);
     setShowStatusFilter(!isMyArticles);
 
@@ -198,7 +177,6 @@ const ArticleListPage = () => {
     router.push(`?${params.toString()}`);
   };
 
-  // 新增文章按鈕跳轉
   const handleButtonClick = (path) => {
     router.push(path);
   };
@@ -210,7 +188,15 @@ const ArticleListPage = () => {
   return (
     <div className="container mt-4">
       <div className="row">
-        <Sidebar />
+        <div className="col-3">
+          <Sidebar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            handleSearch={handleSearch}
+            handleClearSearch={handleClearSearch}
+          />
+        </div>
+
         <div className="article-list col-9">
           <div className="article-controls">
             <div className="filter">
@@ -236,22 +222,6 @@ const ArticleListPage = () => {
                 </select>
               )}
             </div>
-            <div className="article-search-box">
-              <input
-                type="text"
-                placeholder="搜尋文章..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button className="clear-button" onClick={handleClearSearch}>
-                  <i className="fa-solid fa-times"></i>
-                </button>
-              )}
-              <button className="search-button" onClick={handleSearch}>
-                搜尋
-              </button>
-            </div>
             <div className="article-controls-btn">
               <button
                 className="btn"
@@ -270,21 +240,23 @@ const ArticleListPage = () => {
               </button>
             </div>
           </div>
-          {(searchQuery ? filteredArticles : articles).map((article) => (
-            <ArticleCard
-              key={article.id}
-              article={article}
-              isMyArticles={isMyArticles}
-              onDeleteSuccess={() => {
-                setArticles((prevArticles) =>
-                  prevArticles.filter((a) => a.id !== article.id)
-                );
-                setFilteredArticles((prevFilteredArticles) =>
-                  prevFilteredArticles.filter((a) => a.id !== article.id)
-                );
-              }}
-            />
-          ))}
+          <div className="cards-container">
+            {(searchQuery ? filteredArticles : articles).map((article) => (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                isMyArticles={isMyArticles}
+                onDeleteSuccess={() => {
+                  setArticles((prevArticles) =>
+                    prevArticles.filter((a) => a.id !== article.id)
+                  );
+                  setFilteredArticles((prevFilteredArticles) =>
+                    prevFilteredArticles.filter((a) => a.id !== article.id)
+                  );
+                }}
+              />
+            ))}
+          </div>
           <div className="custom-pagination">
             <div className="page-item">
               <button

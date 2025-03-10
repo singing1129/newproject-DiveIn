@@ -33,6 +33,7 @@ import groupJoin from "../routes/group/join.js";
 import "../cron.js"; //    排程自動檢查並更新揪團狀態
 import groupUpdate from "../routes/group/update.js"
 import createWebsocketRoom from "../routes/webSocket/index.js";
+import systemNotifications from "../routes/webSocket/notifications.js";
 // 租借相關路由
 import rentRouter from "../routes/rent/index.js";
 import rentCategoryRouter from "../routes/rent/categories.js";
@@ -49,8 +50,8 @@ import rentIdColorRouter from "../routes/rent/idcolors.js";
 import articleRouter from "../routes/article/index.js"; // 文章列表 & 動態文章頁
 import articleCreateRouter from "../routes/article/create.js"; // 取得新建文章所需的分類/標籤 & 新增文章
 import articleUpdateRouter from "../routes/article/update.js"; // 文章修改
-// import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
-// import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
+import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
+import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
 // 優惠券相關路由
 import myCouponRouter from "../routes/coupon/myCoupon.js";
 import couponClaimRouter from "../routes/coupon/couponClaim.js";
@@ -175,6 +176,7 @@ apiRouter.use("/group", groupDetailRouter);
 apiRouter.use("/group", groupCreate);
 apiRouter.use("/group", groupJoin);
 apiRouter.use("/group", groupUpdate);
+apiRouter.use("/notifications", systemNotifications);
 
 // 租借相關路由
 apiRouter.use("/rent", rentRouter); // 負責 `/api/rent`
@@ -193,8 +195,8 @@ apiRouter.use("/rent", rentIdColorRouter); // 負責 `/api/rent/:id/colors`
 apiRouter.use("/article", articleRouter); // `/api/article` 文章列表 & 文章內容
 apiRouter.use("/article", articleCreateRouter); // `/api/article/create` 新增文章、取得新建文章所需數據
 apiRouter.use("/article", articleUpdateRouter); // `/api/article/update`
-// apiRouter.use("/article", articleReplyRouter); // `/api/article/reply` 留言 & 回覆
-// apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
+apiRouter.use("/article", articleReplyRouter); // `/api/article/reply` 留言 & 回覆
+apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
 
 // 優惠券相關路由
 apiRouter.use("/coupon", myCouponRouter); // 負責 `/api/coupon/myCoupon`

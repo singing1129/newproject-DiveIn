@@ -5,7 +5,7 @@ const query = async (sql, params = []) => {
   const connection = await pool.getConnection();
   try {
     const [results, fields] = await connection.execute(sql, params);
-    return { results, fields }; // 返回完整的結果和欄位資訊
+    return { results: results || [], fields }; // 返回完整的結果和欄位資訊，如果 results 是 undefined，則返回空陣列  
   } catch (error) {
     console.error("資料庫錯誤：", error);
     throw error;

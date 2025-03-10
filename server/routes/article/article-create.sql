@@ -60,42 +60,65 @@ CREATE TABLE article_tag_big (
 
 -- =========================== 7. article_reply 表格 ===========================
 CREATE TABLE article_reply (
-    id INT AUTO_INCREMENT PRIMARY KEY, -- 主鍵
-    article_id INT, -- 文章ID (文章的外鍵)
-    users_id INT UNSIGNED, -- 使用者ID (留言者的外鍵)
-    content TEXT NOT NULL, -- 留言內容
-    floor_number INT, -- 樓層編號
-    reply_number INT DEFAULT 0, -- 根留言為0
-    level ENUM('1', '2') DEFAULT '1', -- 留言層級 (只有1或2)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 創建時間
-    is_deleted BOOLEAN DEFAULT FALSE, -- 軟刪除標記
-    FOREIGN KEY (article_id) REFERENCES article (id) ON DELETE CASCADE, -- 外鍵: 文章
-    FOREIGN KEY (users_id) REFERENCES users (id) ON DELETE CASCADE -- 外鍵: 使用者
-);
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    article_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
+    content TEXT NOT NULL,
+    parent_id INT UNSIGNED DEFAULT NULL, -- 只有兩層，留言為NULL，回覆指向 article_reply.id
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (article_id) REFERENCES article(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES article_reply(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
--- =========================== 8. article_likes_dislikes 表格 ===========================
+
+-- 文章 1 留言與回覆
+INSERT INTO article_reply (article_id, user_id, content, parent_id, created_at) VALUES
+(1, 1, '這是文章1的留言1', NULL, '2025-03-01 10:00:00'), -- 留言1 (user1)
+(1, 2, '這是文章1的回覆1', 1, '2025-03-01 10:05:00'),    -- 回覆1 (user2) 回應 留言1
+(1, 3, '這是文章1的留言2', NULL, '2025-03-01 10:10:00'), -- 留言2 (user3)
+(1, 1, '這是文章1的回覆2', 3, '2025-03-01 10:15:00'),    -- 回覆2 (user1) 回應 留言2
+(1, 2, '這是文章1的回覆3', 3, '2025-03-01 10:20:00');    -- 回覆3 (user2) 回應 留言2
+
+-- 文章 2 留言與回覆
+INSERT INTO article_reply (article_id, user_id, content, parent_id, created_at) VALUES
+(2, 1, '這是文章2的留言1', NULL, '2025-03-01 11:00:00'), -- 留言1 (user1)
+(2, 3, '這是文章2的回覆1', 1, '2025-03-01 11:05:00'),    -- 回覆1 (user3) 回應 留言1
+(2, 2, '這是文章2的留言2', NULL, '2025-03-01 11:10:00'), -- 留言2 (user2)
+(2, 1, '這是文章2的回覆2', 2, '2025-03-01 11:15:00'),    -- 回覆2 (user1) 回應 留言2
+(2, 3, '這是文章2的回覆3', 2, '2025-03-01 11:20:00');    -- 回覆3 (user3) 回應 留言2
+
+
+-- =========================== 8. article_likes_dislikes 表格 ========================
+
+--
 CREATE TABLE article_likes_dislikes (
-    article_id INT, -- 文章ID (文章的外鍵)
-    users_id INT UNSIGNED, -- 使用者ID (users 外鍵)
-    is_like BOOLEAN, -- 按讚為 TRUE，倒讚為 FALSE
-    PRIMARY KEY (article_id, users_id), -- 複合主鍵
-    FOREIGN KEY (article_id) REFERENCES article (id) ON DELETE CASCADE, -- 外鍵: 文章
-    FOREIGN KEY (users_id) REFERENCES users (id) ON DELETE CASCADE -- 外鍵: 使用者
-);
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reply_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
+    is_like BOOLEAN DEFAULT NULL, -- 允許為 NULL，表示用戶未對留言做出任何反應
+    FOREIGN KEY (reply_id) REFERENCES article_reply(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
--- =========================== 9. comment 表格 ===========================
-CREATE TABLE comment (
-    id INT AUTO_INCREMENT PRIMARY KEY, -- 主鍵
-    star TINYINT NOT NULL, -- 評分 (1-5)
-    type ENUM('product', 'activity', 'rent') NOT NULL, -- 評論類型
-    content TEXT NOT NULL, -- 評論內容
-    users_id INT UNSIGNED, -- 使用者ID (留言者的外鍵)
-    product_id INT UNSIGNED DEFAULT NULL, -- 產品ID (可為NULL)
-    activity_id INT UNSIGNED DEFAULT NULL, -- 活動ID (可為NULL)
-    rent_item_id INT UNSIGNED DEFAULT NULL, -- 租借ID (可為NULL)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 創建時間
-    FOREIGN KEY (users_id) REFERENCES users (id) ON DELETE CASCADE, -- 外鍵: 使用者
-    FOREIGN KEY (product_id) REFERENCES product (id) ON DELETE CASCADE, -- 外鍵: 產品 (可為NULL)
-    FOREIGN KEY (activity_id) REFERENCES activity (id) ON DELETE CASCADE, -- 外鍵: 活動 (可為NULL)
-    FOREIGN KEY (rent_item_id) REFERENCES rent_item (id) ON DELETE CASCADE -- 外鍵: 租借 (可為NULL)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+-- 加入 UNIQUE KEY（如果表成功建立）
+ALTER TABLE article_likes_dislikes ADD UNIQUE KEY unique_like (reply_id, user_id);
+
+
+-- 文章 1 留言的按讚/倒讚
+INSERT INTO article_likes_dislikes (reply_id, user_id, is_like) VALUES
+(1, 1, 1),  -- user1 對 留言1 按讚
+(1, 2, 1),  -- user2 對 留言1 按讚
+(2, 3, 0),  -- user3 對 留言1 倒讚
+(3, 1, 1),  -- user1 對 留言2 按讚
+(3, 2, 1),  -- user2 對 留言2 按讚
+(4, 3, 0),  -- user3 對 回覆2 倒讚
+(5, 1, 1);  -- user1 對 回覆3 按讚
+
+-- 文章 2 留言的按讚/倒讚
+INSERT INTO article_likes_dislikes (reply_id, user_id, is_like) VALUES
+(6, 1, 1),  -- user1 對 留言1 按讚
+(6, 3, 1),  -- user3 對 留言1 按讚
+(7, 2, 0),  -- user2 對 留言2 倒讚
+(8, 1, 1),  -- user1 對 回覆2 按讚
+(9, 3, 1);  -- user3 對 回覆3 按讚
