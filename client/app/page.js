@@ -49,8 +49,9 @@ export default function Home() {
     <>
       <main>
         {/* KV */}
+        <Carousel />
 
-        <div className={`${styles.kv}`}>
+        {/* <div className={`${styles.kv}`}>
           <div
             className={`w-100 d-flex justify-content-between align-items-center`}
           >
@@ -75,7 +76,7 @@ export default function Home() {
               <FaAngleRight />
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* section start */}
         <div className={`container ${styles.sectionStart}`}>
