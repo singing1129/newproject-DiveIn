@@ -142,59 +142,74 @@ export default function Header() {
                   論壇
                 </Link>
               </li>
-              <li className="px-3 py-2">
-                <button
-                  className="btn btn-link p-0 border-0"
-                  onClick={toggleSearch}
-                  aria-label="搜索"
-                >
-                  <FaSearch size={18} />
-                </button>
-              </li>
             </ul>
           </div>
           <HeaderPop show={showPop} activeMenu={activeMenu} />
           <div className="header-right-box d-flex justify-content-end align-items-center">
-            <form className="d-flex search-box" action="">
-              <input
-                type="search"
-                className="form-control"
-                placeholder="Search"
-              />
-              <button className="btn">
-                <FaSearch className="text-secondary vstack text-center" />
+            {/* 統一的圖標樣式 */}
+            <div className="d-flex align-items-center gap-3">
+              {/* 搜索按鈕 */}
+              <button
+                className="btn btn-link p-0 border-0 header-icon"
+                onClick={toggleSearch}
+                aria-label="搜尋"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#333",
+                  fontSize: "20px",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              >
+                <FaSearch size={20} />
               </button>
-            </form>
-            <a
-              href="/cart/step1"
-              className="header-cart a"
-              id="cart-icon"
-              style={{ position: "relative" }}
-            >
-              <FiShoppingCart />
-              {cartCount > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    background: "#e74c3c",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "18px",
-                    height: "18px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {cartCount}
-                </span>
-              )}
-            </a>
-            <User />
+
+              {/* 購物車按鈕 */}
+              <Link
+                href="/cart/step1"
+                className="header-icon"
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#333",
+                  fontSize: "20px",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              >
+                <FiShoppingCart size={22} />
+                {cartCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-8px",
+                      right: "-8px",
+                      background: "#e74c3c",
+                      color: "white",
+                      borderRadius: "50%",
+                      width: "18px",
+                      height: "18px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* 用戶圖標 */}
+              <div className="header-icon">
+                <User />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -220,10 +235,34 @@ export default function Header() {
             </Link>
           </div>
           <div className="mobile-cart fs-4">
-            <Link href="/cart" className="a text-black">
-              <FiShoppingCart />
+            <Link
+              href="/cart/step1"
+              className="a text-black"
+              style={{ position: "relative" }}
+            >
+              <FiShoppingCart size={22} />
+              {cartCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-8px",
+                    right: "-8px",
+                    background: "#e74c3c",
+                    color: "white",
+                    borderRadius: "50%",
+                    width: "18px",
+                    height: "18px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {cartCount}
+                </span>
+              )}
             </Link>
-            {/* <a href="#"="" class="a text-black ms-1"><i class="bi bi-person"></i></a> */}
           </div>
         </div>
       </nav>

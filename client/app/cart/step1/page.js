@@ -186,7 +186,7 @@ export default function Cart1() {
                         key={item.id || `product-${Math.random()}`}
                         item={{
                           ...item,
-                          image: item.image_url,
+                          image: `/image/product/${item.image_url}`,
                           name: item.product_name || "未知商品",
                           stock: item.stock === undefined ? null : item.stock,
                           color: item.color_name || "標準",
@@ -240,7 +240,7 @@ export default function Cart1() {
                         key={item.id}
                         item={{
                           ...item,
-                          image: item.image_url,
+                          image: `/image/activity/${item.activity_id}/${item.image_url}`,
                           name: item.activity_name,
                           activityInfo: `${item.date} ${item.time}`,
                         }}
@@ -265,7 +265,7 @@ export default function Cart1() {
                         key={item.id}
                         item={{
                           ...item,
-                          image: item.image_url,
+                          image: `${item.image_url}`,
                           name: (
                             <>
                               <span>{item.rentalBrand} -</span>
