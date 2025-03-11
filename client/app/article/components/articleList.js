@@ -44,9 +44,14 @@ const ArticleListPage = () => {
   const [sortOption, setSortOption] = useState("all");
   const [statusOption, setStatusOption] = useState("all");
 
+  // 用戶認證和加載狀態
   const { user } = useAuth();
   const [usersId, setUsersId] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Sidebar 數據狀態
+  const [sidebarData, setSidebarData] = useState({ sidebar: {} });
+  const [currentBigCategory, setCurrentBigCategory] = useState("課程與體驗");
 
   useEffect(() => {
     if (user === -1) {
@@ -59,6 +64,7 @@ const ArticleListPage = () => {
     setLoading(false);
   }, [user]);
 
+  // 獲取文章數據
   useEffect(() => {
     const fetchArticles = async () => {
       const page = parseInt(searchParams.get("page")) || 1;
@@ -97,6 +103,7 @@ const ArticleListPage = () => {
       }
 
       setArticles(data.data);
+      setFilteredArticles(data.data); // 初始時同步 filteredArticles
       setPagination({
         totalPages: data.pagination.totalPages,
         currentPage: data.pagination.currentPage,
@@ -108,6 +115,17 @@ const ArticleListPage = () => {
     }
   }, [searchParams, sortOption, usersId, loading]);
 
+  // 獲取 Sidebar 數據
+  useEffect(() => {
+    const fetchSidebarData = async () => {
+      const res = await fetch(`${API_BASE_URL}/article/sidebar`);
+      const data = await res.json();
+      setSidebarData(data);
+    };
+    fetchSidebarData();
+  }, []);
+
+  // 分頁切換
   const goToPage = (page) => {
     if (page < 1 || page > pagination.totalPages) return;
     const params = new URLSearchParams(searchParams);
@@ -115,6 +133,7 @@ const ArticleListPage = () => {
     router.push(`?${params.toString()}`);
   };
 
+  // 排序處理
   const handleSortChange = (sortValue) => {
     setSortOption(sortValue);
     const params = new URLSearchParams(searchParams);
@@ -145,6 +164,7 @@ const ArticleListPage = () => {
     router.push(`/article?${params.toString()}`);
   };
 
+  // 狀態篩選處理
   const handleStatusChange = (statusValue) => {
     setStatusOption(statusValue);
     const params = new URLSearchParams(searchParams);
@@ -158,30 +178,90 @@ const ArticleListPage = () => {
     router.push(`/article?${params.toString()}`);
   };
 
+  // 按鈕跳轉
   const handleButtonClick = (path) => {
     router.push(path);
   };
 
-  if (!articles) {
+  // 大分類切換
+  const handleBigCategoryChange = (bigCategory) => {
+    setCurrentBigCategory(bigCategory);
+    const params = new URLSearchParams(searchParams);
+    params.delete("category"); // 切換大分類時清空小分類
+    router.push(`?${params.toString()}`);
+  };
+
+  // 小分類點擊
+  const handleCategoryClick = (categorySmallName) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("category", categorySmallName);
+    router.push(`/article?${params.toString()}`);
+  };
+
+  // 根據當前大分類過濾小分類
+  const smallCategories = sidebarData.sidebar.categorySmall?.filter(
+    (small) =>
+      small.category_big_id ===
+      sidebarData.sidebar.categoryBig?.find(
+        (big) => big.name === currentBigCategory
+      )?.id
+  ) || [];
+
+  if (loading || !articles) {
     return <div>載入中...</div>;
   }
 
   return (
     <div className="container mt-4">
-      <div className="row">
-        <div className="col-3">
-          <Sidebar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            handleSearch={handleSearch}
-            handleClearSearch={handleClearSearch}
-          />
+    <div className="row">
+      {/* 大螢幕 Sidebar */}
+      <div className="col-lg-3 col-md-4 sidebar-desktop">
+        <Sidebar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          handleSearch={handleSearch}
+          handleClearSearch={handleClearSearch}
+        />
+      </div>
+
+        {/* 手機版分類與控制區域 */}
+        <div className="col-12 sidebar-mobile">
+          <div className="mobile-category-bar">
+            <div className="big-category-bar">
+              <select
+                value={currentBigCategory}
+                onChange={(e) => handleBigCategoryChange(e.target.value)}
+              >
+                {sidebarData?.sidebar?.categoryBig?.map((big) => (
+                  <option key={big.id} value={big.name}>
+                    {big.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="small-category-bar">
+              {smallCategories.slice(0, 3).map((small) => ( // 只顯示前三個小分類
+                <button
+                  key={small.id}
+                  className={`small-category-btn ${
+                    searchParams.get("category") === small.category_small_name
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() => handleCategoryClick(small.category_small_name)}
+                >
+                  {small.category_small_name}
+                </button>
+              ))}
+            </div>
+          </div>
+      
         </div>
 
-        <div className="article-list col-9">
-          {/* article-controls */}
-          <div className="article-controls">
-            {/* create-btn */}
+        {/* 主內容區域 */}
+        <div className="col-lg-9 col-md-8 article-list">
+          {/* 大螢幕的控制區域 */}
+          <div className="article-controls desktop-controls">
             <div className="article-controls-btn">
               <button
                 className="btn"
@@ -193,9 +273,7 @@ const ArticleListPage = () => {
                 新增文章
               </button>
             </div>
-            {/* filter */}
             <div className="custom-filter">
-              {/* 排序選項 */}
               <div className="dropdown">
                 <button
                   className="px-3 btn custom-filter-btn"
@@ -204,19 +282,80 @@ const ArticleListPage = () => {
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  {sortOption === "all" ? "所有文章" : sortOption === "newest" ? "最新文章" : sortOption === "oldest" ? "最舊文章" : sortOption === "popular" ? "熱門文章" : "我的文章"}
+                  {sortOption === "all"
+                    ? "所有文章"
+                    : sortOption === "newest"
+                    ? "最新文章"
+                    : sortOption === "oldest"
+                    ? "最舊文章"
+                    : sortOption === "popular"
+                    ? "熱門文章"
+                    : "我的文章"}
                   <i className="bi bi-caret-down-fill ps-2"></i>
                 </button>
                 <ul className="dropdown-menu" aria-labelledby="sortButton">
-                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("all"); }}>所有文章</a></li>
-                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("newest"); }}>最新文章</a></li>
-                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("oldest"); }}>最舊文章</a></li>
-                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("popular"); }}>熱門文章</a></li>
-                  <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleSortChange("my-articles"); }}>我的文章</a></li>
+                  <li>
+                    <a
+                      className="dropdown-item"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSortChange("all");
+                      }}
+                    >
+                      所有文章
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="dropdown-item"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSortChange("newest");
+                      }}
+                    >
+                      最新文章
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="dropdown-item"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSortChange("oldest");
+                      }}
+                    >
+                      最舊文章
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="dropdown-item"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSortChange("popular");
+                      }}
+                    >
+                      熱門文章
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="dropdown-item"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSortChange("my-articles");
+                      }}
+                    >
+                      我的文章
+                    </a>
+                  </li>
                 </ul>
               </div>
-
-              {/* 如果選擇了「我的文章」顯示狀態選項 */}
               {sortOption === "my-articles" && (
                 <div className="dropdown">
                   <button
@@ -226,20 +365,57 @@ const ArticleListPage = () => {
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
-                    {statusOption === "all" ? "所有文章" : statusOption === "published" ? "已發表" : "草稿夾"}
+                    {statusOption === "all"
+                      ? "所有文章"
+                      : statusOption === "published"
+                      ? "已發表"
+                      : "草稿夾"}
                     <i className="bi bi-caret-down-fill ps-2"></i>
                   </button>
                   <ul className="dropdown-menu" aria-labelledby="statusButton">
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleStatusChange("all"); }}>所有文章</a></li>
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleStatusChange("published"); }}>已發表</a></li>
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); handleStatusChange("draft"); }}>草稿夾</a></li>
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleStatusChange("all");
+                        }}
+                      >
+                        所有文章
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleStatusChange("published");
+                        }}
+                      >
+                        已發表
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleStatusChange("draft");
+                        }}
+                      >
+                        草稿夾
+                      </a>
+                    </li>
                   </ul>
                 </div>
               )}
             </div>
           </div>
 
-          {/* card */}
+          {/* 卡片區域 */}
           <div className="cards-container">
             {(searchQuery ? filteredArticles : articles).map((article) => (
               <ArticleCard
@@ -257,6 +433,8 @@ const ArticleListPage = () => {
               />
             ))}
           </div>
+
+          {/* 分頁 */}
           <div className="custom-pagination">
             <div className="page-item">
               <button

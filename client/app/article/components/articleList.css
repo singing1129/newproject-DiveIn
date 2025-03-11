@@ -128,7 +128,7 @@
 .article-list-card-link {
   display: block; /* 修正 <Link> 的顯示問題 */
   width: calc(50% - 30px); /* 與卡片寬度一致 */
-  margin: 0; /* 移除間距 */
+  margin: 0 0 20px 0;
   text-decoration: none; /* 移除下劃線 */
   color: inherit; /* 繼承文字顏色 */
   margin: 0 10px 30px 10px;
@@ -235,7 +235,7 @@
 }
 
 .article-list-card-btn .btn {
-margin-left: 10px;
+  margin-left: 10px;
   text-align: center;
   font-size: 14px;
   border: none;
@@ -268,8 +268,6 @@ margin-left: 10px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-
-
 /* Pagination 分页 */
 .custom-pagination {
   position: absolute; /* 相對於 .article-list 定位 */
@@ -279,7 +277,7 @@ margin-left: 10px;
   justify-content: flex-end;
   background-color: white;
   list-style: none;
-  margin-bottom: 40px; 
+  margin-bottom: 40px;
   padding: 0;
 }
 
@@ -333,4 +331,147 @@ margin-left: 10px;
 
 .page-link:focus {
   outline: none;
+}
+
+/* 手機版樣式 */
+@media (max-width: 768px) {
+  /* 隱藏大螢幕的 Sidebar 和 article-controls */
+  .sidebar-desktop {
+    display: none;
+  }
+
+  /* 手機版 Sidebar */
+  .sidebar-mobile {
+    display: block;
+    padding: 10px;
+  }
+
+  .mobile-category-bar {
+    margin-bottom: 10px;
+  }
+
+  .big-category-bar select,
+  .small-category-bar {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .big-category-bar select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .small-category-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+  }
+
+  .small-category-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    color: #6f6f6f;
+  }
+
+  .small-category-btn.active,
+  .small-category-btn:hover {
+    background-color: #8ecae6;
+    color: #fff;
+  }
+
+  /* 卡片佈局 */
+  .article-list {
+    padding: 0 10px;
+  }
+
+  .cards-container {
+    flex-direction: column;
+    padding-bottom: 80px; /* 為分頁預留空間 */
+    display: flex;
+    align-items: center; /* 讓卡片在容器內水平居中 */
+  }
+
+  .article-list-card-link {
+    width: 100%;
+    margin: 0 auto 20px auto; /* 上下間距 20px，左右自動居中 */
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .article-list-card {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* 填充 .article-list-card-link */
+  }
+
+  .article-list-card-photo {
+    height: 200px; /* 固定高度或根據需求調整 */
+  }
+
+  .article-list-card-text {
+    width: 100%; /* 確保文字區塊填滿卡片寬度 */
+    box-sizing: border-box; /* 包含 padding 在寬度計算中 */
+  }
+
+  .article-list-card-title {
+    margin: 0; /* 移除左右 margin，讓標題填滿寬度 */
+  }
+
+  .article-list-card-info {
+    margin: 7px 0;
+    display: flex;
+    flex-direction: row; /* 改為橫向排列 */
+    justify-content: space-between; /* 前兩個靠左，最後一個靠右 */
+    align-items: center; /* 垂直居中對齊 */
+    width: 100%; /* 確保資訊區填滿寬度 */
+  }
+
+  .article-list-card-author,
+  .article-list-card-publishtime {
+    margin-right: 10px; /* 前兩個元素之間的間距 */
+  }
+
+  .article-list-card-comment {
+    margin-left: auto; /* 將評論數推到右邊 */
+  }
+
+  .article-list-card-content {
+    margin: 0; /* 移除左右 margin */
+    width: 100%; /* 確保內容填滿寬度 */
+  }
+
+  .article-list-card-tag {
+    width: 100%; /* 確保標籤區填滿寬度 */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .article-list-card-btn {
+    margin-top: 10px;
+    width: 100%; /* 確保按鈕區填滿寬度 */
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* 分頁置中 */
+  .custom-pagination {
+    position: static;
+    justify-content: center;
+    margin: 20px 0;
+  }
+}
+/* 大螢幕隱藏手機版內容 */
+@media (min-width: 769px) {
+  .sidebar-mobile {
+    display: none;
+  }
 }
