@@ -61,6 +61,7 @@
     "rimraf": "^6.0.1",
     "sass": "^1.83.4",
     "shapefile": "^0.6.6",
+    "sonner": "^2.0.1",
     "swiper": "^11.2.5",
     "zipcode-tw-react": "^1.2.0",
     "zxcvbn": "^4.4.2"
