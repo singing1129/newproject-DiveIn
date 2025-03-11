@@ -78,7 +78,7 @@ router.get("/reply/:replyId/likes", async (req, res) => {
  */
 router.get("/reply/:replyId/user-like", async (req, res) => {
   const { replyId } = req.params;
-  const { user_id } = req.query; // 從查詢參數獲取 user_id
+  const { user_id } = req.query;
 
   if (!user_id) {
     return res
@@ -93,7 +93,7 @@ router.get("/reply/:replyId/user-like", async (req, res) => {
       WHERE reply_id = ? AND user_id = ?
     `;
     const { results } = await db.query(sql, [replyId, user_id]);
-    
+
     if (results.length > 0) {
       res.json({
         success: true,

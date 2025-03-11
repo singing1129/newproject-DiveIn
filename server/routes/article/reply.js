@@ -81,7 +81,18 @@ router.post("/:article_id/replies", async (req, res) => {
       [article_id, user_id, content, parent_id || null]
     );
 
-    res.json({ message: "留言成功", reply_id: results.insertId });
+    const { results: newReply } = await db.query(
+      `
+      SELECT ar.*, u.name,
+          (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 1) AS likes,
+          (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 0) AS dislikes
+      FROM article_reply ar
+      LEFT JOIN users u ON ar.user_id = u.id
+      WHERE ar.id = ?`,
+      [results.insertId]
+    );
+
+    res.json({ message: "留言成功", reply: newReply[0] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "留言失敗" });

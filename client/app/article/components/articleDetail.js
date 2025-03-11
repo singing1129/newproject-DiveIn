@@ -6,10 +6,9 @@ import axios from "axios";
 import DOMPurify from "dompurify";
 import { useAuth } from "../../hooks/useAuth";
 import Link from "next/link";
-import Sidebar from "./sidebar"; // 引入 Sidebar 組件
+import Sidebar from "./sidebar";
 import "./article.css";
 
-// ArticleContent 組件（保持不變）
 const ArticleContent = ({ article }) => {
   const [sanitizedContent, setSanitizedContent] = useState("");
 
@@ -27,7 +26,6 @@ const ArticleContent = ({ article }) => {
   );
 };
 
-// ArticleDetail 組件
 export default function ArticleDetail() {
   const { id } = useParams();
   const router = useRouter();
@@ -39,9 +37,10 @@ export default function ArticleDetail() {
   const [relatedArticles, setRelatedArticles] = useState([]);
   const [newReply, setNewReply] = useState("");
   const [replyInputs, setReplyInputs] = useState({});
+  const [showReplyInput, setShowReplyInput] = useState({});
   const [likedReplies, setLikedReplies] = useState({});
-  const [sidebarData, setSidebarData] = useState({ sidebar: {} }); // Sidebar 數據
-  const [currentBigCategory, setCurrentBigCategory] = useState("課程與體驗"); // 當前大分類
+  const [sidebarData, setSidebarData] = useState({ sidebar: {} });
+  const [currentBigCategory, setCurrentBigCategory] = useState("課程與體驗");
 
   const backendURL = "http://localhost:3005";
   const defaultImage = `${backendURL}/uploads/article/no_is_main.png`;
@@ -76,7 +75,7 @@ export default function ArticleDetail() {
     fetchArticle();
   }, [id]);
 
-  // 獲取 Sidebar 數據（模仿 articleList.js）
+  // 獲取 Sidebar 數據
   useEffect(() => {
     const fetchSidebarData = async () => {
       const res = await fetch(`${backendURL}/api/article/sidebar`);
@@ -86,51 +85,51 @@ export default function ArticleDetail() {
     fetchSidebarData();
   }, []);
 
-  // 獲取留言並初始化用戶點讚/倒讚狀態（保持不變）
-  useEffect(() => {
-    const fetchReplies = async () => {
-      try {
-        const res = await axios.get(`${backendURL}/api/article/${id}/replies`);
-        setReplies(res.data);
+  // 獲取留言並初始化用戶點讚/倒讚狀態
+  const fetchReplies = async () => {
+    try {
+      const res = await axios.get(`${backendURL}/api/article/${id}/replies`);
+      setReplies(res.data);
 
-        if (user && user.id) {
-          const likedStatus = {};
-          const fetchUserLikes = res.data.map(async (reply) => {
-            const response = await axios.get(
-              `${backendURL}/api/article/reply/${reply.id}/user-like`,
-              { params: { user_id: user.id } }
-            );
-            if (response.data.success) {
-              if (response.data.hasLiked) {
-                likedStatus[reply.id] = true;
-              } else if (response.data.hasDisliked) {
-                likedStatus[reply.id] = false;
+      if (user && user.id) {
+        const likedStatus = {};
+        const fetchUserLikes = res.data.map(async (reply) => {
+          const response = await axios.get(
+            `${backendURL}/api/article/reply/${reply.id}/user-like`,
+            { params: { user_id: user.id } }
+          );
+          if (response.data.success) {
+            likedStatus[reply.id] = response.data.hasLiked
+              ? true
+              : response.data.hasDisliked
+              ? false
+              : undefined;
+          }
+          if (reply.replies && reply.replies.length > 0) {
+            for (const subReply of reply.replies) {
+              const subResponse = await axios.get(
+                `${backendURL}/api/article/reply/${subReply.id}/user-like`,
+                { params: { user_id: user.id } }
+              );
+              if (subResponse.data.success) {
+                likedStatus[subReply.id] = subResponse.data.hasLiked
+                  ? true
+                  : subResponse.data.hasDisliked
+                  ? false
+                  : undefined;
               }
             }
-            if (reply.replies && reply.replies.length > 0) {
-              for (const subReply of reply.replies) {
-                const subResponse = await axios.get(
-                  `${backendURL}/api/article/reply/${subReply.id}/user-like`,
-                  { params: { user_id: user.id } }
-                );
-                if (subResponse.data.success) {
-                  if (subResponse.data.hasLiked) {
-                    likedStatus[subReply.id] = true;
-                  } else if (subResponse.data.hasDisliked) {
-                    likedStatus[subReply.id] = false;
-                  }
-                }
-              }
-            }
-          });
-          await Promise.all(fetchUserLikes);
-          setLikedReplies(likedStatus);
-        }
-      } catch (err) {
-        console.error("Failed to fetch replies or user likes", err);
+          }
+        });
+        await Promise.all(fetchUserLikes);
+        setLikedReplies(likedStatus);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch replies or user likes", err);
+    }
+  };
 
+  useEffect(() => {
     fetchReplies();
   }, [id, user]);
 
@@ -147,54 +146,11 @@ export default function ArticleDetail() {
     }
 
     try {
-      const postResponse = await axios.post(
-        `${backendURL}/api/article/reply/${replyId}/like`,
-        {
-          user_id: user.id,
-          is_like: isLike,
-        }
-      );
-
-      if (postResponse.data.success) {
-        const getResponse = await axios.get(
-          `${backendURL}/api/article/reply/${replyId}/likes`
-        );
-
-        if (getResponse.data.success) {
-          setReplies((prevReplies) =>
-            prevReplies.map((reply) =>
-              reply.id === replyId
-                ? {
-                    ...reply,
-                    likes: getResponse.data.likes,
-                    dislikes: getResponse.data.dislikes,
-                  }
-                : {
-                    ...reply,
-                    replies: reply.replies.map((subReply) =>
-                      subReply.id === replyId
-                        ? {
-                            ...subReply,
-                            likes: getResponse.data.likes,
-                            dislikes: getResponse.data.dislikes,
-                          }
-                        : subReply
-                    ),
-                  }
-            )
-          );
-
-          setLikedReplies((prev) => {
-            const currentState = prev[replyId];
-            if (currentState === isLike) {
-              const { [replyId]: _, ...rest } = prev;
-              return rest;
-            } else {
-              return { ...prev, [replyId]: isLike };
-            }
-          });
-        }
-      }
+      await axios.post(`${backendURL}/api/article/reply/${replyId}/like`, {
+        user_id: user.id,
+        is_like: isLike,
+      });
+      await fetchReplies();
     } catch (err) {
       console.error("Failed to like/dislike reply", err);
       alert("操作失敗，請稍後再試！");
@@ -206,28 +162,14 @@ export default function ArticleDetail() {
     if (!newReply.trim()) return;
 
     try {
-      const res = await axios.post(`${backendURL}/api/article/${id}/replies`, {
+      await axios.post(`${backendURL}/api/article/${id}/replies`, {
         article_id: id,
         user_id: user?.id || 1,
         content: newReply,
         parent_id: null,
       });
-
-      const newReplyData = {
-        id: res.data.reply_id,
-        article_id: id,
-        user_id: user?.id || 1,
-        content: newReply,
-        parent_id: null,
-        created_at: new Date().toISOString(),
-        name: user?.name || "匿名",
-        likes: 0,
-        dislikes: 0,
-        replies: [],
-      };
-
-      setReplies((prevReplies) => [...prevReplies, newReplyData]);
       setNewReply("");
+      await fetchReplies();
     } catch (err) {
       console.error("Failed to post article reply", err);
     }
@@ -235,9 +177,9 @@ export default function ArticleDetail() {
 
   // 處理回覆輸入框顯示
   const handleShowReplyInput = (replyId) => {
-    setReplyInputs((prev) => ({
+    setShowReplyInput((prev) => ({
       ...prev,
-      [replyId]: prev[replyId] ? "" : "",
+      [replyId]: !prev[replyId],
     }));
   };
 
@@ -247,33 +189,14 @@ export default function ArticleDetail() {
     if (!content || !content.trim()) return;
 
     try {
-      const res = await axios.post(`${backendURL}/api/article/${id}/replies`, {
+      await axios.post(`${backendURL}/api/article/${id}/replies`, {
         article_id: id,
         user_id: user?.id || 1,
         content,
         parent_id: parentId,
       });
-
-      const newReplyData = {
-        id: res.data.reply_id,
-        article_id: id,
-        user_id: user?.id || 1,
-        content,
-        parent_id: parentId,
-        created_at: new Date().toISOString(),
-        name: user?.name || "匿名",
-        likes: 0,
-        dislikes: 0,
-      };
-
-      setReplies((prevReplies) =>
-        prevReplies.map((reply) =>
-          reply.id === parentId
-            ? { ...reply, replies: [...reply.replies, newReplyData] }
-            : reply
-        )
-      );
       setReplyInputs((prev) => ({ ...prev, [parentId]: "" }));
+      await fetchReplies();
     } catch (err) {
       console.error("Failed to post reply", err);
     }
@@ -342,7 +265,7 @@ export default function ArticleDetail() {
               </span>
             )}
           </div>
-          {replyInputs[reply.id] !== undefined && (
+          {showReplyInput[reply.id] && (
             <div className="more-reply reply-input-area">
               <img src="../img/article/reply3.jpg" className="reply-avatar" alt="" />
               <input
@@ -374,11 +297,9 @@ export default function ArticleDetail() {
 
   return (
     <div className="row">
-      {/* 大螢幕 Sidebar */}
       <div className="col-lg-3 col-md-4 sidebar-desktop">
         <Sidebar />
       </div>
-      {/* 手機版 Sidebar */}
       <div className="col-12 sidebar-mobile">
         <div className="mobile-category-bar">
           <div className="big-category-bar">
@@ -406,7 +327,6 @@ export default function ArticleDetail() {
           </div>
         </div>
       </div>
-      {/* 主內容區域 */}
       <div className="col-lg-9 col-md-8 article">
         <div className="articleDetail">
           <div className="title">
@@ -419,16 +339,6 @@ export default function ArticleDetail() {
               <i className="fa-solid fa-calendar-days"></i>
               {article.publish_at}
             </div>
-          </div>
-          <div className="main-photo">
-            <Image
-              src={imageUrl}
-              alt="Article Thumbnail"
-              fill
-              style={{ objectFit: "cover" }}
-              sizes="(max-width: 768px) 100vw, 50vw"
-              onError={() => setImageUrl(defaultImage)}
-            />
           </div>
           <div className="article-content-area">
             <ArticleContent article={article} />
