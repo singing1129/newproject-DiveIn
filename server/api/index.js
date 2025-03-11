@@ -52,6 +52,7 @@ import articleCreateRouter from "../routes/article/create.js"; // 取得新建�
 import articleUpdateRouter from "../routes/article/update.js"; // 文章修改
 import articleReplyRouter from "../routes/article/reply.js"; // 留言 & 回覆
 import articleLikeRouter from "../routes/article/like.js"; // 文章與留言按讚
+import articleUserRouter from "../routes/article/user.js"; // 獲取當前用戶的頭像資訊
 // 優惠券相關路由
 import myCouponRouter from "../routes/coupon/myCoupon.js";
 import couponClaimRouter from "../routes/coupon/couponClaim.js";
@@ -197,6 +198,7 @@ apiRouter.use("/article", articleCreateRouter); // `/api/article/create` 新增�
 apiRouter.use("/article", articleUpdateRouter); // `/api/article/update`
 apiRouter.use("/article", articleReplyRouter); // `/api/article/reply` 留言 & 回覆
 apiRouter.use("/article", articleLikeRouter); // `/api/article/like` 文章 & 留言按讚
+apiRouter.use("/article", articleUserRouter); // `/api/article/user` 獲取當前用戶的頭像資訊
 
 // 優惠券相關路由
 apiRouter.use("/coupon", myCouponRouter); // 負責 `/api/coupon/myCoupon`

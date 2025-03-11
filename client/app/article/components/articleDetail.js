@@ -41,9 +41,11 @@ export default function ArticleDetail() {
   const [likedReplies, setLikedReplies] = useState({});
   const [sidebarData, setSidebarData] = useState({ sidebar: {} });
   const [currentBigCategory, setCurrentBigCategory] = useState("課程與體驗");
+  const [currentUserHead, setCurrentUserHead] = useState(null); // 新增狀態儲存當前用戶頭像
 
   const backendURL = "http://localhost:3005";
   const defaultImage = `${backendURL}/uploads/article/no_is_main.png`;
+  const defaultAvatar = "/image/default-memberimg.png"; // 前端預設頭像路徑
   const [imageUrl, setImageUrl] = useState(defaultImage);
 
   // 獲取文章詳情和相關文章
@@ -84,6 +86,25 @@ export default function ArticleDetail() {
     };
     fetchSidebarData();
   }, []);
+
+  // 獲取當前用戶頭像
+  useEffect(() => {
+    const fetchCurrentUserHead = async () => {
+      if (user && user.id) {
+        try {
+          const res = await axios.get(`${backendURL}/api/user/${user.id}`);
+          setCurrentUserHead(res.data.head); // 假設後端返回 { head: "filename.png" }
+        } catch (err) {
+          console.error("Failed to fetch current user head:", err);
+          setCurrentUserHead(null); // 若失敗，設為 null，使用預設頭像
+        }
+      } else {
+        setCurrentUserHead(null); // 未登入時設為 null
+      }
+    };
+
+    fetchCurrentUserHead();
+  }, [user]);
 
   // 獲取留言並初始化用戶點讚/倒讚狀態
   const fetchReplies = async () => {
@@ -222,6 +243,11 @@ export default function ArticleDetail() {
       )?.id
   ) || [];
 
+  // 動態獲取頭像路徑
+  const getAvatarUrl = (head) => {
+    return head ? `${backendURL}/uploads/avatars/${head}` : defaultAvatar;
+  };
+
   // 渲染留言
   const renderReplies = (replies, level = 1) => {
     return replies.map((reply) => (
@@ -229,9 +255,10 @@ export default function ArticleDetail() {
         <div className="reply-details">
           <div className="reply-area">
             <img
-              src="../img/article/reply2.jpg"
+              src={getAvatarUrl(reply.head)} // 留言者的頭像
               className="reply-avatar"
               alt="avatar"
+              onError={(e) => (e.target.src = defaultAvatar)}
             />
             <div className="reply-text">
               <div className="reply-header">
@@ -267,7 +294,12 @@ export default function ArticleDetail() {
           </div>
           {showReplyInput[reply.id] && (
             <div className="more-reply reply-input-area">
-              <img src="../img/article/reply3.jpg" className="reply-avatar" alt="" />
+              <img
+                src={getAvatarUrl(currentUserHead)} // 使用當前用戶的頭像
+                className="reply-avatar"
+                alt="avatar"
+                onError={(e) => (e.target.src = defaultAvatar)}
+              />
               <input
                 type="text"
                 className="form-control"
@@ -359,9 +391,10 @@ export default function ArticleDetail() {
             {replies.length > 0 ? renderReplies(replies) : <p>尚無留言</p>}
             <div className="more-reply">
               <img
-                src="../img/article/reply3.jpg"
+                src={getAvatarUrl(currentUserHead)} // 使用當前用戶的頭像
                 className="reply-avatar"
-                alt=""
+                alt="avatar"
+                onError={(e) => (e.target.src = defaultAvatar)}
               />
               <input
                 type="text"

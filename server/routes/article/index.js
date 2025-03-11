@@ -4,7 +4,8 @@ import articleSidebarRouter from "./sidebar.js";
 import articleCreateRouter from "./create.js";
 import articleUpdateRouter from "./update.js";
 import articleReplyRouter from "./reply.js";
-import articleLikeRouter from "./like.js"; // 文章 & 留言按讚
+import articleLikeRouter from "./like.js"; 
+import articleUserRouter from "./user.js"; 
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ router.use("/create", articleCreateRouter);
 router.use("/update", articleUpdateRouter);
 router.use("/reply", articleReplyRouter);
 router.use("/like", articleLikeRouter);
+router.use("/user", articleUserRouter);
 
 /** 獲取文章列表 */
 router.get("/", async (req, res) => {

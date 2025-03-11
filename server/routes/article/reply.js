@@ -13,7 +13,7 @@ router.get("/:article_id/replies", async (req, res) => {
   try {
     const { results: replies } = await db.query(
       `
-      SELECT ar.*, u.name,
+      SELECT ar.*, u.name, u.head,
           (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 1) AS likes,
           (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 0) AS dislikes
        FROM article_reply ar
@@ -62,7 +62,6 @@ router.post("/:article_id/replies", async (req, res) => {
   }
 
   try {
-    // 確保 parent_id 是第一層留言（防止超過兩層）
     if (parent_id) {
       const { results: parent } = await db.query(
         "SELECT parent_id FROM article_reply WHERE id = ?",
@@ -83,7 +82,7 @@ router.post("/:article_id/replies", async (req, res) => {
 
     const { results: newReply } = await db.query(
       `
-      SELECT ar.*, u.name,
+      SELECT ar.*, u.name, u.head,
           (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 1) AS likes,
           (SELECT COUNT(*) FROM article_likes_dislikes ald WHERE ald.reply_id = ar.id AND ald.is_like = 0) AS dislikes
       FROM article_reply ar
