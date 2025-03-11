@@ -1,30 +1,31 @@
-/* article-controls */
+/* 通用樣式 */
 .article-controls {
   width: 100%;
   height: 60px;
-  margin-bottom: 20px; /* 添加底部间距 */
+  margin-bottom: 20px;
   display: flex;
-  justify-content: space-between; /* 将筛选器和按钮区域分开 */
-  align-items: center; /* 垂直居中 */
-  padding: 0 15px 15px 0; /* 添加一些内边距 */
-  background-color: #fff; /* 设置背景颜色 */
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px 15px 0;
+  background-color: #fff;
   margin: 0 8px;
 }
+
 .article-controls-btn {
   display: flex;
-  justify-content: flex-end; /* 将按钮区域置于右侧 */
-  gap: 10px; /* 按钮之间的间距 */
-  
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .article-controls-btn .btn-icon {
   margin-right: 10px;
 }
+
 .article-controls-btn .btn {
   width: 120px;
   height: 40px;
-  display: inline-flex; /* 讓按鈕成為彈性盒元素 */
-  align-items: center; /* 垂直居中对齐内容 */
+  display: inline-flex;
+  align-items: center;
   padding: 8px 19px;
   background-color: #029cad;
   color: #fff;
@@ -36,15 +37,14 @@
 }
 
 .article-controls-btn .btn:hover {
-  background-color: #02818b; /* 滑鼠懸停時改變背景顏色 */
+  background-color: #02818b;
   color: #fff;
 }
 
 .create-form {
   padding: 32px 32px 70px 32px;
-  
   margin-bottom: 60px;
-  border-top: 6px solid#219ebc;
+  border-top: 6px solid #219ebc;
   border-right: 2px solid #219ebc;
   border-bottom: 2px solid #219ebc;
   border-left: 2px solid #219ebc;
@@ -58,6 +58,7 @@
   border: 1px solid #c0c0c0;
   border-radius: 0% !important;
 }
+
 .upload-square {
   width: 125px;
   height: 125px;
@@ -68,7 +69,7 @@
   cursor: pointer;
   position: relative;
   border-radius: 4px;
-  overflow: hidden; /* 圖片超出範圍時隱藏 */
+  overflow: hidden;
 }
 
 .upload-square-icon {
@@ -95,12 +96,12 @@
 .upload-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 確保圖片覆蓋整個區域 */
+  object-fit: cover;
 }
 
 .create-title {
-  flex: 1; /* 讓標題佔滿剩餘空間 */
-  text-align: left; /* 左對齊標題 */
+  flex: 1;
+  text-align: left;
   color: #000;
   font-family: "Noto Sans TC";
   font-size: 24px;
@@ -122,14 +123,14 @@
   padding: 5px 15px;
   border: 1px solid #c0c0c0;
   margin: 20px 20px 10px 0;
-  position: relative; /* 讓叉叉可以絕對定位 */
+  position: relative;
   color: rgba(0, 0, 0, 0.5);
   font-size: 16px;
   font-weight: 400;
 }
 
 .close-tag-btn {
-  margin-left: 10px; /* 增加叉叉和文字之間的間距 */
+  margin-left: 10px;
   background: none;
   border: none;
   font-size: 16px;
@@ -138,51 +139,76 @@
 }
 
 .close-tag-btn:hover {
-  color: red; /* 叉叉顏色變紅，表示可刪除 */
+  color: red;
 }
 
-/* 調整 select 框框的長度 */
 .category-container {
   display: flex;
-  gap: 20px; /* 控制選項間的間距 */
+  gap: 20px;
 }
 
 .category-big,
 .category-small {
-  width: 25% !important; /* 讓 select 填滿父容器的寬度 */
-  border-radius: 0 !important; /* 可選，圓角邊框 */
+  width: 25% !important;
+  border-radius: 0 !important;
 }
 
 .form-item {
-  width: 100%; /* 確保 form-item 內的所有元素都能佔滿寬度 */
+  width: 100%;
 }
 
-/* 讓 btnarea 內的按鈕置中 */
 .btnarea {
-  display: flex; /* 使用flex布局 */
-  justify-content: center; /* 讓按鈕水平置中 */
-  align-items: center; /* 讓按鈕垂直置中 */
-  gap: 10px; /* 在按鈕之間增加間距 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
   margin: 30px 0 20px 0;
 }
 
-/* 設定按鈕的樣式 */
 .btnarea .article-create-btn {
-  display: inline-block; /* 按鈕為行內區塊元素 */
-  margin-top: 8px; /* 上邊距 */
-  padding: 8px 12px 50px 8px; /* 內邊距 */
-  background-color: #029cad; /* 背景顏色 */
-  color: #fff; /* 文字顏色為白色 */
-  text-align: center; /* 文字置中 */
-  font-size: 14px; /* 字體大小 */
-  border: none; /* 移除邊框 */
-  border-radius: 4px; /* 圓角邊框 */
-  cursor: pointer; /* 設置為點擊樣式 */
-  box-sizing: border-box; /* 讓內邊距和邊框算在內 */
+  display: inline-block;
+  margin-top: 8px;
+  padding: 8px 12px 50px 8px;
+  background-color: #029cad;
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
-/* 設定按鈕懸停時的效果 */
 .btnarea .article-create-btn:hover {
-  background-color: #02818b; /* 滑鼠懸停時改變背景顏色 */
-  color: #fff; /* 文字顏色為白色 */
+  background-color: #02818b;
+  color: #fff;
+}
+
+/* 手機板小尺寸 RWD */
+@media (max-width: 767.98px) {
+  .article-create {
+    width: 90% !important; /* 讓 ArticleForm 佔據頁面橫向的 90% */
+    margin: 0 auto; /* 置中 */
+  }
+
+  .create-form {
+    padding: 16px; /* 減少內邊距 */
+  }
+
+  .category-container {
+    flex-direction: column; /* 讓分類選項垂直排列 */
+  }
+
+  .category-big,
+  .category-small {
+    width: 100% !important; /* 讓 select 填滿父容器的寬度 */
+  }
+
+  .btnarea {
+    flex-direction: column; /* 讓按鈕垂直排列 */
+  }
+
+  .btnarea .article-create-btn {
+    width: 100%; /* 讓按鈕填滿寬度 */
+  }
 }
