@@ -137,7 +137,11 @@ const ArticleForm = () => {
 
       if (response.data.success) {
         alert("文章創建成功！");
-        router.push(`/article/${response.data.articleId}`);
+        if (status === "draft") {
+          router.push("/article"); // 儲存草稿後跳轉到文章列表頁
+        } else if (status === "published") {
+          router.push(`/article/${response.data.articleId}`); // 發表文章後跳轉到新文章頁面
+        }
       } else {
         alert("創建文章失敗");
       }

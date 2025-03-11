@@ -127,6 +127,7 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
                     className="btn btn-card btn-edit"
                     onClick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault(); // 防止 Link 跳轉
                       router.push(`/article/${article.id}/update`);
                     }}
                   >
@@ -136,6 +137,7 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
                     className="btn btn-card btn-delete"
                     onClick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault(); // 防止 Link 跳轉
                       handleDelete();
                     }}
                   >

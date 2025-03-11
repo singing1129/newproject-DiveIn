@@ -370,14 +370,8 @@ router.delete("/:id", async (req, res) => {
       `UPDATE article_image SET is_deleted = 1 WHERE article_id = ?`,
       [id]
     );
-
-    // 3. 刪除 article_likes_dislikes 表中的資料
-    await connection.execute(
-      `DELETE FROM article_likes_dislikes WHERE article_id = ?`,
-      [id]
-    );
-
-    // 4. 刪除 article_tag_big 表中的資料
+   
+    // 3. 刪除 article_tag_big 表中的資料
     await connection.execute(
       `DELETE FROM article_tag_big WHERE article_id = ?`,
       [id]

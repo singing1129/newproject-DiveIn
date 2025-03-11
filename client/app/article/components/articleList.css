@@ -268,10 +268,7 @@ margin-left: 10px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.article-list-card-tag .tag:hover {
-  background-color: #8ecae6;
-  color: #000000;
-}
+
 
 /* Pagination 分页 */
 .custom-pagination {

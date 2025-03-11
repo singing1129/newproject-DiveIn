@@ -63,28 +63,21 @@
 }
 
 .tag-area {
-  /* padding: 3rem 20px 20px 0; */
-
   border-bottom: 1px solid #ddd; /* 可視需求添加邊框 */
 }
+.tag-area {
+  margin: 10px 10px 30px 0;
+}
+
 .tag-area .tag {
   display: inline-block;
-  padding: 0.5em 1em; /* 增加 padding，避免文字擠在邊框裡 */
-  margin: 20px 10px 30px 0;
-  border: 1px solid rgba(0, 0, 0, 0.25); /* 外框顏色 */
-  border-radius: 20px; /* 讓外框變成橢圓形 */
-  color: rgba(0, 0, 0, 0.5); /* 文字顏色 */
+  padding: 7px 14px 7px 0; 
+  margin-bottom: 15px;
+  color: #219ebc;
   font-size: 0.9rem;
   text-align: center;
   margin-right: 0.5em;
-  background-color: transparent; /* 可根據需求設定背景色 */
-}
-
-.tag-area .tag:hover {
-  background-color: #f0f0f0; /* 當滑鼠懸停時的背景色 */
-  cursor: pointer; /* 顯示為可點擊 */
-  background-color: #219ebc;
-  color: white;
+  background-color: transparent; 
 }
 
 .replyFilter {
@@ -114,8 +107,6 @@
 /* 留言容器 */
 .reply-container {
   width: 100%; /* 確保佔據整行 */
-
-
 }
 
 /* 第一層留言 */
@@ -196,7 +187,7 @@
 .good:hover,
 .bad:hover,
 .others-reply:hover {
-  color:#219ebc;
+  color: #219ebc;
 }
 
 /* 已點讚狀態 */
@@ -206,7 +197,7 @@
 
 /* 已倒讚狀態 */
 .bad.disliked {
-  color:#219ebc;
+  color: #219ebc;
 }
 
 /* 子回覆容器 */

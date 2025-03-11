@@ -4,18 +4,17 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import EditMyeditor from "./editMyeditor";
 import "./articleCreate.css";
+import InteractiveButton from "../components/InteractiveButton"; // 假設路徑相同
 
 const API_URL = "http://localhost:3005";
 
 const Edit = ({ initialData = {}, onSave }) => {
   const [title, setTitle] = useState(initialData?.title || "");
   const [content, setContent] = useState(initialData?.content || "");
-  // 使用 ID 作為分類的狀態
   const [categoryBig, setCategoryBig] = useState("");
   const [categorySmall, setCategorySmall] = useState(
     initialData?.article_category_small_id || ""
   );
-
   const [newTag, setNewTag] = useState("");
   const [tagsList, setTagsList] = useState(initialData?.tags || []);
   const [coverImage, setCoverImage] = useState(null);
@@ -27,7 +26,9 @@ const Edit = ({ initialData = {}, onSave }) => {
   const [filteredSmallCategories, setFilteredSmallCategories] = useState([]);
   const [tags, setTags] = useState([]);
 
-  // 獲取分類與標籤，並設置初始值
+  // 計算按鈕是否應該禁用
+  const isDisabled = !title.trim() || !content.trim() || !categorySmall;
+
   useEffect(() => {
     const getCategoriesAndTags = async () => {
       try {
@@ -40,15 +41,14 @@ const Edit = ({ initialData = {}, onSave }) => {
           setCategoriesBig(data.category_big || []);
           setCategoriesSmall(data.category_small || []);
 
-          // 根據 initialData.article_category_small_id 設置初始分類
           if (initialData?.article_category_small_id) {
             const smallCategory = data.category_small.find(
               (item) =>
                 item.small_category_id === initialData.article_category_small_id
             );
             if (smallCategory) {
-              setCategoryBig(smallCategory.category_big_id); // 設置大分類 ID
-              setCategorySmall(smallCategory.small_category_id); // 設置小分類 ID
+              setCategoryBig(smallCategory.category_big_id);
+              setCategorySmall(smallCategory.small_category_id);
               const filtered = data.category_small.filter(
                 (item) => item.category_big_id === smallCategory.category_big_id
               );
@@ -65,14 +65,12 @@ const Edit = ({ initialData = {}, onSave }) => {
     getCategoriesAndTags();
   }, [initialData]);
 
-  // 當大分類改變時，更新小分類選項
   useEffect(() => {
     if (categoryBig) {
       const filtered = categoriesSmall.filter(
         (item) => item.category_big_id === parseInt(categoryBig)
       );
       setFilteredSmallCategories(filtered);
-      // 如果小分類不在新過濾結果中，重置小分類
       if (
         !filtered.some(
           (item) => item.small_category_id === parseInt(categorySmall)
@@ -86,7 +84,6 @@ const Edit = ({ initialData = {}, onSave }) => {
     }
   }, [categoryBig, categoriesSmall]);
 
-  // 處理標籤輸入
   const handleTagInput = (e) => setNewTag(e.target.value);
   const addTag = (e) => {
     if (e.key === "Enter" && newTag.trim() !== "") {
@@ -125,22 +122,21 @@ const Edit = ({ initialData = {}, onSave }) => {
     reader.readAsDataURL(file);
   };
 
- // Edit.js
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const formData = new FormData();
-  formData.append("title", title || "");
-  formData.append("content", content || "");
-  formData.append("article_category_small_id", categorySmall || "");
-  formData.append("tags", JSON.stringify(tagsList || [])); // 與 ArticleForm 一致
-  formData.append("status", submitStatus || "draft");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("title", title || "");
+    formData.append("content", content || "");
+    formData.append("article_category_small_id", categorySmall || "");
+    formData.append("tags", JSON.stringify(tagsList || []));
+    formData.append("status", submitStatus || "draft");
 
-  if (coverImage) {
-    formData.append("coverImage", coverImage);
-  }
+    if (coverImage) {
+      formData.append("coverImage", coverImage);
+    }
 
-  onSave(formData, submitStatus);
-};
+    onSave(formData, submitStatus);
+  };
 
   const router = useRouter();
 
@@ -250,20 +246,20 @@ const handleSubmit = async (e) => {
         </div>
 
         <div className="btnarea">
-          <button
-            type="submit"
-            className="btn article-create-btn"
+          <InteractiveButton
             onClick={() => setSubmitStatus("draft")}
+            disabled={isDisabled}
+            rubbing="請填寫完整內容"
           >
             儲存草稿
-          </button>
-          <button
-            type="submit"
-            className="btn article-create-btn"
+          </InteractiveButton>
+          <InteractiveButton
             onClick={() => setSubmitStatus("published")}
+            disabled={isDisabled}
+            rubbing="請填寫完整內容"
           >
             發表文章
-          </button>
+          </InteractiveButton>
         </div>
       </form>
     </div>
