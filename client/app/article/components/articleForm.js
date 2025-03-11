@@ -6,10 +6,11 @@ import "./articleCreate.css";
 import Myeditor from "../components/Myeditor";
 import { useAuth } from "../../hooks/useAuth"; // 用戶驗證
 import InteractiveButton from "../components/InteractiveButton";
+import { useSonner } from  "../../hooks/useSonner"; // useSonner hook
 
 const ArticleForm = () => {
-  const { id } = useParams(); // 这里 `id` 可能是文章 ID，如果页面是创建新文章，则 `id` 可能为 undefined
-  const articleId = id || null; // 如果是创建文章，articleId 为空
+  const { id } = useParams(); // 这里 `id` 可能是文章 ID，如果頁面是創建新文章，則 `id` 可能为 undefined
+  const articleId = id || null; // 如果是創建文章，articleId 為空
   const router = useRouter();
   const { user } = useAuth(); // 獲取當前用戶資訊
   const [new_title, setTitle] = useState("");
@@ -21,6 +22,7 @@ const ArticleForm = () => {
   const [new_coverImage, setCoverImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [submitStatus, setSubmitStatus] = useState(""); // "draft" 或 "published"
+  const { success } = useSonner();
 
   // 按鈕點擊事件，跳轉不同頁面
   const handleButtonClick = (path) => {
@@ -135,16 +137,22 @@ const ArticleForm = () => {
         formData
       );
 
-      if (response.data.success) {
-        alert("文章創建成功！");
-        if (status === "draft") {
-          router.push("/article"); // 儲存草稿後跳轉到文章列表頁
-        } else if (status === "published") {
-          router.push(`/article/${response.data.articleId}`); // 發表文章後跳轉到新文章頁面
-        }
-      } else {
-        alert("創建文章失敗");
-      }
+// sonner
+if (response.data.success) {
+  // 顯示成功通知
+  if (status === "draft") {
+    success("草稿創立成功！");
+    router.push("/article"); // 儲存草稿後跳轉到文章列表頁
+  } else if (status === "published") {
+    success("文章創立成功！");
+    router.push(`/article/${response.data.articleId}`); // 發表文章後跳轉到新文章頁面
+  }
+} else {
+  error("創建文章失敗"); // 失敗時顯示 sonner 通知
+}
+
+
+
     } catch (error) {
       console.error("❌ 文章創建錯誤：", error);
     }
@@ -165,7 +173,7 @@ const ArticleForm = () => {
           </span>
           返回列表
         </span>
-        </div>
+      </div>
 
       <form
         onSubmit={(e) => {
