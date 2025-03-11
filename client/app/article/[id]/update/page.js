@@ -5,11 +5,13 @@ import axios from "axios";
 import Sidebar from "../../components/sidebar";
 import Edit from "../../components/edit"; // 引入編輯組件
 import "../../components/articleCreate.css";
+import { useSonner } from "../../../hooks/useSonner"; // 引入 useSonner hook
 
 export default function ArticleUpdate() {
   const { id } = useParams(); // 獲取文章 ID
   const router = useRouter();
   const [initialData, setInitialData] = useState(null);
+  const { success, error: sonnerError } = useSonner();
 
   const [error, setError] = useState(null);
   // 獲取文章初始數據
@@ -49,17 +51,19 @@ const handleSave = async (formData, status) => {
         },
       }
     );
-    if (response.data.status === "success") { // 改為使用 status
-      alert("文章更新成功！");
+
+    //sonner
+    if (response.data.status === "success") {
+      success("文章更新成功！"); // 使用 sonner 的成功通知
       router.push(`/article/${id}`);
     } else {
-      alert("更新文章失敗");
+      sonnerError("更新文章失敗"); // 使用 sonner 的錯誤通知
     }
   } catch (error) {
     console.error("❌ 提交表單失敗：", error);
+    sonnerError("提交表單失敗，請稍後再試"); // 使用 sonner 的錯誤通知
   }
 };
-
 
   return (
     <div className="container mt-4">
