@@ -1,3 +1,4 @@
+/* 大螢幕樣式（默認樣式） */
 .article .title {
   display: flex;
   justify-content: space-between;
@@ -9,92 +10,72 @@
   color: rgba(0, 0, 0, 0.8);
   font-size: 28px;
   font-weight: 700;
-  text-align: left; /* 讓 textArea 文字左對齊 */
-  flex: 1; /* 讓 textArea 佔據剩餘空間 */
+  text-align: left;
+  flex: 1;
 }
 
 .article .author-area,
 .article .publish-time-area {
-  display: inline-flex; /* 使用 inline-flex 以便讓圖標和文字保持在同一行 */
-  align-items: center; /* 垂直置中圖標和文字 */
+  display: inline-flex;
+  align-items: center;
   color: #898989;
   font-size: 16px;
   font-weight: 400;
-  gap: 10px; /* 圖標與文字之間的間距 */
+  gap: 10px;
 }
 
 .article .author-area {
-  margin-right: 20px; /* authorArea 和 publishTimeArea 之間的間距 */
+  margin-right: 20px;
 }
 
 .article .publish-time-area {
-  margin-left: 10px; /* 增加 publishTimeArea 左邊的間距 */
+  margin-left: 10px;
 }
 
 .article .main-photo {
-  width: 100%; /* 確保寬度佔滿父容器 */
-  height: 50vh; /* 高度設定為視窗高度的 50% */
-  position: relative; /* 設置為相對定位 */
-  z-index: 1; /* 確保圖片在文字之上 */
-  overflow: hidden; /* 隱藏超出容器的部分 */
+  width: 100%;
+  height: 50vh;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .article .main-photo img {
-  width: 100%; /* 圖片寬度佔滿容器 */
-  height: 100%; /* 圖片高度佔滿容器 */
-  object-fit: cover; /* 確保圖片不會變形，超出部分裁切 */
-  object-position: center; /* 圖片居中顯示 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
-/* .article-content-area {
-  margin: 20px 0;
-} */
 .article-content-area {
-  max-width: 100%; /* 限制容器最大寬度 */
-  margin: 20px 0; /* 可選：增加上下間距 */
-  overflow: hidden; /* 隱藏超出容器的部分 */
+  max-width: 100%;
+  margin: 20px 0;
+  overflow: hidden;
 }
 
 .article-content-area img {
-  max-width: 100%; /* 限制圖片最大寬度為容器的 100% */
-  height: auto; /* 高度自動調整，保持圖片比例 */
-  display: block; /* 確保圖片不會有額外的空白間距 */
-  margin: 10px 0; /* 可選：增加上下間距 */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
 }
 
 .tag-area {
-  border-bottom: 1px solid #ddd; /* 可視需求添加邊框 */
-}
-.tag-area {
+  border-bottom: 1px solid #ddd;
   margin: 10px 10px 30px 0;
 }
 
 .tag-area .tag {
   display: inline-block;
-  padding: 7px 14px 7px 0; 
+  padding: 7px 14px 7px 0;
   margin-bottom: 15px;
   color: #219ebc;
   font-size: 0.9rem;
   text-align: center;
   margin-right: 0.5em;
-  background-color: transparent; 
+  background-color: transparent;
 }
 
-.replyFilter {
-  display: flex;
-  justify-content: space-between; /* 將子項目分散兩側 */
-  align-items: center; /* 垂直置中對齊 */
-  padding: 10px;
-}
-
-.totalReply {
-  font-size: 1rem;
-  color: rgba(0, 0, 0, 0.5);
-}
-
-/* 留言 */
-
-/* 留言區域整體樣式 */
 .replies-section {
   margin-top: 20px;
 }
@@ -104,36 +85,30 @@
   margin-bottom: 15px;
 }
 
-/* 留言容器 */
 .reply-container {
-  width: 100%; /* 確保佔據整行 */
+  width: 100%;
 }
 
-/* 第一層留言 */
 .reply-level-1 {
-  margin-left: 0; /* 無內縮 */
+  margin-left: 0;
 }
 
-/* 第二層留言 - 向右內縮 50px */
 .reply-level-2 {
-  margin-left: 50px; /* 向右內縮 50px */
-  width: calc(100% - 50px); /* 寬度減少 50px，與 level-1 右邊界對齊 */
+  margin-left: 50px;
+  width: calc(100% - 50px);
 }
 
-/* 留言詳情 */
 .reply-details {
   padding: 15px 0 5px 15px;
-  display: block; /* 垂直排列內容 */
+  display: block;
   margin: 15px 0;
 }
 
-/* 留言區域（頭像 + 文字） */
 .reply-area {
   display: flex;
   align-items: flex-start;
 }
 
-/* 頭像 */
 .reply-avatar {
   width: 40px;
   height: 40px;
@@ -141,12 +116,10 @@
   margin-right: 10px;
 }
 
-/* 文字區域 */
 .reply-text {
-  flex: 1; /* 佔據剩餘空間 */
+  flex: 1;
 }
 
-/* 留言頭部 */
 .reply-header {
   display: flex;
   justify-content: space-between;
@@ -164,13 +137,11 @@
   color: #888;
 }
 
-/* 留言內容 */
 .reply-content {
   margin-bottom: 10px;
   color: #555;
 }
 
-/* 操作區域 */
 .others-reply-area {
   display: flex;
   gap: 15px;
@@ -190,34 +161,30 @@
   color: #219ebc;
 }
 
-/* 已點讚狀態 */
 .good.liked {
   color: #219ebc;
 }
 
-/* 已倒讚狀態 */
 .bad.disliked {
   color: #219ebc;
 }
 
-/* 子回覆容器 */
 .reply-children {
-  width: 100%; /* 確保子回覆佔據整行 */
-  display: block; /* 垂直排列子回覆 */
+  width: 100%;
+  display: block;
 }
 
-/* 留言輸入區域 */
 .more-reply,
 .reply-input-area {
   display: flex;
   align-items: center;
-  margin-top: 20px; /* 統一外邊距 */
+  margin-top: 20px;
 }
 
 .more-reply input,
 .reply-input-area input {
   flex: 1;
-  margin: 0 17px; /* 統一輸入框間距 */
+  margin: 0 17px;
 }
 
 .more-reply button,
@@ -228,7 +195,7 @@
   border-radius: 4px;
   color: black;
   padding: 6px 20px;
-  background-color: transparent; /* 統一背景色 */
+  background-color: transparent;
   cursor: pointer;
 }
 
@@ -236,38 +203,28 @@
 .reply-input-area button:hover {
   border: none;
   background-color: #8ecae6;
-  color: black; /* 統一懸停效果 */
+  color: black;
 }
 
-.reply-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-/* related-article-area */
 .related-article-area-title {
   display: flex;
   width: 100%;
-  padding: 11px 28px; /* 調整內邊距 */
+  padding: 11px 28px;
   align-items: center;
   background: #219ebc;
-  white-space: nowrap; /* 防止換行 */
+  white-space: nowrap;
   color: #fff;
   font-size: 12px;
   font-weight: 500;
   margin: 40px 0 30px 0;
 }
 
-/* 父容器設置 */
 .related-article-area {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   margin-bottom: 40px;
 }
 
-/* card */
 .related-card {
   gap: 5px;
   display: flex;
@@ -277,25 +234,23 @@
   background: #fff;
   position: relative;
   margin-bottom: 25px;
-  cursor: pointer; /* 顯示手形光標，表示可點擊 */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* 添加過渡效果 */
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .related-card:hover {
-  transform: scale(1.03); /* 懸停時略微放大 */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 添加陰影效果 */
+  transform: scale(1.03);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 確保 Link 不影響樣式 */
 .related-article-area a {
-  text-decoration: none; /* 移除底線 */
-  color: inherit; /* 繼承文字顏色 */
+  text-decoration: none;
+  color: inherit;
 }
 
-/* 圖片區域 */
 .related-card .img-container {
   width: 100%;
-  height: 50%; /* 使圖片區域佔卡片的一半高度 */
+  height: 50%;
   overflow: hidden;
 }
 
@@ -306,15 +261,13 @@
   object-position: center;
 }
 
-/* 內容區域 */
 .related-card .card-body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 50%; /* 使文字區域佔卡片的另一半高度 */
+  height: 50%;
 }
 
-/* 卡片標題與內容 */
 .related-card .card-title {
   margin: 5px;
   color: rgba(0, 0, 0, 0.8);
@@ -330,19 +283,18 @@
   font-size: 14px;
   font-weight: 400;
   margin: 5px;
-  line-height: 1.4; /* 設置行高 */
-  max-height: 2.8em; /* 限制高度（2 行） */
+  line-height: 1.4;
+  max-height: 2.8em;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2; /* 最多顯示兩行 */
+  -webkit-line-clamp: 2;
 }
 
-/* 標籤區域 */
 .related-card .related-tag-area {
-  margin-top: 5px; /* 增加上邊距，避免與其他區域重疊 */
-  padding-bottom: 5px; /* 確保標籤區域與下方區域有距離 */
+  margin-top: 5px;
+  padding-bottom: 5px;
 }
 
 .related-card .tag {
@@ -352,14 +304,114 @@
   margin: 5px;
 }
 
-/* 回覆區域 */
-.related-card .others-reply-area {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  color: #a3a3a3;
-  font-size: 14px;
-  font-weight: 400;
-  margin-top: auto; /* 讓回覆區域推到卡片底部 */
-  padding-top: 8px; /* 確保區域有一定的上下間距 */
+/* 手機版樣式 */
+@media (max-width: 768px) {
+  /* 隱藏大螢幕 Sidebar */
+  .sidebar-desktop {
+    display: none;
+  }
+
+  /* 顯示手機版 Sidebar */
+  .sidebar-mobile {
+    display: block;
+    padding: 10px;
+  }
+
+  .mobile-category-bar {
+    margin-bottom: 10px;
+  }
+
+  .big-category-bar select,
+  .small-category-bar {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .big-category-bar select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .small-category-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+  }
+
+  .small-category-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    color: #6f6f6f;
+  }
+
+  .small-category-btn:hover {
+    background-color: #8ecae6;
+    color: #fff;
+  }
+
+  /* 調整標題為垂直排列 */
+  .article .title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .article .text-area {
+    font-size: 24px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .article .author-area {
+    margin-right: 0;
+    margin-bottom: 5px;
+    width: 100%;
+  }
+
+  .article .publish-time-area {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* 主圖片調整 */
+  .article .main-photo {
+    height: 30vh;
+  }
+
+  /* 內容區域 */
+  .article-content-area {
+    margin: 15px 0;
+  }
+
+  /* 相關文章調整為單欄 */
+  .related-article-area {
+    grid-template-columns: 1fr;
+  }
+
+  .related-card {
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .related-card .img-container {
+    height: 150px;
+  }
+
+  .related-card .card-body {
+    height: auto;
+  }
+}
+
+/* 大螢幕隱藏手機版內容 */
+@media (min-width: 769px) {
+  .sidebar-mobile {
+    display: none;
+  }
 }

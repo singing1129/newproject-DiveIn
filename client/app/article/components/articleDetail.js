@@ -6,9 +6,10 @@ import axios from "axios";
 import DOMPurify from "dompurify";
 import { useAuth } from "../../hooks/useAuth";
 import Link from "next/link";
+import Sidebar from "./sidebar"; // 引入 Sidebar 組件
 import "./article.css";
 
-// ArticleContent 組件
+// ArticleContent 組件（保持不變）
 const ArticleContent = ({ article }) => {
   const [sanitizedContent, setSanitizedContent] = useState("");
 
@@ -36,9 +37,11 @@ export default function ArticleDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedArticles, setRelatedArticles] = useState([]);
-  const [newReply, setNewReply] = useState(""); // 文章留言輸入框
-  const [replyInputs, setReplyInputs] = useState({}); // 每個回覆的輸入框狀態
+  const [newReply, setNewReply] = useState("");
+  const [replyInputs, setReplyInputs] = useState({});
   const [likedReplies, setLikedReplies] = useState({});
+  const [sidebarData, setSidebarData] = useState({ sidebar: {} }); // Sidebar 數據
+  const [currentBigCategory, setCurrentBigCategory] = useState("課程與體驗"); // 當前大分類
 
   const backendURL = "http://localhost:3005";
   const defaultImage = `${backendURL}/uploads/article/no_is_main.png`;
@@ -73,7 +76,17 @@ export default function ArticleDetail() {
     fetchArticle();
   }, [id]);
 
-  // 獲取留言並初始化用戶點讚/倒讚狀態
+  // 獲取 Sidebar 數據（模仿 articleList.js）
+  useEffect(() => {
+    const fetchSidebarData = async () => {
+      const res = await fetch(`${backendURL}/api/article/sidebar`);
+      const data = await res.json();
+      setSidebarData(data);
+    };
+    fetchSidebarData();
+  }, []);
+
+  // 獲取留言並初始化用戶點讚/倒讚狀態（保持不變）
   useEffect(() => {
     const fetchReplies = async () => {
       try {
@@ -188,7 +201,7 @@ export default function ArticleDetail() {
     }
   };
 
-  // 處理文章留言提交（parent_id = null）
+  // 處理文章留言提交
   const handleArticleReplySubmit = async () => {
     if (!newReply.trim()) return;
 
@@ -224,7 +237,7 @@ export default function ArticleDetail() {
   const handleShowReplyInput = (replyId) => {
     setReplyInputs((prev) => ({
       ...prev,
-      [replyId]: prev[replyId] ? "" : "", // 切換顯示時清空輸入框
+      [replyId]: prev[replyId] ? "" : "",
     }));
   };
 
@@ -260,11 +273,31 @@ export default function ArticleDetail() {
             : reply
         )
       );
-      setReplyInputs((prev) => ({ ...prev, [parentId]: "" })); // 清空輸入框
+      setReplyInputs((prev) => ({ ...prev, [parentId]: "" }));
     } catch (err) {
       console.error("Failed to post reply", err);
     }
   };
+
+  // 大分類切換
+  const handleBigCategoryChange = (bigCategory) => {
+    setCurrentBigCategory(bigCategory);
+    router.push(`/article?category=${bigCategory}`);
+  };
+
+  // 小分類點擊
+  const handleCategoryClick = (categorySmallName) => {
+    router.push(`/article?category=${categorySmallName}`);
+  };
+
+  // 根據當前大分類過濾小分類
+  const smallCategories = sidebarData.sidebar.categorySmall?.filter(
+    (small) =>
+      small.category_big_id ===
+      sidebarData.sidebar.categoryBig?.find(
+        (big) => big.name === currentBigCategory
+      )?.id
+  ) || [];
 
   // 渲染留言
   const renderReplies = (replies, level = 1) => {
@@ -300,7 +333,7 @@ export default function ArticleDetail() {
             >
               <i className="fa-regular fa-thumbs-down"></i> {reply.dislikes || 0}
             </span>
-            {level === 1 && ( // 僅第一層顯示回覆按鈕
+            {level === 1 && (
               <span
                 className="others-reply"
                 onClick={() => handleShowReplyInput(reply.id)}
@@ -310,23 +343,23 @@ export default function ArticleDetail() {
             )}
           </div>
           {replyInputs[reply.id] !== undefined && (
-  <div className="more-reply reply-input-area">
-    <img src="../img/article/reply3.jpg" className="reply-avatar" alt="" />
-    <input
-      type="text"
-      className="form-control"
-      placeholder="輸入回覆..."
-      value={replyInputs[reply.id] || ""}
-      onChange={(e) =>
-        setReplyInputs((prev) => ({
-          ...prev,
-          [reply.id]: e.target.value,
-        }))
-      }
-    />
-    <button onClick={() => handleReplySubmit(reply.id)}>回覆</button>
-  </div>
-)}
+            <div className="more-reply reply-input-area">
+              <img src="../img/article/reply3.jpg" className="reply-avatar" alt="" />
+              <input
+                type="text"
+                className="form-control"
+                placeholder="輸入回覆..."
+                value={replyInputs[reply.id] || ""}
+                onChange={(e) =>
+                  setReplyInputs((prev) => ({
+                    ...prev,
+                    [reply.id]: e.target.value,
+                  }))
+                }
+              />
+              <button onClick={() => handleReplySubmit(reply.id)}>回覆</button>
+            </div>
+          )}
         </div>
         {reply.replies?.length > 0 && (
           <div className="reply-children">{renderReplies(reply.replies, 2)}</div>
@@ -340,109 +373,144 @@ export default function ArticleDetail() {
   if (!article) return <div>No article found</div>;
 
   return (
-    <div className="article">
-      <div className="articleDetail">
-        <div className="title">
-          <div className="text-area">{article.title}</div>
-          <div className="author-area">
-            <i className="fa-solid fa-user"></i>
-            {article.author_name}
+    <div className="row">
+      {/* 大螢幕 Sidebar */}
+      <div className="col-lg-3 col-md-4 sidebar-desktop">
+        <Sidebar />
+      </div>
+      {/* 手機版 Sidebar */}
+      <div className="col-12 sidebar-mobile">
+        <div className="mobile-category-bar">
+          <div className="big-category-bar">
+            <select
+              value={currentBigCategory}
+              onChange={(e) => handleBigCategoryChange(e.target.value)}
+            >
+              {sidebarData?.sidebar?.categoryBig?.map((big) => (
+                <option key={big.id} value={big.name}>
+                  {big.name}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="publish-time-area">
-            <i className="fa-solid fa-calendar-days"></i>
-            {article.publish_at}
-          </div>
-        </div>
-        <div className="main-photo">
-          <Image
-            src={imageUrl}
-            alt="Article Thumbnail"
-            fill
-            style={{ objectFit: "cover" }}
-            sizes="(max-width: 768px) 100vw, 50vw"
-            onError={() => setImageUrl(defaultImage)}
-          />
-        </div>
-        <div className="article-content-area">
-          <ArticleContent article={article} />
-        </div>
-        <div className="tag-area">
-          {Array.isArray(article.tags) ? (
-            article.tags.map((tag, index) => (
-              <span key={index} className="tag">
-                #{tag.trim()}
-              </span>
-            ))
-          ) : (
-            <span>No tags available</span>
-          )}
-        </div>
-        <div className="replies-section">
-          <h3>留言</h3>
-          {replies.length > 0 ? renderReplies(replies) : <p>尚無留言</p>}
-          <div className="more-reply">
-            <img
-              src="../img/article/reply3.jpg"
-              className="reply-avatar"
-              alt=""
-            />
-            <input
-              type="text"
-              className="form-control"
-              placeholder="對文章留言..."
-              value={newReply}
-              onChange={(e) => setNewReply(e.target.value)}
-            />
-            <button onClick={handleArticleReplySubmit}>留言</button>
+          <div className="small-category-bar">
+            {smallCategories.slice(0, 3).map((small) => (
+              <button
+                key={small.id}
+                className={`small-category-btn`}
+                onClick={() => handleCategoryClick(small.category_small_name)}
+              >
+                {small.category_small_name}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="related-article-area-title">相關文章</div>
-        <div className="related-article-area row row-cols-1 row-cols-md-2">
-  {relatedArticles.map((relatedArticle, index) => {
-    const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
-      ? relatedArticle.img_url
-      : `${backendURL}${relatedArticle.img_url || defaultImage}`;
-    const sanitizedContent = DOMPurify.sanitize(relatedArticle.content);
-
-    return (
-      <Link href={`/article/${relatedArticle.id}`} key={index} passHref>
-        <div className="related-card">
-          <div className="img-container">
-            <Image
-              className="article-list-card-photo-img"
-              src={relatedImageUrl}
-              alt="Article Thumbnail"
-              width={300}
-              height={200}
-              style={{ objectFit: "cover", objectPosition: "center" }}
-              onError={(e) => {
-                e.currentTarget.src = defaultImage;
-              }}
-            />
-          </div>
-          <div className="card-body">
-            <div className="card-title">{relatedArticle.title}</div>
-            <div
-              className="card-content"
-              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-            />
-            <div className="related-tag-area">
-              {Array.isArray(relatedArticle.tags) ? (
-                relatedArticle.tags.map((tag, index) => (
-                  <span key={index} className="tag">
-                    #{tag.trim()}
-                  </span>
-                ))
-              ) : (
-                <span>No tags available</span>
-              )}
+      </div>
+      {/* 主內容區域 */}
+      <div className="col-lg-9 col-md-8 article">
+        <div className="articleDetail">
+          <div className="title">
+            <div className="text-area">{article.title}</div>
+            <div className="author-area">
+              <i className="fa-solid fa-user"></i>
+              {article.author_name}
+            </div>
+            <div className="publish-time-area">
+              <i className="fa-solid fa-calendar-days"></i>
+              {article.publish_at}
             </div>
           </div>
+          <div className="main-photo">
+            <Image
+              src={imageUrl}
+              alt="Article Thumbnail"
+              fill
+              style={{ objectFit: "cover" }}
+              sizes="(max-width: 768px) 100vw, 50vw"
+              onError={() => setImageUrl(defaultImage)}
+            />
+          </div>
+          <div className="article-content-area">
+            <ArticleContent article={article} />
+          </div>
+          <div className="tag-area">
+            {Array.isArray(article.tags) ? (
+              article.tags.map((tag, index) => (
+                <span key={index} className="tag">
+                  #{tag.trim()}
+                </span>
+              ))
+            ) : (
+              <span>No tags available</span>
+            )}
+          </div>
+          <div className="replies-section">
+            <h3>留言</h3>
+            {replies.length > 0 ? renderReplies(replies) : <p>尚無留言</p>}
+            <div className="more-reply">
+              <img
+                src="../img/article/reply3.jpg"
+                className="reply-avatar"
+                alt=""
+              />
+              <input
+                type="text"
+                className="form-control"
+                placeholder="對文章留言..."
+                value={newReply}
+                onChange={(e) => setNewReply(e.target.value)}
+              />
+              <button onClick={handleArticleReplySubmit}>留言</button>
+            </div>
+          </div>
+          <div className="related-article-area-title">相關文章</div>
+          <div className="related-article-area row row-cols-1 row-cols-md-2">
+            {relatedArticles.map((relatedArticle, index) => {
+              const relatedImageUrl = relatedArticle.img_url?.startsWith("http")
+                ? relatedArticle.img_url
+                : `${backendURL}${relatedArticle.img_url || defaultImage}`;
+              const sanitizedContent = DOMPurify.sanitize(relatedArticle.content);
+
+              return (
+                <Link href={`/article/${relatedArticle.id}`} key={index} passHref>
+                  <div className="related-card">
+                    <div className="img-container">
+                      <Image
+                        className="article-list-card-photo-img"
+                        src={relatedImageUrl}
+                        alt="Article Thumbnail"
+                        width={300}
+                        height={200}
+                        style={{ objectFit: "cover", objectPosition: "center" }}
+                        onError={(e) => {
+                          e.currentTarget.src = defaultImage;
+                        }}
+                      />
+                    </div>
+                    <div className="card-body">
+                      <div className="card-title">{relatedArticle.title}</div>
+                      <div
+                        className="card-content"
+                        dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+                      />
+                      <div className="related-tag-area">
+                        {Array.isArray(relatedArticle.tags) ? (
+                          relatedArticle.tags.map((tag, index) => (
+                            <span key={index} className="tag">
+                              #{tag.trim()}
+                            </span>
+                          ))
+                        ) : (
+                          <span>No tags available</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </Link>
-    );
-  })}
-</div>
       </div>
     </div>
   );
