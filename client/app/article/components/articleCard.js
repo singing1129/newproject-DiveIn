@@ -7,6 +7,7 @@ import "./articleList.css";
 import axios from "axios";
 import DOMPurify from "dompurify";
 import { useAuth } from "../../hooks/useAuth";
+import { useSonner } from "../../hooks/useSonner"; // 引入 useSonner
 
 export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) {
   const backendURL = "http://localhost:3005";
@@ -20,6 +21,7 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
 
   const { user } = useAuth();
   const router = useRouter();
+  const { success, error: sonnerError, withAction } = useSonner(); // 解構出 狀態
   const sanitizedContent = DOMPurify.sanitize(article.content || "");
 
   // 獲取單篇文章的標籤資料
@@ -38,20 +40,36 @@ export default function ArticleCard({ article, isMyArticles, onDeleteSuccess }) 
     fetchTags();
   }, [article.id]);
 
+  //sonner
   const handleDelete = async () => {
-    if (window.confirm("確定要刪除這篇文章嗎？")) {
-      try {
-        console.log(`Deleting article with ID: ${article.id}`);
-        const response = await axios.delete(`${backendURL}/api/article/${article.id}`);
-        if (response.data.status === "success") {
-          alert("文章刪除成功");
-          onDeleteSuccess();
+    // 使用 withAction 替代 window.confirm
+    withAction(
+      "確定要刪除這篇文章嗎？",
+      "確認",
+      async () => {
+        try {
+          console.log(`Deleting article with ID: ${article.id}`);
+          const response = await axios.delete(`${backendURL}/api/article/${article.id}`);
+          if (response.data.status === "success") {
+            success("文章刪除成功");
+            onDeleteSuccess();
+          }
+        } catch (error) {
+          console.error("刪除失敗:", error);
+          sonnerError("刪除文章失敗");
         }
-      } catch (error) {
-        console.error("刪除失敗:", error);
-        alert("刪除文章失敗");
+      },
+      {
+        duration: 5000, // 通知持續 5 秒
+        action: {
+          label: "確認",
+          onClick: async () => {
+            // 這裡的邏輯已移到上面，這裡只是為了展示結構
+          },
+        },
+        // 可以添加取消按鈕（sonner 默認支持關閉按鈕）
       }
-    }
+    );
   };
 
   useEffect(() => {
